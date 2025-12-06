@@ -38,9 +38,10 @@ export function ChatTabs({
           onClick={() => onTabChange(tab.id)}
           className={`
             group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors
-            ${activeTab === tab.id
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+            ${
+              activeTab === tab.id
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             }
           `}
         >
