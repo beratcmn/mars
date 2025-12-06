@@ -61,11 +61,11 @@ interface MarsApiInterface {
     content: string,
     session_id?: string,
     model?: string,
-    agent?: string
+    agent?: string,
   ): Promise<ApiResponse<Message>>;
   list_messages(
     session_id?: string,
-    limit?: number
+    limit?: number,
   ): Promise<ApiResponse<Message[]>>;
   abort_session(session_id?: string): Promise<ApiResponse<boolean>>;
 
@@ -80,7 +80,7 @@ interface MarsApiInterface {
   execute_command(
     command: string,
     args?: Record<string, unknown>,
-    session_id?: string
+    session_id?: string,
   ): Promise<ApiResponse<unknown>>;
 }
 
@@ -122,9 +122,7 @@ export async function isServerRunning(): Promise<boolean> {
 
 // === Session Management ===
 
-export async function createSession(
-  title?: string
-): Promise<Session | null> {
+export async function createSession(title?: string): Promise<Session | null> {
   if (!isPyWebView()) return null;
   const result = await getApi().create_session(title);
   if (result.success && result.session) {
@@ -139,9 +137,7 @@ export async function listSessions(): Promise<Session[]> {
   return (result.sessions as Session[]) || [];
 }
 
-export async function getSession(
-  sessionId: string
-): Promise<Session | null> {
+export async function getSession(sessionId: string): Promise<Session | null> {
   if (!isPyWebView()) return null;
   const result = await getApi().get_session(sessionId);
   if (result.success && result.session) {
@@ -174,7 +170,7 @@ export async function sendMessage(
     sessionId?: string;
     model?: string;
     agent?: string;
-  }
+  },
 ): Promise<{ response: Message | null; sessionId: string | null }> {
   if (!isPyWebView()) {
     // Mock response for browser development
@@ -188,7 +184,7 @@ export async function sendMessage(
     content,
     options?.sessionId,
     options?.model,
-    options?.agent
+    options?.agent,
   );
 
   return {
@@ -199,7 +195,7 @@ export async function sendMessage(
 
 export async function listMessages(
   sessionId?: string,
-  limit?: number
+  limit?: number,
 ): Promise<Message[]> {
   if (!isPyWebView()) return [];
   const result = await getApi().list_messages(sessionId, limit);
@@ -252,7 +248,7 @@ export async function listCommands(): Promise<unknown[]> {
 export async function executeCommand(
   command: string,
   args?: Record<string, unknown>,
-  sessionId?: string
+  sessionId?: string,
 ): Promise<unknown | null> {
   if (!isPyWebView()) return null;
   const result = await getApi().execute_command(command, args, sessionId);
