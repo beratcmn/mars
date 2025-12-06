@@ -7,12 +7,16 @@ interface HeaderProps {
 
 export function Header({ projectPath }: HeaderProps) {
   return (
-    <header className="flex h-12 items-center justify-between border-b border-border px-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <FolderOpen className="h-4 w-4" />
-        <span className="font-medium text-foreground">{projectPath}</span>
+    <header className="flex h-11 items-center justify-between border-b border-border/50 px-4">
+      <div className="flex items-center gap-2 text-sm">
+        <FolderOpen className="h-4 w-4 text-muted-foreground" />
+        <span className="font-medium">{projectPath}</span>
       </div>
-      <Button variant="outline" size="sm" className="gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+      >
         Open
         <ChevronDown className="h-3 w-3" />
       </Button>

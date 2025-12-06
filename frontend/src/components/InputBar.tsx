@@ -1,5 +1,4 @@
 import { useState, type KeyboardEvent } from "react";
-import { Input } from "@/components/ui/input";
 import { ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -26,24 +25,26 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
   };
 
   return (
-    <div className="border-t border-border p-4">
-      <div className="max-w-3xl mx-auto relative">
-        <Input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask to make changes, @mention files, run /commands"
-          className="pr-12 h-12 text-base"
-          disabled={isLoading}
-        />
-        <Button
-          size="icon"
-          onClick={handleSend}
-          disabled={!value.trim() || isLoading}
-          className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8"
-        >
-          <ArrowUp className="h-4 w-4" />
-        </Button>
+    <div className="border-t border-border/50 p-4">
+      <div className="max-w-2xl mx-auto">
+        <div className="relative flex items-center">
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask to make changes, @mention files, run /commands"
+            className="w-full h-11 pl-4 pr-12 text-sm bg-muted/50 border border-border/50 rounded-lg placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring/50 focus:border-ring/50 transition-colors"
+            disabled={isLoading}
+          />
+          <Button
+            size="icon"
+            onClick={handleSend}
+            disabled={!value.trim() || isLoading}
+            className="absolute right-1.5 h-8 w-8 rounded-md"
+          >
+            <ArrowUp className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
