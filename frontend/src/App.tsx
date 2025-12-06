@@ -1,35 +1,53 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+import { Header } from "@/components/Header";
+import { ChatTabs } from "@/components/ChatTabs";
+import { ChatArea } from "@/components/ChatArea";
+import { InputBar } from "@/components/InputBar";
+import { Footer } from "@/components/Footer";
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+interface Message {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
 }
 
-export default App
+function App() {
+  const [activeTab, setActiveTab] = useState("chat");
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSend = async (content: string) => {
+    // Add user message
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content,
+    };
+    setMessages((prev) => [...prev, userMessage]);
+    setIsLoading(true);
+
+    // TODO: Integrate with OpenCode via PyWebView
+    // For now, simulate a response
+    setTimeout(() => {
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `This is a placeholder response. OpenCode integration coming soon!\n\nYou said: "${content}"`,
+      };
+      setMessages((prev) => [...prev, assistantMessage]);
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  return (
+    <div className="flex h-screen flex-col bg-background">
+      <Header projectPath="mars" />
+      <ChatTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      <ChatArea messages={messages} />
+      <InputBar onSend={handleSend} isLoading={isLoading} />
+      <Footer model="claude-4" />
+    </div>
+  );
+}
+
+export default App;
