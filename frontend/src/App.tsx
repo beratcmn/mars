@@ -367,6 +367,24 @@ function App() {
           );
         }
       }
+
+      // Handle session.updated to capture title changes
+      if (payload.type === "session.updated" && payload.properties?.info) {
+        const info = payload.properties.info;
+        const sessionId = info.id;
+        const newTitle = info.title;
+
+        if (sessionId && newTitle) {
+          setTabs((prevTabs) =>
+            prevTabs.map((tab) => {
+              if (tab.sessionId === sessionId && tab.label !== newTitle) {
+                return { ...tab, label: newTitle };
+              }
+              return tab;
+            }),
+          );
+        }
+      }
     });
 
     return () => cleanup();
@@ -433,9 +451,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId
           ? {
-              ...tab,
-              messages: [...tab.messages, userMessage, assistantMessage],
-            }
+            ...tab,
+            messages: [...tab.messages, userMessage, assistantMessage],
+          }
           : tab,
       ),
     );
@@ -446,9 +464,9 @@ function App() {
       if (api.isPyWebView()) {
         const modelParam = selectedModel
           ? {
-              providerID: selectedModel.providerId,
-              modelID: selectedModel.modelId,
-            }
+            providerID: selectedModel.providerId,
+            modelID: selectedModel.modelId,
+          }
           : undefined;
 
         await api.streamMessage(currentSessionId, content, modelParam);
