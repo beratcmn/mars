@@ -225,8 +225,8 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
                     }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />

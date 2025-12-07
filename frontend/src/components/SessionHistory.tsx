@@ -93,7 +93,7 @@ export function SessionHistory({
                 </Button>
             </PopoverTrigger>
             <PopoverContent
-                className="w-80 p-0 bg-popover/95 backdrop-blur-xl border-border/50"
+                className="w-80 p-0 bg-popover/95 backdrop-blur-xl border-border/50 rounded-md"
                 align="start"
                 sideOffset={8}
             >

@@ -88,11 +88,11 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   // Format the input for display
   const inputDisplay = part.state.input
     ? Object.entries(part.state.input)
-        .map(
-          ([key, value]) =>
-            `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
-        )
-        .join(", ")
+      .map(
+        ([key, value]) =>
+          `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
+      )
+      .join(", ")
     : "";
 
   return (
@@ -286,7 +286,7 @@ export function ChatArea({
           <div key={message.id} className="group">
             {message.role === "user" ? (
               <div className="flex justify-end">
-                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-2xl">
+                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md">
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {message.content.split(/(@\[.*?\])/g).map((part, i) => {
                       const match = part.match(/@\[(.*?)\]/);

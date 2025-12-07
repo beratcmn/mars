@@ -45,12 +45,12 @@ export function ModelSelector({
         const rawModels = Array.isArray(provider.models)
           ? provider.models
           : Object.entries(provider.models || {}).map(([id, data]) => ({
-              id,
-              name:
-                typeof data === "object" && data !== null
-                  ? (data as { name?: string }).name || id
-                  : id,
-            }));
+            id,
+            name:
+              typeof data === "object" && data !== null
+                ? (data as { name?: string }).name || id
+                : id,
+          }));
 
         const matches = rawModels.filter(
           (m) =>
@@ -106,7 +106,7 @@ export function ModelSelector({
           <ChevronDown className="h-3 w-3 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[340px] p-0" align="start">
+      <PopoverContent className="w-[340px] p-0 rounded-md" align="start">
         <div className="flex items-center border-b px-3 py-2.5">
           <Search className="mr-2 h-4 w-4 text-muted-foreground opacity-50" />
           <input
@@ -149,11 +149,10 @@ export function ModelSelector({
                           }
                           className={`
                                                         w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-sm transition-colors text-left
-                                                        ${
-                                                          isSelected
-                                                            ? "bg-primary text-primary-foreground"
-                                                            : "hover:bg-accent hover:text-accent-foreground text-foreground"
-                                                        }
+                                                        ${isSelected
+                              ? "bg-primary text-primary-foreground"
+                              : "hover:bg-accent hover:text-accent-foreground text-foreground"
+                            }
                                                     `}
                         >
                           <span className="truncate mr-2">{model.name}</span>
