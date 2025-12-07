@@ -706,7 +706,7 @@ function App() {
         {/* File Explorer Sidebar - Toggleable */}
         <div
           className={cn(
-            "border-r border-border/50 transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0",
+            "border-r border-border/50 overflow-hidden flex-shrink-0 sidebar-transition",
             isSidebarOpen ? "w-64 opacity-100" : "w-0 opacity-0 border-r-0"
           )}
         >

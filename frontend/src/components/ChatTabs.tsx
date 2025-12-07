@@ -37,7 +37,7 @@ export function ChatTabs({
         <div
           key={tab.id}
           className={`
-            group relative flex items-center gap-1 pr-1 transition-colors
+            group relative flex items-center gap-1 pr-1 transition-all duration-200
             ${activeTabId === tab.id
               ? "text-foreground"
               : "text-muted-foreground hover:text-foreground"
@@ -57,21 +57,21 @@ export function ChatTabs({
               e.stopPropagation();
               onTabClose?.(tab.id);
             }}
-            className="p-0.5 opacity-0 hover:bg-muted group-hover:opacity-100 transition-opacity"
+            className="p-0.5 opacity-0 hover:bg-muted group-hover:opacity-100 transition-all duration-150 rounded-sm hover:scale-110 active:scale-95"
             aria-label="Close tab"
           >
             <X className="h-3 w-3" />
           </button>
           {/* Active indicator - simple underline */}
           {activeTabId === tab.id && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground tab-indicator animate-scale-in" />
           )}
         </div>
       ))}
       <Button
         variant="ghost"
         size="icon"
-        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+        className="h-7 w-7 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-110 active:scale-95"
         onClick={onNewTab}
       >
         <Plus className="h-4 w-4" />

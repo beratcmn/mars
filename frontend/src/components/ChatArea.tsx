@@ -201,7 +201,7 @@ export function ChatArea({
   if (!hasActiveSession) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 animate-fade-in-up">
           <h1 className="text-3xl font-serif italic text-foreground">
             Welcome to Mars
           </h1>
@@ -213,7 +213,7 @@ export function ChatArea({
             onClick={onNewChat}
             variant="ghost"
             size="sm"
-            className="gap-2"
+            className="gap-2 transition-all duration-150 hover:scale-105 active:scale-95"
           >
             <MessageSquarePlus className="h-4 w-4" />
             Start a new chat
@@ -227,7 +227,7 @@ export function ChatArea({
   if (messages.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-center space-y-3">
+        <div className="text-center space-y-3 animate-fade-in-up">
           <h1 className="text-3xl font-serif italic text-foreground">
             Welcome to Mars
           </h1>
@@ -283,10 +283,10 @@ export function ChatArea({
     <ScrollArea className="h-full">
       <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
         {messages.map((message) => (
-          <div key={message.id} className="group">
+          <div key={message.id} className={`group ${message.role === 'user' ? 'animate-slide-in-right' : 'animate-fade-in-up'}`}>
             {message.role === "user" ? (
               <div className="flex justify-end">
-                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md">
+                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm">
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {message.content.split(/(@\[.*?\])/g).map((part, i) => {
                       const match = part.match(/@\[(.*?)\]/);

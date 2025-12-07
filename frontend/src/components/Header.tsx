@@ -33,10 +33,10 @@ export function Header({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground"
+          className="h-8 w-8 text-muted-foreground transition-all duration-150 hover:scale-105 active:scale-95"
           onClick={onToggleSidebar}
         >
-          <PanelLeft className={`h-4 w-4 ${isSidebarOpen ? "text-foreground" : ""}`} />
+          <PanelLeft className={`h-4 w-4 transition-colors duration-200 ${isSidebarOpen ? "text-foreground" : ""}`} />
         </Button>
         <SessionHistory
           activeSessionId={activeSessionId}
@@ -56,10 +56,10 @@ export function Header({
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150"
         >
           Open
-          <ChevronDown className="h-3 w-3" />
+          <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:translate-y-0.5" />
         </Button>
       </div>
     </header>

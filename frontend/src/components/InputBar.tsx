@@ -236,7 +236,7 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             </div>
           </div>
         )}
-        <div className="relative flex items-center bg-transparent border border-border/50 rounded-md focus-within:border-border transition-colors">
+        <div className="relative flex items-center bg-transparent border border-border/50 rounded-md input-premium shadow-sm hover:border-border/70">
           <div
             ref={editorRef}
             contentEditable
@@ -252,7 +252,7 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             size="icon"
             onClick={handleSend}
             disabled={isLoading}
-            className="absolute right-1.5 h-7 w-7 top-1.5"
+            className="absolute right-1.5 h-7 w-7 top-1.5 btn-press transition-all duration-150 hover:scale-105 active:scale-95"
           >
             <ArrowUp className="h-4 w-4" />
           </Button>

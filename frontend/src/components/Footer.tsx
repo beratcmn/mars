@@ -43,14 +43,14 @@ export function Footer({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          className="h-6 w-6 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-110 active:scale-95"
         >
           <Paperclip className="h-3 w-3" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
+          className="h-6 w-6 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-110 hover:rotate-45 active:scale-95"
         >
           <Settings className="h-3 w-3" />
         </Button>

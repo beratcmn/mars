@@ -87,8 +87,9 @@ function FileTreeItem({
     <div>
       <div
         className={cn(
-          "flex items-center gap-1 py-1 px-2 cursor-pointer select-none transition-colors",
-          "hover:bg-accent hover:text-accent-foreground",
+          "flex items-center gap-1 py-1.5 px-2 cursor-pointer select-none rounded-sm",
+          "transition-all duration-150 ease-out",
+          "hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5",
           "text-muted-foreground",
         )}
         onClick={handleToggle}
@@ -119,7 +120,7 @@ function FileTreeItem({
       </div>
 
       {isOpen && (
-        <div className="pl-3 border-l border-border/40 ml-2">
+        <div className="pl-3 border-l border-border/40 ml-2 tree-children">
           {isLoading ? (
             <div className="text-xs text-muted-foreground py-1 px-4">
               Loading...

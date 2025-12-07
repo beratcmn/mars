@@ -168,3 +168,230 @@ a[href^="#file:"] {
 .dark a[href^="#file:"] {
   background-color: var(--muted);
 }
+
+/* ========================================
+   Premium Animation System
+   ======================================== */
+
+/* Smooth scrolling globally */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base transition for interactive elements */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Fade-in animation for messages */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes gentle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Animation utility classes */
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.2s ease-out forwards;
+}
+
+.animate-gentle-pulse {
+  animation: gentle-pulse 2s ease-in-out infinite;
+}
+
+/* Staggered animation delays for lists */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }
+
+/* Smooth hover transitions for interactive elements */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Focus ring animation */
+.focus-ring-animated {
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.focus-ring-animated:focus-within {
+  box-shadow: 0 0 0 3px rgba(var(--ring), 0.15);
+}
+
+/* Loading shimmer effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    var(--muted-foreground) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Message bubble hover effect */
+.message-bubble {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.message-bubble:hover {
+  transform: scale(1.005);
+}
+
+/* Icon button micro-interaction */
+.icon-btn {
+  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.icon-btn:hover {
+  transform: scale(1.05);
+}
+
+.icon-btn:active {
+  transform: scale(0.95);
+}
+
+/* Sidebar transition */
+.sidebar-transition {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
+              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Tab underline animation */
+.tab-indicator {
+  transition: width 0.2s ease, left 0.2s ease, opacity 0.2s ease;
+}
+
+/* Typing cursor blink */
+@keyframes cursor-blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.cursor-blink {
+  animation: cursor-blink 1s step-end infinite;
+}
+
+/* Expand/collapse animation for tree items */
+.tree-children {
+  animation: fade-in 0.15s ease-out;
+}
+
+/* Smooth border transitions */
+.border-transition {
+  transition: border-color 0.2s ease;
+}
+
+/* Premium input focus state */
+.input-premium {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.input-premium:focus-within {
+  border-color: var(--border);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.03);
+}
+
+/* Button press effect */
+.btn-press:active {
+  transform: scale(0.98);
+}
+
+/* Content fade for streaming */
+.streaming-text {
+  animation: fade-in 0.1s ease-out;
+}

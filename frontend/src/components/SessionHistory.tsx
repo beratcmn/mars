@@ -86,7 +86,7 @@ export function SessionHistory({
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-105 active:scale-95"
                     title="Session History"
                 >
                     <History className="h-4 w-4" />
@@ -115,14 +115,17 @@ export function SessionHistory({
                         </div>
                     ) : (
                         <div className="py-1">
-                            {sessions.map((session) => (
+                            {sessions.map((session, index) => (
                                 <div
                                     key={session.id}
                                     className={cn(
-                                        "group flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors",
-                                        "hover:bg-accent/50",
-                                        activeSessionId === session.id && "bg-accent/30"
+                                        "group flex items-center gap-3 px-3 py-2.5 cursor-pointer rounded-sm mx-1",
+                                        "transition-all duration-150 ease-out",
+                                        "hover:bg-accent/50 hover:translate-x-0.5",
+                                        activeSessionId === session.id && "bg-accent/30",
+                                        "animate-fade-in"
                                     )}
+                                    style={{ animationDelay: `${index * 30}ms` }}
                                     onClick={() => {
                                         onSessionSelect(session);
                                         setIsOpen(false);
@@ -157,7 +160,7 @@ export function SessionHistory({
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all duration-150 text-muted-foreground hover:text-destructive hover:scale-110 active:scale-95"
                                             onClick={(e) => handleDelete(e, session.id)}
                                         >
                                             <Trash2 className="h-3.5 w-3.5" />

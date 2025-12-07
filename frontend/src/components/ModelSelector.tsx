@@ -148,12 +148,13 @@ export function ModelSelector({
                             )
                           }
                           className={`
-                                                        w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-sm transition-colors text-left
-                                                        ${isSelected
+                            w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-sm text-left
+                            transition-all duration-150 ease-out
+                            ${isSelected
                               ? "bg-primary text-primary-foreground"
-                              : "hover:bg-accent hover:text-accent-foreground text-foreground"
+                              : "hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5 text-foreground"
                             }
-                                                    `}
+                          `}
                         >
                           <span className="truncate mr-2">{model.name}</span>
                           {isSelected && (
