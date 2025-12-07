@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 interface FileExplorerProps {
   onFileSelect: (file: FileEntry) => void;
   className?: string;
+  onRootLoaded?: (rootPath: string) => void;
 }
 
-export function FileExplorer({ onFileSelect, className }: FileExplorerProps) {
+export function FileExplorer({ onFileSelect, className, onRootLoaded }: FileExplorerProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
 
   useEffect(() => {
@@ -18,8 +19,11 @@ export function FileExplorer({ onFileSelect, className }: FileExplorerProps) {
 
   const loadFiles = async () => {
     try {
-      const rootFiles = await api.listFiles(".");
-      setFiles(rootFiles);
+      const result = await api.listFiles(".");
+      setFiles(result.files);
+      if (onRootLoaded) {
+        onRootLoaded(result.root);
+      }
     } catch (e) {
       console.error("Failed to load files:", e);
     }
@@ -61,8 +65,8 @@ function FileTreeItem({
     if (!hasLoaded) {
       setIsLoading(true);
       try {
-        const items = await api.listFiles(file.path);
-        setChildren(items);
+        const result = await api.listFiles(file.path);
+        setChildren(result.files);
         setHasLoaded(true);
       } catch (e) {
         console.error("Failed to load directory:", e);
@@ -71,6 +75,12 @@ function FileTreeItem({
       }
     }
     setIsOpen(!isOpen);
+  };
+
+  const handleDragStart = (e: React.DragEvent) => {
+    e.stopPropagation();
+    e.dataTransfer.setData("application/x-mars-file", JSON.stringify(file));
+    e.dataTransfer.effectAllowed = "copy";
   };
 
   return (
@@ -82,6 +92,8 @@ function FileTreeItem({
           "text-muted-foreground",
         )}
         onClick={handleToggle}
+        draggable={true}
+        onDragStart={handleDragStart}
       >
         <span className="flex-shrink-0 w-4 flex justify-center">
           {file.isDirectory ? (

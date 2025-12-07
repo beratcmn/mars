@@ -195,7 +195,25 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
   };
 
   return (
-    <div className="border-t border-border/50 p-4 relative">
+    <div
+      className="border-t border-border/50 p-4 relative"
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "copy";
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        const data = e.dataTransfer.getData("application/x-mars-file");
+        if (data) {
+          try {
+            const file = JSON.parse(data);
+            insertMention(file.path);
+          } catch (err) {
+            console.error("Failed to parse dropped file", err);
+          }
+        }
+      }}
+    >
       <div className="max-w-2xl mx-auto relative">
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute bottom-full left-0 mb-2 w-full max-w-sm bg-popover border border-border rounded-md shadow-lg overflow-hidden z-50">
@@ -206,11 +224,10 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   // We need to prevent default mousedown to not lose focus from editor
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${
-                    index === selectedIndex
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground hover:bg-accent/50"
-                  }`}
+                    }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />
                   <span className="truncate">{file}</span>

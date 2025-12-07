@@ -10,6 +10,7 @@ import { CodeViewer } from "@/components/CodeViewer";
 import { type SelectedModel } from "@/components/ModelSelector";
 import * as api from "@/lib/api";
 import type { Provider, Agent, FileEntry } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 // Part types for streaming message content
 interface TextPart {
@@ -86,6 +87,10 @@ function App() {
   const [isInitialized, setIsInitialized] = useState(false);
   const initStarted = useRef(false); // Prevent double init from StrictMode
 
+  // New states for UI features
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [projectRoot, setProjectRoot] = useState("mars");
+
   // Provider/model state
   const [providers, setProviders] = useState<Provider[]>([]);
   const [connectedProviders, setConnectedProviders] = useState<string[]>([]);
@@ -100,7 +105,7 @@ function App() {
 
   // Create a new session tab
   const createNewTab = useCallback(async () => {
-    const tabId = `tab-${Date.now()}`;
+    const tabId = `tab - ${Date.now()} `;
     let sessionId = tabId; // Fallback for browser mode
     let title = "Untitled";
 
@@ -151,7 +156,7 @@ function App() {
     }
 
     const newTab: FileTab = {
-      id: `file-${Date.now()}`,
+      id: `file - ${Date.now()} `,
       type: "file",
       label: file.name,
       icon: "file",
@@ -161,6 +166,33 @@ function App() {
     setTabs((prev) => [...prev, newTab]);
     setActiveTabId(newTab.id);
   };
+
+  const handleTabClose = async (tabId: string) => {
+    const tab = tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+    setTabs((prev) => prev.filter((t) => t.id !== tabId));
+    if (activeTabId === tabId) {
+      const remainingTabs = tabs.filter((t) => t.id !== tabId);
+      if (remainingTabs.length > 0) {
+        setActiveTabId(remainingTabs[0].id);
+        if (remainingTabs[0].type === "session" && api.isPyWebView())
+          await api.setCurrentSession(remainingTabs[0].sessionId);
+      } else {
+        setActiveTabId(null);
+      }
+    }
+    if (
+      tab.type === "session" &&
+      api.isPyWebView() &&
+      tab.sessionId.startsWith("ses")
+    ) {
+      await api.deleteSession(tab.sessionId);
+    }
+  };
+
+  const handleNewTab = useCallback(async () => {
+    await createNewTab();
+  }, [createNewTab]);
 
   // Initialize on first load & Listen for events
   useEffect(() => {
@@ -240,8 +272,6 @@ function App() {
 
           // Load agent settings
           try {
-            // Re-load settings as they might have been loaded above for model.
-            // Ideally we load once, but for minimal diff we just call again or reuse if we stored it (we didn't).
             const settings = await api.loadSettings();
             if (settings.selectedAgent) {
               const savedAgent = settings.selectedAgent as Agent;
@@ -498,64 +528,23 @@ function App() {
     return () => cleanup();
   }, [isInitialized]);
 
-  // Handle tab change
-  const handleTabChange = async (tabId: string) => {
-    setActiveTabId(tabId);
-    const tab = tabs.find((t) => t.id === tabId);
-    if (tab && tab.type === "session" && api.isPyWebView()) {
-      await api.setCurrentSession(tab.sessionId);
-    }
-  };
-
-  // Handle new tab button
-  const handleNewTab = async () => {
-    await createNewTab();
-  };
-
-  // Handle close tab
-  const handleCloseTab = async (tabId: string) => {
-    const tab = tabs.find((t) => t.id === tabId);
-    if (!tab) return;
-    setTabs((prev) => prev.filter((t) => t.id !== tabId));
-    if (activeTabId === tabId) {
-      const remainingTabs = tabs.filter((t) => t.id !== tabId);
-      if (remainingTabs.length > 0) {
-        setActiveTabId(remainingTabs[0].id);
-        if (remainingTabs[0].type === "session" && api.isPyWebView())
-          await api.setCurrentSession(remainingTabs[0].sessionId);
-      } else {
-        setActiveTabId(null);
-      }
-    }
-    if (
-      tab.type === "session" &&
-      api.isPyWebView() &&
-      tab.sessionId.startsWith("ses")
-    ) {
-      await api.deleteSession(tab.sessionId);
-    }
-  };
-
   // Handle sending a message
   const handleSend = async (content: string) => {
-    // Should only be callable when a session is active
     if (!activeTab || activeTab.type !== "session") return;
 
     const currentTabId = activeTab.id;
     const currentSessionId = activeTab.sessionId;
 
-    // 1. Add User Message
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content,
     };
 
-    // 2. Add Placeholder Assistant Message
     const assistantMessage: Message = {
-      id: `asst-${Date.now()}`,
+      id: `asst - ${Date.now()} `,
       role: "assistant",
-      content: "", // Start empty
+      content: "",
       modelID: selectedModel?.modelId,
       providerID: selectedModel?.providerId,
     };
@@ -564,9 +553,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-              ...tab,
-              messages: [...tab.messages, userMessage, assistantMessage],
-            }
+            ...tab,
+            messages: [...tab.messages, userMessage, assistantMessage],
+          }
           : tab,
       ),
     );
@@ -577,9 +566,9 @@ function App() {
       if (api.isPyWebView()) {
         const modelParam = selectedModel
           ? {
-              providerID: selectedModel.providerId,
-              modelID: selectedModel.modelId,
-            }
+            providerID: selectedModel.providerId,
+            modelID: selectedModel.modelId,
+          }
           : undefined;
 
         const agentParam = selectedAgent ? selectedAgent.name : undefined;
@@ -593,7 +582,6 @@ function App() {
       } else {
         // Browser Mock
         await new Promise((r) => setTimeout(r, 500));
-        // Mock streaming
         const mockText = "This is a mock streaming response in the browser.";
         for (const char of mockText) {
           setTabs((prev) =>
@@ -617,7 +605,6 @@ function App() {
       }
     } catch (error) {
       console.error("Error sending message:", error);
-      // We could update the last message to show error
     } finally {
       setIsLoading(false);
     }
@@ -633,24 +620,43 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background font-sans antialiased overflow-hidden">
-      <Header projectPath={projectPath} />
-      <div className="flex flex-1 min-h-0 overflow-hidden">
-        {/* Sidebar */}
-        <div className="w-64 flex-shrink-0 border-r border-border/50 bg-muted/10 h-full overflow-hidden">
-          <FileExplorer onFileSelect={handleFileSelect} />
+    <div className="flex h-screen w-full flex-col bg-background text-foreground overflow-hidden">
+      <Header
+        projectPath={projectRoot}
+        isSidebarOpen={isSidebarOpen}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* File Explorer Sidebar - Toggleable */}
+        <div
+          className={cn(
+            "border-r border-border/50 transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0",
+            isSidebarOpen ? "w-64 opacity-100" : "w-0 opacity-0 border-r-0"
+          )}
+        >
+          <FileExplorer
+            onFileSelect={handleFileSelect}
+            className="h-full w-64" // Fix width to prevent content squishing
+            onRootLoaded={(path) => {
+              // Extract just the folder name for display if path is long
+              const folderName = path.split(/[\/\\]/).pop() || path;
+              setProjectRoot(folderName);
+            }}
+          />
         </div>
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col w-0 min-w-0">
+        <div className="flex flex-1 flex-col overflow-hidden min-w-0">
           <ChatTabs
             tabs={tabs}
-            activeTab={activeTabId || ""}
-            onTabChange={handleTabChange}
+            activeTabId={activeTabId}
+            onTabSelect={setActiveTabId}
+            onTabClose={handleTabClose}
             onNewTab={handleNewTab}
-            onCloseTab={handleCloseTab}
           />
-          <div className="flex-1 min-h-0 overflow-hidden relative">
+
+          <div className="flex-1 overflow-hidden relative">
             {activeTab?.type === "session" ? (
               <ChatArea
                 messages={(activeTab as SessionTab).messages}
@@ -668,46 +674,40 @@ function App() {
             )}
           </div>
 
-          {/* Input Bar only shown for sessions */}
-          {activeTab?.type === "session" && (
-            <InputBar onSend={handleSend} isLoading={isLoading} />
-          )}
-
-          <Footer
-            providers={providers}
-            connectedProviders={connectedProviders}
-            selectedModel={selectedModel}
-            onModelChange={async (model) => {
-              setSelectedModel(model);
-              if (model) {
-                try {
-                  const currentSettings = await api.loadSettings();
-                  await api.saveSettings({
-                    ...currentSettings,
-                    selectedModel: model,
-                  });
-                } catch (e) {
-                  console.error("Failed to save settings:", e);
-                }
-              }
-            }}
-            agents={agents}
-            selectedAgent={selectedAgent}
-            onAgentChange={async (agent) => {
-              setSelectedAgent(agent);
-              try {
-                const currentSettings = await api.loadSettings();
-                await api.saveSettings({
-                  ...currentSettings,
-                  selectedAgent: agent,
-                });
-              } catch (e) {
-                console.error("Failed to save settings:", e);
-              }
-            }}
+          <InputBar
+            onSend={(msg) => handleSend(msg)}
+            isLoading={isLoading}
           />
         </div>
       </div>
+
+      <Footer
+        providers={providers}
+        connectedProviders={connectedProviders}
+        selectedModel={selectedModel}
+        onModelChange={async (model) => {
+          setSelectedModel(model);
+          if (model) {
+            try {
+              const currentSettings = await api.loadSettings();
+              await api.saveSettings({ ...currentSettings, selectedModel: model });
+            } catch (e) {
+              console.error("Failed to save settings:", e);
+            }
+          }
+        }}
+        agents={agents}
+        selectedAgent={selectedAgent}
+        onAgentChange={async (agent) => {
+          setSelectedAgent(agent);
+          try {
+            const currentSettings = await api.loadSettings();
+            await api.saveSettings({ ...currentSettings, selectedAgent: agent });
+          } catch (e) {
+            console.error("Failed to save settings:", e);
+          }
+        }}
+      />
     </div>
   );
 }

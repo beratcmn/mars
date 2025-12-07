@@ -260,8 +260,8 @@ class MarsAPI:
 
             # Sort: directories first, then files, alphabetical
             items.sort(key=lambda x: (not x["isDirectory"], x["name"].lower()))
-
-            return {"success": True, "files": items, "error": None}
+            
+            return {"success": True, "files": items, "root": search_path, "error": None}
         except Exception as e:
             logger.error(f"Error listing files: {e}")
             return {"success": False, "files": [], "error": str(e)}

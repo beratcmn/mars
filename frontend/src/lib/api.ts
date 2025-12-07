@@ -454,24 +454,30 @@ export async function searchFiles(query: string): Promise<string[]> {
   return (result.files as string[]) || [];
 }
 
-export async function listFiles(path: string = "."): Promise<FileEntry[]> {
+export async function listFiles(path: string = "."): Promise<{ files: FileEntry[]; root: string }> {
   if (!isPyWebView()) {
     // Mock for browser
     if (path === ".") {
-      return [
-        { name: "src", path: "/mock/src", isDirectory: true },
-        { name: "public", path: "/mock/public", isDirectory: true },
-        {
-          name: "package.json",
-          path: "/mock/package.json",
-          isDirectory: false,
-        },
-      ];
+      return {
+        files: [
+          { name: "src", path: "/mock/src", isDirectory: true },
+          { name: "public", path: "/mock/public", isDirectory: true },
+          {
+            name: "package.json",
+            path: "/mock/package.json",
+            isDirectory: false,
+          },
+        ],
+        root: "/mock/mars"
+      };
     }
-    return [];
+    return { files: [], root: "/mock/mars" };
   }
   const result = await getApi().list_files(path);
-  return (result.files as FileEntry[]) || [];
+  return { 
+    files: (result.files as FileEntry[]) || [], 
+    root: (result.root as string) || "" 
+  };
 }
 
 export async function readFile(path: string): Promise<string | null> {
