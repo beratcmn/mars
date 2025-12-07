@@ -17,7 +17,6 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
   // but the concept of where the cursor is relative to text is handled by Selection API.
   // Keeping it here for now, but it's not used in the new logic.
 
-
   // We need to sync the innerHTML/innerText to detect mentions
   // But standard React onChange doesn't work well with contentEditable for this specific rich text case
   // So we use onInput
@@ -58,7 +57,8 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
     // Check text before cursor in the current text node
     if (range.startContainer.nodeType === Node.TEXT_NODE) {
       const textNode = range.startContainer as Text;
-      const textBefore = textNode.textContent?.slice(0, range.startOffset) || "";
+      const textBefore =
+        textNode.textContent?.slice(0, range.startOffset) || "";
       const lastAtPos = textBefore.lastIndexOf("@");
 
       if (lastAtPos !== -1) {
@@ -165,12 +165,16 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
     if (showSuggestions && suggestions.length > 0) {
       if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : suggestions.length - 1));
+        setSelectedIndex((prev) =>
+          prev > 0 ? prev - 1 : suggestions.length - 1,
+        );
         return;
       }
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setSelectedIndex((prev) => (prev < suggestions.length - 1 ? prev + 1 : 0));
+        setSelectedIndex((prev) =>
+          prev < suggestions.length - 1 ? prev + 1 : 0,
+        );
         return;
       }
       if (e.key === "Enter" || e.key === "Tab") {
@@ -202,10 +206,11 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   // We need to prevent default mousedown to not lose focus from editor
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50"
-                    }`}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${
+                    index === selectedIndex
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50"
+                  }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />
                   <span className="truncate">{file}</span>

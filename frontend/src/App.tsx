@@ -142,7 +142,7 @@ function App() {
   const handleFileSelect = (file: FileEntry) => {
     // Check if tab already exists
     const existingTab = tabs.find(
-      (t) => t.type === "file" && (t as FileTab).filePath === file.path
+      (t) => t.type === "file" && (t as FileTab).filePath === file.path,
     );
 
     if (existingTab) {
@@ -232,7 +232,6 @@ function App() {
             }
           }
 
-
           if (modelToSelect) setSelectedModel(modelToSelect);
 
           // Local Agents
@@ -241,13 +240,13 @@ function App() {
 
           // Load agent settings
           try {
-            // Re-load settings as they might have been loaded above for model. 
+            // Re-load settings as they might have been loaded above for model.
             // Ideally we load once, but for minimal diff we just call again or reuse if we stored it (we didn't).
             const settings = await api.loadSettings();
             if (settings.selectedAgent) {
               const savedAgent = settings.selectedAgent as Agent;
               // Verify it exists in the fetched list
-              const found = agentsList.find(a => a.name === savedAgent.name);
+              const found = agentsList.find((a) => a.name === savedAgent.name);
               if (found) setSelectedAgent(savedAgent);
             }
           } catch (e) {
@@ -291,7 +290,8 @@ function App() {
           flushSync(() => {
             setTabs((prevTabs) =>
               prevTabs.map((tab) => {
-                if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
+                if (tab.type !== "session" || tab.sessionId !== sessionId)
+                  return tab;
 
                 const messages = [...tab.messages];
                 const lastMsg = messages[messages.length - 1];
@@ -309,7 +309,9 @@ function App() {
                   existingTextPart.text =
                     (part.text as string) || existingTextPart.text + delta;
                 } else {
-                  const partTime = part.time as Record<string, number> | undefined;
+                  const partTime = part.time as
+                    | Record<string, number>
+                    | undefined;
                   updatedParts.push({
                     id: part.id as string,
                     type: "text",
@@ -334,7 +336,8 @@ function App() {
         // Handle reasoning and tool parts (non-text)
         setTabs((prevTabs) =>
           prevTabs.map((tab) => {
-            if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
+            if (tab.type !== "session" || tab.sessionId !== sessionId)
+              return tab;
 
             const messages = [...tab.messages];
             const lastMsg = messages[messages.length - 1];
@@ -353,7 +356,9 @@ function App() {
               if (existingReasoningPart) {
                 existingReasoningPart.text = (part.text as string) || "";
               } else if (part.text) {
-                const partTime = part.time as Record<string, number> | undefined;
+                const partTime = part.time as
+                  | Record<string, number>
+                  | undefined;
                 updatedParts.push({
                   id: part.id as string,
                   type: "reasoning",
@@ -375,7 +380,9 @@ function App() {
               const existingToolPart = updatedParts.find(
                 (p): p is ToolPart => p.type === "tool" && p.id === part.id,
               );
-              const partState = part.state as Record<string, unknown> | undefined;
+              const partState = part.state as
+                | Record<string, unknown>
+                | undefined;
               const toolState = {
                 status: partState?.status || "pending",
                 input: partState?.input,
@@ -433,14 +440,21 @@ function App() {
                       {
                         ...lastMsg,
                         modelID: (info.modelID as string) || lastMsg.modelID,
-                        providerID: (info.providerID as string) || lastMsg.providerID,
+                        providerID:
+                          (info.providerID as string) || lastMsg.providerID,
                         cost: info.cost as number,
                         tokens: {
                           input: tokens.input as number,
                           output: tokens.output as number,
-                          cache: tokens.cache as { read: number; write: number },
+                          cache: tokens.cache as {
+                            read: number;
+                            write: number;
+                          },
                         },
-                        time: info.time as { created: number; completed: number },
+                        time: info.time as {
+                          created: number;
+                          completed: number;
+                        },
                       },
                     ],
                   };
@@ -464,7 +478,11 @@ function App() {
         if (sessionId && newTitle) {
           setTabs((prevTabs) =>
             prevTabs.map((tab) => {
-              if (tab.type === "session" && tab.sessionId === sessionId && tab.label !== newTitle) {
+              if (
+                tab.type === "session" &&
+                tab.sessionId === sessionId &&
+                tab.label !== newTitle
+              ) {
                 return { ...tab, label: newTitle };
               }
               return tab;
@@ -509,7 +527,11 @@ function App() {
         setActiveTabId(null);
       }
     }
-    if (tab.type === "session" && api.isPyWebView() && tab.sessionId.startsWith("ses")) {
+    if (
+      tab.type === "session" &&
+      api.isPyWebView() &&
+      tab.sessionId.startsWith("ses")
+    ) {
       await api.deleteSession(tab.sessionId);
     }
   };
@@ -542,9 +564,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-            ...tab,
-            messages: [...tab.messages, userMessage, assistantMessage],
-          }
+              ...tab,
+              messages: [...tab.messages, userMessage, assistantMessage],
+            }
           : tab,
       ),
     );
@@ -555,9 +577,9 @@ function App() {
       if (api.isPyWebView()) {
         const modelParam = selectedModel
           ? {
-            providerID: selectedModel.providerId,
-            modelID: selectedModel.modelId,
-          }
+              providerID: selectedModel.providerId,
+              modelID: selectedModel.modelId,
+            }
           : undefined;
 
         const agentParam = selectedAgent ? selectedAgent.name : undefined;

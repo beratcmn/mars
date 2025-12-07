@@ -166,5 +166,5 @@ a[href^="#file:"] {
 /* Specifics for dark theme refinement */
 .dark .mention-badge,
 .dark a[href^="#file:"] {
-    background-color: var(--muted);
+  background-color: var(--muted);
 }

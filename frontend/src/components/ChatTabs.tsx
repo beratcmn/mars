@@ -38,9 +38,10 @@ export function ChatTabs({
           key={tab.id}
           className={`
             group relative flex items-center gap-1 pr-1 transition-colors
-            ${activeTab === tab.id
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+            ${
+              activeTab === tab.id
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             }
           `}
         >

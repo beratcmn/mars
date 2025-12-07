@@ -215,14 +215,14 @@ export function connectToEventStream(
   onEvent: (payload: unknown) => void,
 ): () => void {
   const url = `http://127.0.0.1:${OPENCODE_PORT}/global/event`;
-  
+
   console.log("Connecting to SSE stream:", url);
   const eventSource = new EventSource(url);
-  
+
   eventSource.onopen = () => {
     console.log("SSE connection opened");
   };
-  
+
   eventSource.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
@@ -236,12 +236,12 @@ export function connectToEventStream(
       console.error("Failed to parse SSE event:", e);
     }
   };
-  
+
   eventSource.onerror = (error) => {
     console.error("SSE connection error:", error);
     // EventSource will automatically try to reconnect
   };
-  
+
   // Return cleanup function
   return () => {
     console.log("Closing SSE connection");
@@ -340,7 +340,12 @@ export async function streamMessage(
   agent?: string,
 ): Promise<boolean> {
   if (!isPyWebView()) return false;
-  const result = await getApi().stream_message(sessionId, content, model, agent);
+  const result = await getApi().stream_message(
+    sessionId,
+    content,
+    model,
+    agent,
+  );
   return result.success;
 }
 
@@ -399,10 +404,10 @@ export async function getProviders(): Promise<ProvidersResponse | null> {
 
 export async function listAgents(): Promise<Agent[]> {
   if (!isPyWebView()) {
-      return [
-          { name: "default", description: "Default agent" },
-          { name: "coder", description: "Coding specialist" }
-      ];
+    return [
+      { name: "default", description: "Default agent" },
+      { name: "coder", description: "Coding specialist" },
+    ];
   }
   const result = await getApi().list_agents();
   return (result.agents as Agent[]) || [];
@@ -453,11 +458,15 @@ export async function listFiles(path: string = "."): Promise<FileEntry[]> {
   if (!isPyWebView()) {
     // Mock for browser
     if (path === ".") {
-        return [
-            { name: "src", path: "/mock/src", isDirectory: true },
-            { name: "public", path: "/mock/public", isDirectory: true },
-            { name: "package.json", path: "/mock/package.json", isDirectory: false },
-        ];
+      return [
+        { name: "src", path: "/mock/src", isDirectory: true },
+        { name: "public", path: "/mock/public", isDirectory: true },
+        {
+          name: "package.json",
+          path: "/mock/package.json",
+          isDirectory: false,
+        },
+      ];
     }
     return [];
   }

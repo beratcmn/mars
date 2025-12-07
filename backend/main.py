@@ -229,30 +229,38 @@ class MarsAPI:
             # Resolve path if it's '.'
             search_path = path
             if path == ".":
-                 # Default to the project root (one level up from this file)
-                 # This ensures we see frontend/, backend/, etc.
-                 search_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-                 logger.info(f"Root path resolved to: {search_path}")
-            
+                # Default to the project root (one level up from this file)
+                # This ensures we see frontend/, backend/, etc.
+                search_path = os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), "..")
+                )
+                logger.info(f"Root path resolved to: {search_path}")
+
             if not os.path.exists(search_path):
-                 return {"success": False, "files": [], "error": f"Path not found: {search_path}"}
+                return {
+                    "success": False,
+                    "files": [],
+                    "error": f"Path not found: {search_path}",
+                }
 
             items = []
             try:
                 for entry in os.scandir(search_path):
-                    if entry.name.startswith('.'):
-                        continue # Skip hidden files
-                    items.append({
-                        "name": entry.name,
-                        "path": entry.path,
-                        "isDirectory": entry.is_dir()
-                    })
+                    if entry.name.startswith("."):
+                        continue  # Skip hidden files
+                    items.append(
+                        {
+                            "name": entry.name,
+                            "path": entry.path,
+                            "isDirectory": entry.is_dir(),
+                        }
+                    )
             except PermissionError:
-                 return {"success": False, "files": [], "error": "Permission denied"}
-            
+                return {"success": False, "files": [], "error": "Permission denied"}
+
             # Sort: directories first, then files, alphabetical
-            items.sort(key=lambda x: (not x['isDirectory'], x['name'].lower()))
-            
+            items.sort(key=lambda x: (not x["isDirectory"], x["name"].lower()))
+
             return {"success": True, "files": items, "error": None}
         except Exception as e:
             logger.error(f"Error listing files: {e}")
@@ -263,11 +271,11 @@ class MarsAPI:
         try:
             # Use local file read for speed and simplicity
             if os.path.exists(path) and os.path.isfile(path):
-                with open(path, 'r', encoding='utf-8', errors='replace') as f:
+                with open(path, "r", encoding="utf-8", errors="replace") as f:
                     content = f.read()
                 return {"success": True, "content": content, "error": None}
             else:
-                 return {"success": False, "content": None, "error": "File not found"}
+                return {"success": False, "content": None, "error": "File not found"}
         except Exception as e:
             logger.error(f"Error reading file: {e}")
             return {"success": False, "content": None, "error": str(e)}
@@ -309,7 +317,7 @@ class MarsAPI:
         agent: Optional[str] = None,
     ) -> dict:
         """Send a message asynchronously to trigger streaming events.
-        
+
         Note: The frontend now connects directly to the OpenCode SSE endpoint
         via EventSource for real-time streaming without buffering.
         """

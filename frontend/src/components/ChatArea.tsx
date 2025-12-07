@@ -88,10 +88,11 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   // Format the input for display
   const inputDisplay = part.state.input
     ? Object.entries(part.state.input)
-      .map(([key, value]) =>
-        `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`
-      )
-      .join(", ")
+        .map(
+          ([key, value]) =>
+            `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
+        )
+        .join(", ")
     : "";
 
   return (
@@ -100,9 +101,15 @@ function ToolCallPart({ part }: { part: ToolPart }) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        {isExpanded ? (
+          <ChevronDown className="w-3 h-3" />
+        ) : (
+          <ChevronRight className="w-3 h-3" />
+        )}
         <Wrench className="w-3 h-3" />
-        <span className="font-mono font-medium text-foreground">{part.tool}</span>
+        <span className="font-mono font-medium text-foreground">
+          {part.tool}
+        </span>
         {inputDisplay && (
           <span className="text-muted-foreground truncate max-w-[300px] text-[11px]">
             ({inputDisplay})
@@ -155,7 +162,11 @@ function ReasoningParts({ part }: { part: ReasoningPart }) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        {isExpanded ? (
+          <ChevronDown className="w-3 h-3" />
+        ) : (
+          <ChevronRight className="w-3 h-3" />
+        )}
         <Brain className="w-3 h-3" />
         <span className="italic">Thinking...</span>
       </button>
@@ -186,7 +197,6 @@ export function ChatArea({
   hasActiveSession,
   onNewChat,
 }: ChatAreaProps) {
-
   // No active session - show start new chat prompt
   if (!hasActiveSession) {
     return (
@@ -199,7 +209,12 @@ export function ChatArea({
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
             Start a new conversation to begin exploring code with AI assistance.
           </p>
-          <Button onClick={onNewChat} variant="ghost" size="sm" className="gap-2">
+          <Button
+            onClick={onNewChat}
+            variant="ghost"
+            size="sm"
+            className="gap-2"
+          >
             <MessageSquarePlus className="h-4 w-4" />
             Start a new chat
           </Button>
@@ -249,7 +264,7 @@ export function ChatArea({
 
     // Sort parts by their start time
     const sortedParts = [...parts].sort(
-      (a, b) => getPartStartTime(a) - getPartStartTime(b)
+      (a, b) => getPartStartTime(a) - getPartStartTime(b),
     );
 
     return sortedParts.map((part) => {
@@ -279,7 +294,10 @@ export function ChatArea({
                         const path = match[1];
                         const basename = path.split("/").pop() || path;
                         return (
-                          <span key={i} className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent">
+                          <span
+                            key={i}
+                            className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent"
+                          >
                             {basename}
                           </span>
                         );
@@ -304,36 +322,52 @@ export function ChatArea({
                 {/* Text content */}
                 {message.content && (
                   <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <Streamdown>
-                      {formatMentions(message.content)}
-                    </Streamdown>
+                    <Streamdown>{formatMentions(message.content)}</Streamdown>
                   </div>
                 )}
 
                 {/* Metadata Footer */}
                 {message.tokens && (
                   <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground/50">
-                    <div className="flex items-center gap-1" title="Tokens used">
+                    <div
+                      className="flex items-center gap-1"
+                      title="Tokens used"
+                    >
                       <Zap className="w-3 h-3" />
                       <span>
-                        {formatTokens(message.tokens.input + message.tokens.output)} tokens
-                        {message.tokens.cache && message.tokens.cache.read > 0 && (
-                          <span className="opacity-70">
-                            {" "}({formatTokens(message.tokens.cache.read)} cached)
-                          </span>
-                        )}
+                        {formatTokens(
+                          message.tokens.input + message.tokens.output,
+                        )}{" "}
+                        tokens
+                        {message.tokens.cache &&
+                          message.tokens.cache.read > 0 && (
+                            <span className="opacity-70">
+                              {" "}
+                              ({formatTokens(message.tokens.cache.read)} cached)
+                            </span>
+                          )}
                       </span>
                     </div>
 
                     {message.time && message.time.completed && (
-                      <div className="flex items-center gap-1" title="Time taken">
+                      <div
+                        className="flex items-center gap-1"
+                        title="Time taken"
+                      >
                         <Clock className="w-3 h-3" />
-                        <span>{formatTime(message.time.completed - message.time.created)}</span>
+                        <span>
+                          {formatTime(
+                            message.time.completed - message.time.created,
+                          )}
+                        </span>
                       </div>
                     )}
 
                     {message.cost !== undefined && message.cost > 0 && (
-                      <div className="flex items-center gap-1" title="Estimated cost">
+                      <div
+                        className="flex items-center gap-1"
+                        title="Estimated cost"
+                      >
                         <Coins className="w-3 h-3" />
                         <span>${message.cost.toFixed(5)}</span>
                       </div>
