@@ -171,6 +171,13 @@ function ReasoningParts({ part }: { part: ReasoningPart }) {
   );
 }
 
+// Helper to format @mentions into markdown links that can be styled as badges
+function formatMentions(text: string): string {
+  if (!text) return "";
+  // Replace @[path] with [path](#file:path)
+  return text.replace(/@\[(.*?)\]/g, "[$1](#file:$1)");
+}
+
 export function ChatArea({
   messages,
   hasActiveSession,
@@ -279,7 +286,9 @@ export function ChatArea({
                 {/* Text content */}
                 {message.content && (
                   <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <Streamdown>{message.content}</Streamdown>
+                    <Streamdown>
+                      {formatMentions(message.content)}
+                    </Streamdown>
                   </div>
                 )}
 
