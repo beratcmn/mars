@@ -20,11 +20,28 @@ interface Message {
   info: {
     id: string;
     role: string;
-    createdAt: string;
+    createdAt?: string; // Kept for compat
+    // New fields from OpenCode API
+    modelID?: string;
+    providerID?: string;
+    cost?: number;
+    time?: {
+      created: number;
+      completed: number;
+    };
+    tokens?: {
+      input: number;
+      output: number;
+      cache?: {
+        read: number;
+        write: number;
+      };
+    };
   };
   parts: Array<{
     type: string;
     text?: string;
+    reasoning?: string; // For later
   }>;
 }
 

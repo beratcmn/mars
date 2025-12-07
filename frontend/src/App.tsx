@@ -12,6 +12,22 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  // Metadata
+  modelID?: string;
+  providerID?: string;
+  cost?: number;
+  tokens?: {
+    input: number;
+    output: number;
+    cache?: {
+      read: number;
+      write: number;
+    };
+  };
+  time?: {
+    created: number;
+    completed: number;
+  };
 }
 
 interface SessionTab extends Tab {
@@ -264,6 +280,12 @@ function App() {
             id: response.info?.id || Date.now().toString(),
             role: "assistant",
             content: textParts || "No response content",
+            // Metadata
+            modelID: response.info?.modelID,
+            providerID: response.info?.providerID,
+            cost: response.info?.cost,
+            tokens: response.info?.tokens,
+            time: response.info?.time,
           };
 
           setTabs((prev) =>
@@ -296,6 +318,18 @@ function App() {
           id: (Date.now() + 1).toString(),
           role: "assistant",
           content: `[Browser Dev Mode]\n\nThis is a placeholder response. Run with PyWebView for real OpenCode integration.\n\nYou said: "${content}"`,
+          modelID: "mock-model-v1",
+          providerID: "mock-provider",
+          cost: 0.00012,
+          tokens: {
+            input: 150,
+            output: 45,
+            cache: { read: 0, write: 0 }
+          },
+          time: {
+            created: Date.now(),
+            completed: Date.now() + 1000
+          }
         };
 
         console.log("Adding mock response to tab:", currentTabId);
