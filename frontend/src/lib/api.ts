@@ -166,6 +166,9 @@ interface MarsApiInterface {
 
   // Todos
   list_todos(session_id?: string): Promise<ApiResponse<unknown[]>>;
+
+  // Editor
+  open_in_editor(path?: string): Promise<ApiResponse<boolean>>;
 }
 
 /**
@@ -547,4 +550,18 @@ export async function loadSettings(): Promise<Record<string, unknown>> {
   if (!isPyWebView()) return {};
   const result = await getApi().load_settings();
   return result.success ? (result.settings as Record<string, unknown>) : {};
+}
+
+// === Editor ===
+
+export async function openInEditor(path?: string): Promise<boolean> {
+  if (!isPyWebView()) {
+    console.log("openInEditor: Running in browser mode, cannot open editor");
+    return false;
+  }
+  const result = await getApi().open_in_editor(path);
+  if (!result.success && result.error) {
+    console.error("Failed to open in editor:", result.error);
+  }
+  return result.success;
 }

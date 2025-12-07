@@ -1,6 +1,8 @@
-import { FolderOpen, ChevronDown, PanelLeft } from "lucide-react";
+import { FolderOpen, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SessionHistory } from "@/components/SessionHistory";
+import * as api from "@/lib/api";
+import vscodeIcon from "@/assets/vscode.svg";
 
 interface Session {
   id: string;
@@ -51,15 +53,19 @@ export function Header({
         <span className="font-medium">{projectPath}</span>
       </div>
 
-      {/* Right: Actions/Placeholder (keeping the existing Open button pattern) */}
+      {/* Right: Open in Editor button */}
       <div className="flex items-center">
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground transition-all duration-150"
+          className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-150"
+          onClick={async () => {
+            // Use the backend API to open VS Code
+            await api.openInEditor();
+          }}
         >
-          Open
-          <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:translate-y-0.5" />
+          <img src={vscodeIcon} alt="VS Code" className="h-3.5 w-3.5 shrink-0" />
+          <span>Open in Editor</span>
         </Button>
       </div>
     </header>

@@ -371,6 +371,46 @@ class MarsAPI:
         except Exception as e:
             return {"success": False, "settings": {}, "error": str(e)}
 
+    def open_in_editor(self, path: Optional[str] = None) -> dict:
+        """Open a file or directory in VS Code."""
+        try:
+            import subprocess
+
+            # Use the provided path or default to project root
+            target_path = path
+            if not target_path:
+                # Default to the project root (one level up from backend/)
+                target_path = os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), "..")
+                )
+
+            # Try to open with VS Code using the 'code' command
+            result = subprocess.run(
+                ["code", target_path],
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                return {"success": True, "error": None}
+            else:
+                # If 'code' command fails, try 'open' on macOS with VS Code app
+                if os.uname().sysname == "Darwin":
+                    subprocess.run(
+                        ["open", "-a", "Visual Studio Code", target_path],
+                        capture_output=True,
+                    )
+                    return {"success": True, "error": None}
+                return {"success": False, "error": result.stderr or "Failed to open VS Code"}
+        except FileNotFoundError:
+            return {
+                "success": False,
+                "error": "VS Code 'code' command not found. Please install it from VS Code command palette.",
+            }
+        except Exception as e:
+            logger.error(f"Error opening in editor: {e}")
+            return {"success": False, "error": str(e)}
+
 
 def get_frontend_url() -> str:
     """Get the frontend URL based on environment."""
