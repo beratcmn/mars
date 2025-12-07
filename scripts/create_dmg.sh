@@ -14,9 +14,9 @@ OUTPUT_DMG="$BUILD_DIR/Mars-Installer.dmg"
 echo "Creating Mars DMG installer..."
 echo "Project root: $PROJECT_ROOT"
 
-# Check that mars.app exists
-if [ ! -d "$BUILD_DIR/mars.app" ]; then
-    echo "Error: mars.app not found at $BUILD_DIR/mars.app" >&2
+# Check that Mars.app exists
+if [ ! -d "$BUILD_DIR/Mars.app" ]; then
+    echo "Error: Mars.app not found at $BUILD_DIR/Mars.app" >&2
     echo "Please build the app first with: cd backend && pyinstaller mars.spec" >&2
     exit 1
 fi
@@ -25,9 +25,9 @@ fi
 rm -rf "$DMG_DIR"
 mkdir -p "$DMG_DIR"
 
-# Copy mars.app to staging
+# Copy Mars.app to staging
 echo "Copying Mars.app..."
-cp -R "$BUILD_DIR/mars.app" "$DMG_DIR/Mars.app"
+cp -R "$BUILD_DIR/Mars.app" "$DMG_DIR/Mars.app"
 
 # Create symlink to Applications
 echo "Creating Applications symlink..."
