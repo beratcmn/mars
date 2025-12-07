@@ -213,6 +213,16 @@ class MarsAPI:
         except Exception as e:
             return {"success": False, "project": None, "error": str(e)}
 
+    # === Files ===
+
+    def search_files(self, query: str) -> dict:
+        """Search for files."""
+        try:
+            files = self.client.search_files(query)
+            return {"success": True, "files": files, "error": None}
+        except Exception as e:
+            return {"success": False, "files": [], "error": str(e)}
+
     # === Commands ===
 
     def list_commands(self) -> dict:

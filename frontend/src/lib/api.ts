@@ -134,6 +134,9 @@ interface MarsApiInterface {
     session_id?: string,
   ): Promise<ApiResponse<unknown>>;
 
+  // Files
+  search_files(query: string): Promise<ApiResponse<string[]>>;
+
   // Settings
   save_settings(
     settings: Record<string, unknown>,
@@ -428,6 +431,14 @@ export async function executeCommand(
   if (!isPyWebView()) return null;
   const result = await getApi().execute_command(command, args, sessionId);
   return result.success ? result.result : null;
+}
+
+// === Files ===
+
+export async function searchFiles(query: string): Promise<string[]> {
+  if (!isPyWebView()) return [];
+  const result = await getApi().search_files(query);
+  return (result.files as string[]) || [];
 }
 
 // === Settings ===
