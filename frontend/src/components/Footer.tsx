@@ -40,7 +40,7 @@ export function Footer({
         />
       </div>
       <div className="flex items-center gap-1">
-        <img src="/logo.png" alt="Mars" className="h-4 w-4 mr-2 opacity-40" />
+        <img src="./logo.png" alt="Mars" className="h-4 w-4 mr-2 opacity-40" />
         <Button
           variant="ghost"
           size="icon"

@@ -301,7 +301,7 @@ export function ChatArea({
           {/* Logo */}
           <div className="relative mx-auto w-20 h-20">
             <img
-              src="/logo.png"
+              src="./logo.png"
               alt="Mars"
               className="w-full h-full object-contain"
             />
@@ -343,7 +343,7 @@ export function ChatArea({
           {/* Logo */}
           <div className="relative mx-auto w-16 h-16">
             <img
-              src="/logo.png"
+              src="./logo.png"
               alt="Mars"
               className="w-full h-full object-contain"
             />

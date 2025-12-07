@@ -27,7 +27,7 @@ export function ChatTabs({
       case "file":
         return <File className="h-4 w-4" />;
       case "sparkles":
-        return <img src="/logo.png" alt="Mars" className="h-4 w-4" />;
+        return <img src="./logo.png" alt="Mars" className="h-4 w-4" />;
     }
   };
 

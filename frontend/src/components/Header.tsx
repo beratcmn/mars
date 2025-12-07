@@ -50,7 +50,7 @@ export function Header({
 
       {/* Center: Logo + Project Path */}
       <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 text-sm z-0">
-        <img src="/logo.png" alt="Mars" className="h-5 w-5" />
+        <img src="./logo.png" alt="Mars" className="h-5 w-5" />
         <span className="font-medium">{projectPath}</span>
       </div>
 
