@@ -333,11 +333,9 @@ class MarsAPI:
             # Resolve path if it's '.'
             search_path = path
             if path == ".":
-                # Default to the project root (one level up from this file)
-                # This ensures we see frontend/, backend/, etc.
-                search_path = os.path.abspath(
-                    os.path.join(os.path.dirname(__file__), "..")
-                )
+                # Use MARS_WORKDIR environment variable (set by the launcher script)
+                # This ensures we show the user's project directory, not the app bundle
+                search_path = os.environ.get("MARS_WORKDIR") or os.getcwd()
                 logger.info(f"Root path resolved to: {search_path}")
 
             if not os.path.exists(search_path):

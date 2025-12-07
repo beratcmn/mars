@@ -60,6 +60,28 @@ echo "Opening Mars in: $WORKDIR"
 # Export environment variables that the app will inherit
 export MARS_WORKDIR="$WORKDIR"
 
+# Start opencode serve in the working directory FIRST
+# Check if opencode is already running on port 4096
+if ! lsof -ti:4096 > /dev/null 2>&1; then
+    echo "Starting opencode server..."
+    cd "$WORKDIR"
+    nohup opencode serve -p 4096 > /tmp/opencode_server.log 2>&1 &
+    OPENCODE_PID=$!
+    echo "OpenCode server started (PID: $OPENCODE_PID)"
+    
+    # Wait for server to be ready (max 10 seconds)
+    echo "Waiting for server to be ready..."
+    for i in {1..20}; do
+        if curl -s http://127.0.0.1:4096/config > /dev/null 2>&1; then
+            echo "OpenCode server is ready!"
+            break
+        fi
+        sleep 0.5
+    done
+else
+    echo "OpenCode server already running on port 4096"
+fi
+
 # Find the actual executable inside the .app bundle
 MARS_EXECUTABLE="$MARS_APP/Contents/MacOS/mars"
 
