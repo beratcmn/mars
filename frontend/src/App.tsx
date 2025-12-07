@@ -8,10 +8,40 @@ import { type SelectedModel } from "@/components/ModelSelector";
 import * as api from "@/lib/api";
 import type { Provider } from "@/lib/api";
 
+// Part types for streaming message content
+interface TextPart {
+  id: string;
+  type: "text";
+  text: string;
+}
+
+interface ReasoningPart {
+  id: string;
+  type: "reasoning";
+  text: string;
+}
+
+interface ToolPart {
+  id: string;
+  type: "tool";
+  tool: string;
+  state: {
+    status: "pending" | "running" | "completed" | "error";
+    input?: Record<string, unknown>;
+    output?: string;
+    error?: string;
+    time?: { start: number; end?: number };
+  };
+}
+
+type MessagePart = TextPart | ReasoningPart | ToolPart;
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  // Parts for streaming content (tools, reasoning, text)
+  parts?: MessagePart[];
   // Metadata
   modelID?: string;
   providerID?: string;
@@ -181,37 +211,101 @@ function App() {
       const payload = event.detail;
       console.log("Mars Event:", payload);
 
-      // Handle text delta
+      // Handle message.part.updated - text deltas, tool calls, reasoning
       if (payload.type === "message.part.updated" && payload.properties) {
         const { part, delta } = payload.properties;
         const sessionId = part.sessionID;
 
-        // We only support streaming text deltas for now
-        if (delta && typeof delta === "string") {
-          setTabs((prevTabs) => prevTabs.map(tab => {
-            if (tab.sessionId === sessionId) {
-              const messages = [...tab.messages];
-              const lastMsg = messages[messages.length - 1];
+        setTabs((prevTabs) => prevTabs.map(tab => {
+          if (tab.sessionId !== sessionId) return tab;
 
-              if (lastMsg && lastMsg.role === "assistant") {
-                // Update the last message
-                const newContent = lastMsg.content + delta;
-                return {
-                  ...tab,
-                  messages: [
-                    ...messages.slice(0, -1),
-                    { ...lastMsg, content: newContent }
-                  ]
-                };
-              } else if (lastMsg && lastMsg.role === "user") {
-                // Should not happen if we optimistically added an assistant message, 
-                // but if we didn't, we might need to create one. 
-                // For now, assume handleSend created the placeholder.
+          const messages = [...tab.messages];
+          const lastMsg = messages[messages.length - 1];
+
+          if (!lastMsg || lastMsg.role !== "assistant") return tab;
+
+          const existingParts = lastMsg.parts || [];
+          let updatedParts = [...existingParts];
+
+          // Handle text parts with delta streaming
+          if (part.type === "text") {
+            if (delta && typeof delta === "string") {
+              // Update content for backwards compatibility
+              const newContent = lastMsg.content + delta;
+
+              // Also track in parts
+              const existingTextPart = updatedParts.find(
+                (p): p is TextPart => p.type === "text" && p.id === part.id
+              );
+              if (existingTextPart) {
+                existingTextPart.text = part.text || existingTextPart.text + delta;
+              } else {
+                updatedParts.push({ id: part.id, type: "text", text: part.text || delta });
               }
+
+              return {
+                ...tab,
+                messages: [
+                  ...messages.slice(0, -1),
+                  { ...lastMsg, content: newContent, parts: updatedParts }
+                ]
+              };
             }
-            return tab;
-          }));
-        }
+          }
+
+          // Handle reasoning parts
+          if (part.type === "reasoning") {
+            const existingReasoningPart = updatedParts.find(
+              (p): p is ReasoningPart => p.type === "reasoning" && p.id === part.id
+            );
+            if (existingReasoningPart) {
+              existingReasoningPart.text = part.text || "";
+            } else if (part.text) {
+              updatedParts.push({ id: part.id, type: "reasoning", text: part.text });
+            }
+            return {
+              ...tab,
+              messages: [
+                ...messages.slice(0, -1),
+                { ...lastMsg, parts: updatedParts }
+              ]
+            };
+          }
+
+          // Handle tool parts
+          if (part.type === "tool") {
+            const existingToolPart = updatedParts.find(
+              (p): p is ToolPart => p.type === "tool" && p.id === part.id
+            );
+            const toolState = {
+              status: part.state?.status || "pending",
+              input: part.state?.input,
+              output: part.state?.output,
+              error: part.state?.error,
+              time: part.state?.time
+            } as ToolPart["state"];
+
+            if (existingToolPart) {
+              existingToolPart.state = toolState;
+            } else {
+              updatedParts.push({
+                id: part.id,
+                type: "tool",
+                tool: part.tool || "unknown",
+                state: toolState
+              });
+            }
+            return {
+              ...tab,
+              messages: [
+                ...messages.slice(0, -1),
+                { ...lastMsg, parts: updatedParts }
+              ]
+            };
+          }
+
+          return tab;
+        }));
       }
 
       // Handle message.updated to capture metadata (tokens, cost, time)
