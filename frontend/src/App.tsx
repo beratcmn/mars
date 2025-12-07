@@ -238,9 +238,16 @@ function App() {
       if (api.isPyWebView()) {
         console.log("Using PyWebView API");
         // Real API call via PyWebView
+        // Model format should be an object with providerID and modelID
+        const modelParam = selectedModel
+          ? {
+            providerID: selectedModel.providerId,
+            modelID: selectedModel.modelId,
+          }
+          : undefined;
         const { response } = await api.sendMessage(content, {
           sessionId: activeTab.sessionId,
-          model: selectedModel?.modelId,
+          model: modelParam,
         });
 
         console.log("Response received:", response);

@@ -6,7 +6,7 @@ Main entry point for the desktop application.
 import webview
 import os
 import logging
-from typing import Optional
+from typing import Optional, Union, Dict
 from opencode_client import OpenCodeClient, OpenCodeServer, OpenCodeConfig
 
 # Configure logging
@@ -108,7 +108,7 @@ class MarsAPI:
         self,
         content: str,
         session_id: Optional[str] = None,
-        model: Optional[str] = None,
+        model: Optional[Union[str, dict]] = None,
         agent: Optional[str] = None,
     ) -> dict:
         """Send a message and get a response."""
@@ -186,7 +186,7 @@ class MarsAPI:
         """Get available providers and models."""
         try:
             providers = self.client.get_providers()
-            logger.info(f"get_providers response: {providers}")
+            # logger.info(f"get_providers response: {providers}")
             return {"success": True, "providers": providers, "error": None}
         except Exception as e:
             logger.error(f"get_providers error: {e}", exc_info=True)

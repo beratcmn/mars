@@ -78,7 +78,7 @@ interface MarsApiInterface {
   send_message(
     content: string,
     session_id?: string,
-    model?: string,
+    model?: string | { providerID: string; modelID: string },
     agent?: string,
   ): Promise<ApiResponse<Message>>;
   list_messages(
@@ -216,7 +216,7 @@ export async function sendMessage(
   content: string,
   options?: {
     sessionId?: string;
-    model?: string;
+    model?: string | { providerID: string; modelID: string };
     agent?: string;
   },
 ): Promise<{ response: Message | null; sessionId: string | null }> {

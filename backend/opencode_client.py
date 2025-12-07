@@ -7,7 +7,7 @@ import requests
 import subprocess
 import time
 import logging
-from typing import Optional, Any
+from typing import Optional, Any, Union, Dict
 from dataclasses import dataclass
 
 logger = logging.getLogger("mars.opencode")
@@ -188,22 +188,27 @@ class OpenCodeClient:
         self,
         session_id: str,
         content: str,
-        model: Optional[str] = None,
+        model: Optional[Union[str, dict]] = None,
         agent: Optional[str] = None,
     ) -> dict:
         """Send a message and wait for response."""
+        import logging
+        logger = logging.getLogger("mars.opencode")
+        
         body = {"parts": [{"type": "text", "text": content}]}
         if model:
             body["model"] = model
         if agent:
             body["agent"] = agent
+        
+        logger.info(f"send_message body: {body}")
         return self._request("POST", f"/session/{session_id}/message", json=body)
 
     def send_message_async(
         self,
         session_id: str,
         content: str,
-        model: Optional[str] = None,
+        model: Optional[Union[str, dict]] = None,
         agent: Optional[str] = None,
     ) -> None:
         """Send a message asynchronously (no wait)."""
