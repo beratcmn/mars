@@ -32,7 +32,7 @@ export function Footer({
           selectedModel={selectedModel}
           onModelChange={onModelChange}
         />
-        <div className="w-px h-4 bg-border/50 mx-1" />
+        <div className="w-px h-4 bg-border/50 mx-2" />
         <AgentSelector
           agents={agents}
           selectedAgent={selectedAgent}

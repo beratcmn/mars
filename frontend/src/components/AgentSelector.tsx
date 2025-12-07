@@ -47,17 +47,15 @@ export function AgentSelector({
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="h-9 gap-2 px-3 text-sm font-normal border border-input/0 hover:border-input/50 hover:bg-accent hover:text-accent-foreground transition-all"
+                    className="h-9 gap-2 px-2 text-sm font-normal text-muted-foreground hover:text-foreground transition-colors duration-200"
                 >
-                    <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-500/10 text-purple-500">
-                        <Bot className="h-3 w-3" />
+                    <div className="flex items-center justify-center w-5 h-5">
+                        <Bot className="h-4 w-4" />
                     </div>
-                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">
-                        <span className="text-foreground font-medium">
-                            {selectedAgent?.name || "Select Agent"}
-                        </span>
+                    <span className="font-medium transition-opacity duration-200">
+                        {selectedAgent?.name || "Select Agent"}
                     </span>
-                    <ChevronDown className="h-3 w-3 opacity-50 ml-1" />
+                    <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[200px] p-0" align="start">
