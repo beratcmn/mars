@@ -82,9 +82,10 @@ interface MarsApiInterface {
   start_server(): Promise<ApiResponse<boolean>>;
   stop_server(): Promise<ApiResponse<boolean>>;
   is_server_running(): Promise<boolean>;
+  check_status(): Promise<ApiResponse<boolean>>;
 
   // Session Management
-  create_session(title?: string): Promise<ApiResponse<Session>>;
+  create_session(title?: string, parent_id?: string): Promise<ApiResponse<Session>>;
   list_sessions(): Promise<ApiResponse<Session[]>>;
   get_session(session_id: string): Promise<ApiResponse<Session>>;
   delete_session(session_id: string): Promise<ApiResponse<boolean>>;
@@ -95,9 +96,14 @@ interface MarsApiInterface {
   send_message(
     content: string,
     session_id?: string,
-    model?: string | { providerID: string; modelID: string },
+    model?: string | Record<string, unknown>,
     agent?: string,
   ): Promise<ApiResponse<Message>>;
+  stream_message(
+    session_id: string,
+    content: string,
+    model?: Record<string, unknown>,
+  ): Promise<ApiResponse<boolean>>;
   list_messages(
     session_id?: string,
     limit?: number,
@@ -170,7 +176,20 @@ function getApi(): MarsApiInterface {
   return window.pywebview.api;
 }
 
+// --- Helper for handling Python -> JS events ---
+export function onEvent(eventName: string, callback: (event: CustomEvent) => void) {
+  const handler = (e: Event) => callback(e as CustomEvent);
+  window.addEventListener(eventName, handler);
+  return () => window.removeEventListener(eventName, handler);
+}
+
 // === Server Management ===
+
+export async function checkServerStatus(): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().check_status();
+  return result.success;
+}
 
 export async function startServer(): Promise<boolean> {
   if (!isPyWebView()) return false;
@@ -191,19 +210,19 @@ export async function isServerRunning(): Promise<boolean> {
 
 // === Session Management ===
 
-export async function createSession(title?: string): Promise<Session | null> {
+export async function createSession(
+  title?: string,
+  parentId?: string,
+): Promise<Session | null> {
   if (!isPyWebView()) return null;
-  const result = await getApi().create_session(title);
-  if (result.success && result.session) {
-    return result.session as Session;
-  }
-  return null;
+  const result = await getApi().create_session(title || undefined, parentId || undefined);
+  return result.success ? (result.session as Session) : null;
 }
 
 export async function listSessions(): Promise<Session[]> {
   if (!isPyWebView()) return [];
   const result = await getApi().list_sessions();
-  return (result.sessions as Session[]) || [];
+  return result.success && Array.isArray(result.sessions) ? result.sessions : [];
 }
 
 export async function getSession(sessionId: string): Promise<Session | null> {
@@ -234,32 +253,23 @@ export async function getCurrentSessionId(): Promise<string | null> {
 // === Messages ===
 
 export async function sendMessage(
+  sessionId: string,
   content: string,
-  options?: {
-    sessionId?: string;
-    model?: string | { providerID: string; modelID: string };
-    agent?: string;
-  },
-): Promise<{ response: Message | null; sessionId: string | null }> {
-  if (!isPyWebView()) {
-    // Mock response for browser development
-    return {
-      response: null,
-      sessionId: null,
-    };
-  }
+  model?: Record<string, unknown>,
+): Promise<Message | null> {
+  if (!isPyWebView()) return null;
+  const result = await getApi().send_message(sessionId, content, model);
+  return result.success ? (result.message as Message) : null;
+}
 
-  const result = await getApi().send_message(
-    content,
-    options?.sessionId,
-    options?.model,
-    options?.agent,
-  );
-
-  return {
-    response: result.success ? (result.response as Message) : null,
-    sessionId: result.sessionId as string | null,
-  };
+export async function streamMessage(
+  sessionId: string,
+  content: string,
+  model?: Record<string, unknown>,
+): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().stream_message(sessionId, content, model);
+  return result.success;
 }
 
 export async function listMessages(

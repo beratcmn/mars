@@ -28,6 +28,7 @@ class MarsAPI:
         self.server = OpenCodeServer(self.config)
         self.client = OpenCodeClient(self.config)
         self._current_session_id: Optional[str] = None
+        self.window = None
 
     # === Server Management ===
 
@@ -58,11 +59,11 @@ class MarsAPI:
 
     # === Session Management ===
 
-    def create_session(self, title: Optional[str] = None) -> dict:
+    def create_session(self, title: Optional[str] = None, parent_id: Optional[str] = None) -> dict:
         """Create a new session."""
-        logger.info(f"create_session called with title: {title}")
+        logger.info(f"create_session called with title: {title}, parent_id: {parent_id}")
         try:
-            session = self.client.create_session(title=title)
+            session = self.client.create_session(title=title, parent_id=parent_id)
             logger.info(f"Session created: {session}")
             self._current_session_id = session.get("id")
             return {"success": True, "session": session, "error": None}
@@ -234,6 +235,46 @@ class MarsAPI:
             return {"success": True, "result": result, "error": None}
         except Exception as e:
             return {"success": False, "result": None, "error": str(e)}
+    # === Streaming ===
+
+    def start_event_listener(self):
+        """Start the background thread to listen for server events."""
+        import threading
+        if not hasattr(self, "_event_thread") or not self._event_thread.is_alive():
+            self._event_thread = threading.Thread(target=self._event_loop, daemon=True)
+            self._event_thread.start()
+
+    def _event_loop(self):
+        """Listen for events and dispatch them to the frontend."""
+        import json
+        for event in self.client.listen_events():
+            # Create JS code to dispatch a custom event
+            # We use 'mars:event' as the event name
+            json_event = json.dumps(event)
+            js_code = f"window.dispatchEvent(new CustomEvent('mars:event', {{ detail: {json_event} }}))"
+            
+            if self.window:
+                # Dispatch to main window
+                try:
+                    self.window.evaluate_js(js_code)
+                except Exception as e:
+                    print(f"Failed to dispatch event to frontend: {e}")
+
+    def stream_message(self, session_id: str, content: str, model: Optional[dict] = None) -> dict:
+        """Send a message asynchronously to trigger streaming events."""
+        try:
+            # Ensure event listener is running
+            self.start_event_listener()
+            
+            self.client.send_message_async(
+                session_id=session_id,
+                content=content,
+                model=model
+            )
+            return {"success": True, "error": None}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     # === Settings ===
 
     def save_settings(self, settings: dict) -> dict:
@@ -292,6 +333,7 @@ def main():
         min_size=(800, 600),
         text_select=True,
     )
+    api.window = window
 
     # Start the application
     webview.start(debug=True)
