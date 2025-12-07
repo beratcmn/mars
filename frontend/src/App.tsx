@@ -5,9 +5,11 @@ import { ChatTabs, type Tab } from "@/components/ChatTabs";
 import { ChatArea } from "@/components/ChatArea";
 import { InputBar } from "@/components/InputBar";
 import { Footer } from "@/components/Footer";
+import { FileExplorer } from "@/components/FileExplorer";
+import { CodeViewer } from "@/components/CodeViewer";
 import { type SelectedModel } from "@/components/ModelSelector";
 import * as api from "@/lib/api";
-import type { Provider, Agent } from "@/lib/api";
+import type { Provider, Agent, FileEntry } from "@/lib/api";
 
 // Part types for streaming message content
 interface TextPart {
@@ -64,12 +66,20 @@ interface Message {
 }
 
 interface SessionTab extends Tab {
+  type: "session";
   sessionId: string;
   messages: Message[];
 }
 
+interface FileTab extends Tab {
+  type: "file";
+  filePath: string;
+}
+
+type AppTab = SessionTab | FileTab;
+
 function App() {
-  const [tabs, setTabs] = useState<SessionTab[]>([]);
+  const [tabs, setTabs] = useState<AppTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [projectPath, setProjectPath] = useState("mars");
@@ -87,7 +97,6 @@ function App() {
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
-  const messages = activeTab?.messages || [];
 
   // Create a new session tab
   const createNewTab = useCallback(async () => {
@@ -109,6 +118,7 @@ function App() {
 
     const newTab: SessionTab = {
       id: tabId,
+      type: "session",
       sessionId,
       label: title,
       icon: "sparkles",
@@ -127,6 +137,30 @@ function App() {
 
     return newTab;
   }, []);
+
+  // Handle file selection from Explorer
+  const handleFileSelect = (file: FileEntry) => {
+    // Check if tab already exists
+    const existingTab = tabs.find(
+      (t) => t.type === "file" && (t as FileTab).filePath === file.path
+    );
+
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      return;
+    }
+
+    const newTab: FileTab = {
+      id: `file-${Date.now()}`,
+      type: "file",
+      label: file.name,
+      icon: "file",
+      filePath: file.path,
+    };
+
+    setTabs((prev) => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+  };
 
   // Initialize on first load & Listen for events
   useEffect(() => {
@@ -257,7 +291,7 @@ function App() {
           flushSync(() => {
             setTabs((prevTabs) =>
               prevTabs.map((tab) => {
-                if (tab.sessionId !== sessionId) return tab;
+                if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
 
                 const messages = [...tab.messages];
                 const lastMsg = messages[messages.length - 1];
@@ -300,7 +334,7 @@ function App() {
         // Handle reasoning and tool parts (non-text)
         setTabs((prevTabs) =>
           prevTabs.map((tab) => {
-            if (tab.sessionId !== sessionId) return tab;
+            if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
 
             const messages = [...tab.messages];
             const lastMsg = messages[messages.length - 1];
@@ -387,7 +421,7 @@ function App() {
           const tokens = info.tokens as Record<string, unknown>;
           setTabs((prevTabs) =>
             prevTabs.map((tab) => {
-              if (tab.sessionId === sessionId) {
+              if (tab.type === "session" && tab.sessionId === sessionId) {
                 const messages = [...tab.messages];
                 const lastMsg = messages[messages.length - 1];
 
@@ -430,7 +464,7 @@ function App() {
         if (sessionId && newTitle) {
           setTabs((prevTabs) =>
             prevTabs.map((tab) => {
-              if (tab.sessionId === sessionId && tab.label !== newTitle) {
+              if (tab.type === "session" && tab.sessionId === sessionId && tab.label !== newTitle) {
                 return { ...tab, label: newTitle };
               }
               return tab;
@@ -450,7 +484,7 @@ function App() {
   const handleTabChange = async (tabId: string) => {
     setActiveTabId(tabId);
     const tab = tabs.find((t) => t.id === tabId);
-    if (tab && api.isPyWebView()) {
+    if (tab && tab.type === "session" && api.isPyWebView()) {
       await api.setCurrentSession(tab.sessionId);
     }
   };
@@ -469,20 +503,21 @@ function App() {
       const remainingTabs = tabs.filter((t) => t.id !== tabId);
       if (remainingTabs.length > 0) {
         setActiveTabId(remainingTabs[0].id);
-        if (api.isPyWebView())
+        if (remainingTabs[0].type === "session" && api.isPyWebView())
           await api.setCurrentSession(remainingTabs[0].sessionId);
       } else {
         setActiveTabId(null);
       }
     }
-    if (api.isPyWebView() && tab.sessionId.startsWith("ses")) {
+    if (tab.type === "session" && api.isPyWebView() && tab.sessionId.startsWith("ses")) {
       await api.deleteSession(tab.sessionId);
     }
   };
 
   // Handle sending a message
   const handleSend = async (content: string) => {
-    if (!activeTab) return;
+    // Should only be callable when a session is active
+    if (!activeTab || activeTab.type !== "session") return;
 
     const currentTabId = activeTab.id;
     const currentSessionId = activeTab.sessionId;
@@ -505,7 +540,7 @@ function App() {
 
     setTabs((prev) =>
       prev.map((tab) =>
-        tab.id === currentTabId
+        tab.id === currentTabId && tab.type === "session"
           ? {
             ...tab,
             messages: [...tab.messages, userMessage, assistantMessage],
@@ -541,7 +576,7 @@ function App() {
         for (const char of mockText) {
           setTabs((prev) =>
             prev.map((t) => {
-              if (t.id === currentTabId) {
+              if (t.id === currentTabId && t.type === "session") {
                 const msgs = [...t.messages];
                 const last = msgs[msgs.length - 1];
                 return {
@@ -578,55 +613,79 @@ function App() {
   return (
     <div className="flex h-screen flex-col bg-background font-sans antialiased overflow-hidden">
       <Header projectPath={projectPath} />
-      <ChatTabs
-        tabs={tabs}
-        activeTab={activeTabId || ""}
-        onTabChange={handleTabChange}
-        onNewTab={handleNewTab}
-        onCloseTab={handleCloseTab}
-      />
-      <div className="flex-1 min-h-0 overflow-hidden">
-        <ChatArea
-          messages={messages}
-          hasActiveSession={activeTab !== undefined}
-          onNewChat={handleNewTab}
-        />
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+        {/* Sidebar */}
+        <div className="w-64 flex-shrink-0 border-r border-border/50 bg-muted/10 h-full overflow-hidden">
+          <FileExplorer onFileSelect={handleFileSelect} />
+        </div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col w-0 min-w-0">
+          <ChatTabs
+            tabs={tabs}
+            activeTab={activeTabId || ""}
+            onTabChange={handleTabChange}
+            onNewTab={handleNewTab}
+            onCloseTab={handleCloseTab}
+          />
+          <div className="flex-1 min-h-0 overflow-hidden relative">
+            {activeTab?.type === "session" ? (
+              <ChatArea
+                messages={(activeTab as SessionTab).messages}
+                hasActiveSession={true}
+                onNewChat={handleNewTab}
+              />
+            ) : activeTab?.type === "file" ? (
+              <CodeViewer filePath={(activeTab as FileTab).filePath} />
+            ) : (
+              <ChatArea
+                messages={[]}
+                hasActiveSession={false}
+                onNewChat={handleNewTab}
+              />
+            )}
+          </div>
+
+          {/* Input Bar only shown for sessions */}
+          {activeTab?.type === "session" && (
+            <InputBar onSend={handleSend} isLoading={isLoading} />
+          )}
+
+          <Footer
+            providers={providers}
+            connectedProviders={connectedProviders}
+            selectedModel={selectedModel}
+            onModelChange={async (model) => {
+              setSelectedModel(model);
+              if (model) {
+                try {
+                  const currentSettings = await api.loadSettings();
+                  await api.saveSettings({
+                    ...currentSettings,
+                    selectedModel: model,
+                  });
+                } catch (e) {
+                  console.error("Failed to save settings:", e);
+                }
+              }
+            }}
+            agents={agents}
+            selectedAgent={selectedAgent}
+            onAgentChange={async (agent) => {
+              setSelectedAgent(agent);
+              try {
+                const currentSettings = await api.loadSettings();
+                await api.saveSettings({
+                  ...currentSettings,
+                  selectedAgent: agent,
+                });
+              } catch (e) {
+                console.error("Failed to save settings:", e);
+              }
+            }}
+          />
+        </div>
       </div>
-      <InputBar onSend={handleSend} isLoading={isLoading} />
-      <Footer
-        providers={providers}
-        connectedProviders={connectedProviders}
-        selectedModel={selectedModel}
-        onModelChange={async (model) => {
-          setSelectedModel(model);
-          if (model) {
-            try {
-              // Load existing settings first to merge
-              const currentSettings = await api.loadSettings();
-              await api.saveSettings({
-                ...currentSettings,
-                selectedModel: model,
-              });
-            } catch (e) {
-              console.error("Failed to save settings:", e);
-            }
-          }
-        }}
-        agents={agents}
-        selectedAgent={selectedAgent}
-        onAgentChange={async (agent) => {
-          setSelectedAgent(agent);
-          try {
-            const currentSettings = await api.loadSettings();
-            await api.saveSettings({
-              ...currentSettings,
-              selectedAgent: agent,
-            });
-          } catch (e) {
-            console.error("Failed to save settings:", e);
-          }
-        }}
-      />
     </div>
   );
 }

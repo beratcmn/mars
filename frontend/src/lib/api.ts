@@ -136,6 +136,8 @@ interface MarsApiInterface {
 
   // Files
   search_files(query: string): Promise<ApiResponse<string[]>>;
+  list_files(path?: string): Promise<ApiResponse<FileEntry[]>>;
+  read_file(path: string): Promise<ApiResponse<string>>;
 
   // Settings
   save_settings(
@@ -435,10 +437,38 @@ export async function executeCommand(
 
 // === Files ===
 
+export interface FileEntry {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+}
+
 export async function searchFiles(query: string): Promise<string[]> {
   if (!isPyWebView()) return [];
   const result = await getApi().search_files(query);
   return (result.files as string[]) || [];
+}
+
+export async function listFiles(path: string = "."): Promise<FileEntry[]> {
+  if (!isPyWebView()) {
+    // Mock for browser
+    if (path === ".") {
+        return [
+            { name: "src", path: "/mock/src", isDirectory: true },
+            { name: "public", path: "/mock/public", isDirectory: true },
+            { name: "package.json", path: "/mock/package.json", isDirectory: false },
+        ];
+    }
+    return [];
+  }
+  const result = await getApi().list_files(path);
+  return (result.files as FileEntry[]) || [];
+}
+
+export async function readFile(path: string): Promise<string | null> {
+  if (!isPyWebView()) return null;
+  const result = await getApi().read_file(path);
+  return result.success ? (result.content as string) : null;
 }
 
 // === Settings ===

@@ -223,6 +223,57 @@ class MarsAPI:
         except Exception as e:
             return {"success": False, "files": [], "error": str(e)}
 
+    def list_files(self, path: str = ".") -> dict:
+        """List files in a directory."""
+        try:
+            # Resolve path if it's '.'
+            search_path = path
+            if path == ".":
+                 project = self.client.get_current_project()
+                 if isinstance(project, dict) and 'path' in project:
+                     search_path = project['path']
+                 else:
+                     logger.warning("Could not get current project path, using current cwd")
+                     search_path = os.getcwd()
+            
+            if not os.path.exists(search_path):
+                 return {"success": False, "files": [], "error": f"Path not found: {search_path}"}
+
+            items = []
+            try:
+                for entry in os.scandir(search_path):
+                    if entry.name.startswith('.'):
+                        continue # Skip hidden files
+                    items.append({
+                        "name": entry.name,
+                        "path": entry.path,
+                        "isDirectory": entry.is_dir()
+                    })
+            except PermissionError:
+                 return {"success": False, "files": [], "error": "Permission denied"}
+            
+            # Sort: directories first, then files, alphabetical
+            items.sort(key=lambda x: (not x['isDirectory'], x['name'].lower()))
+            
+            return {"success": True, "files": items, "error": None}
+        except Exception as e:
+            logger.error(f"Error listing files: {e}")
+            return {"success": False, "files": [], "error": str(e)}
+
+    def read_file(self, path: str) -> dict:
+        """Read file content."""
+        try:
+            # Use local file read for speed and simplicity
+            if os.path.exists(path) and os.path.isfile(path):
+                with open(path, 'r', encoding='utf-8', errors='replace') as f:
+                    content = f.read()
+                return {"success": True, "content": content, "error": None}
+            else:
+                 return {"success": False, "content": None, "error": "File not found"}
+        except Exception as e:
+            logger.error(f"Error reading file: {e}")
+            return {"success": False, "content": None, "error": str(e)}
+
     # === Commands ===
 
     def list_commands(self) -> dict:
