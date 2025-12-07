@@ -414,7 +414,13 @@ export function ChatArea({
       if (part.type === "tool") {
         return <ToolCallPart key={part.id} part={part} />;
       }
-      // Text parts are rendered via message.content
+      if (part.type === "text") {
+        return (
+          <div key={part.id} className="prose prose-sm max-w-none dark:prose-invert">
+            <Streamdown>{formatMentions(part.text)}</Streamdown>
+          </div>
+        )
+      }
       return null;
     });
   };
@@ -423,127 +429,131 @@ export function ChatArea({
     <div className="relative h-full" ref={scrollAreaRef}>
       <ScrollArea className="h-full" onScrollCapture={handleScroll}>
         <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
-          {messages.map((message) => (
-            <div key={message.id} className={`group ${message.role === 'user' ? 'animate-slide-in-right' : 'animate-fade-in-up'}`}>
-              {message.role === "user" ? (
-                <div className="flex justify-end gap-2 items-start">
-                  {/* User message hover actions */}
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pt-2">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(message.content);
-                      }}
-                      className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/80 transition-all duration-150"
-                      title="Copy message"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm">
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {message.content.split(/(@\[.*?\])/g).map((part, i) => {
-                        const match = part.match(/@\[(.*?)\]/);
-                        if (match) {
-                          const path = match[1];
-                          const basename = path.split("/").pop() || path;
-                          return (
-                            <span
-                              key={i}
-                              className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent"
-                            >
-                              {basename}
-                            </span>
-                          );
-                        }
-                        return part;
-                      })}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {/* Model Badge */}
-                  {message.modelID && (
-                    <div className="model-badge mb-2">
-                      {message.modelID}
+          {messages.map((message) => {
+            const messageHasTextParts = message.parts?.some(p => p.type === "text");
+            return (
+              <div key={message.id} className={`group ${message.role === 'user' ? 'animate-slide-in-right' : 'animate-fade-in-up'}`}>
+                {message.role === "user" ? (
+                  <div className="flex justify-end gap-2 items-start">
+                    {/* User message hover actions */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pt-2">
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(message.content);
+                        }}
+                        className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                        title="Copy message"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
                     </div>
-                  )}
-
-                  {/* Render reasoning and tool parts */}
-                  {renderParts(message.parts)}
-
-                  {/* Text content */}
-                  {message.content && (
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                      <Streamdown>{formatMentions(message.content)}</Streamdown>
+                    <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm">
+                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {message.content.split(/(@\[.*?\])/g).map((part, i) => {
+                          const match = part.match(/@\[(.*?)\]/);
+                          if (match) {
+                            const path = match[1];
+                            const basename = path.split("/").pop() || path;
+                            return (
+                              <span
+                                key={i}
+                                className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent"
+                              >
+                                {basename}
+                              </span>
+                            );
+                          }
+                          return part;
+                        })}
+                      </p>
                     </div>
-                  )}
-
-                  {/* Metadata Footer with Copy Button */}
-                  <div className="flex items-center gap-5 pt-3 mt-3 border-t border-transparent footer-meta group-hover:border-border/30 transition-colors">
-                    {message.tokens && (
-                      <>
-                        <div
-                          className="flex items-center gap-1.5"
-                          title="Tokens used"
-                        >
-                          <Zap className="w-3 h-3" />
-                          <span>
-                            {formatTokens(
-                              message.tokens.input + message.tokens.output,
-                            )}{" "}
-                            tokens
-                            {message.tokens.cache &&
-                              message.tokens.cache.read > 0 && (
-                                <span className="opacity-60">
-                                  {" "}
-                                  ({formatTokens(message.tokens.cache.read)} cached)
-                                </span>
-                              )}
-                          </span>
-                        </div>
-
-                        {message.time && message.time.completed && (
-                          <div
-                            className="flex items-center gap-1.5"
-                            title="Time taken"
-                          >
-                            <Clock className="w-3 h-3" />
-                            <span>
-                              {formatTime(
-                                message.time.completed - message.time.created,
-                              )}
-                            </span>
-                          </div>
-                        )}
-
-                        {message.cost !== undefined && message.cost > 0 && (
-                          <div
-                            className="flex items-center gap-1.5"
-                            title="Estimated cost"
-                          >
-                            <Coins className="w-3 h-3" />
-                            <span>${message.cost.toFixed(5)}</span>
-                          </div>
-                        )}
-                      </>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    {/* Model Badge */}
+                    {message.modelID && (
+                      <div className="model-badge mb-2">
+                        {message.modelID}
+                      </div>
                     )}
 
-                    {/* Copy button - always at far right */}
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(message.content);
-                      }}
-                      className="ml-auto p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted/80 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                      title="Copy response"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
+                    {/* Render reasoning and tool parts AND text parts if available */}
+                    {renderParts(message.parts)}
+
+                    {/* Text content fallback - only if no text parts exist */}
+                    {!messageHasTextParts && message.content && (
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <Streamdown>{formatMentions(message.content)}</Streamdown>
+                      </div>
+                    )}
+
+                    {/* Metadata Footer with Copy Button */}
+                    <div className="flex items-center gap-5 pt-3 mt-3 border-t border-transparent footer-meta group-hover:border-border/30 transition-colors">
+                      {message.tokens && (
+                        <>
+                          <div
+                            className="flex items-center gap-1.5"
+                            title="Tokens used"
+                          >
+                            <Zap className="w-3 h-3" />
+                            <span>
+                              {formatTokens(
+                                message.tokens.input + message.tokens.output,
+                              )}{" "}
+                              tokens
+                              {message.tokens.cache &&
+                                message.tokens.cache.read > 0 && (
+                                  <span className="opacity-60">
+                                    {" "}
+                                    ({formatTokens(message.tokens.cache.read)} cached)
+                                  </span>
+                                )}
+                            </span>
+                          </div>
+
+                          {message.time && message.time.completed && (
+                            <div
+                              className="flex items-center gap-1.5"
+                              title="Time taken"
+                            >
+                              <Clock className="w-3 h-3" />
+                              <span>
+                                {formatTime(
+                                  message.time.completed - message.time.created,
+                                )}
+                              </span>
+                            </div>
+                          )}
+
+                          {message.cost !== undefined && message.cost > 0 && (
+                            <div
+                              className="flex items-center gap-1.5"
+                              title="Estimated cost"
+                            >
+                              <Coins className="w-3 h-3" />
+                              <span>${message.cost.toFixed(5)}</span>
+                            </div>
+                          )}
+                        </>
+                      )}
+
+                      {/* Copy button - always at far right */}
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(message.content);
+                        }}
+                        className="ml-auto p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted/80 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                        title="Copy response"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                )}
+              </div>
+            );
+          })}
+
         </div>
       </ScrollArea>
 

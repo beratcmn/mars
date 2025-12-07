@@ -1,9 +1,9 @@
 {
   "selectedModel": {
-    "providerId": "github-copilot",
-    "providerName": "GitHub Copilot",
-    "modelId": "claude-opus-4.5",
-    "modelName": "Claude Opus 4.5"
+    "providerId": "zai-coding-plan",
+    "providerName": "Z.AI Coding Plan",
+    "modelId": "glm-4.6",
+    "modelName": "GLM-4.6"
   },
   "selectedAgent": {
     "name": "build",
