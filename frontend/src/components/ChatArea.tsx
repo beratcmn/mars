@@ -479,67 +479,67 @@ export function ChatArea({
                     </div>
                   )}
 
-                  {/* Assistant message hover actions */}
-                  <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                  {/* Metadata Footer with Copy Button */}
+                  <div className="flex items-center gap-5 pt-3 mt-3 border-t border-transparent footer-meta group-hover:border-border/30 transition-colors">
+                    {message.tokens && (
+                      <>
+                        <div
+                          className="flex items-center gap-1.5"
+                          title="Tokens used"
+                        >
+                          <Zap className="w-3 h-3" />
+                          <span>
+                            {formatTokens(
+                              message.tokens.input + message.tokens.output,
+                            )}{" "}
+                            tokens
+                            {message.tokens.cache &&
+                              message.tokens.cache.read > 0 && (
+                                <span className="opacity-60">
+                                  {" "}
+                                  ({formatTokens(message.tokens.cache.read)} cached)
+                                </span>
+                              )}
+                          </span>
+                        </div>
+
+                        {message.time && message.time.completed && (
+                          <div
+                            className="flex items-center gap-1.5"
+                            title="Time taken"
+                          >
+                            <Clock className="w-3 h-3" />
+                            <span>
+                              {formatTime(
+                                message.time.completed - message.time.created,
+                              )}
+                            </span>
+                          </div>
+                        )}
+
+                        {message.cost !== undefined && message.cost > 0 && (
+                          <div
+                            className="flex items-center gap-1.5"
+                            title="Estimated cost"
+                          >
+                            <Coins className="w-3 h-3" />
+                            <span>${message.cost.toFixed(5)}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+
+                    {/* Copy button - always at far right */}
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(message.content);
                       }}
-                      className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                      className="ml-auto p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted/80 opacity-0 group-hover:opacity-100 transition-all duration-150"
                       title="Copy response"
                     >
                       <Copy className="w-3.5 h-3.5" />
                     </button>
                   </div>
-
-                  {/* Metadata Footer */}
-                  {message.tokens && (
-                    <div className="flex items-center gap-5 pt-3 mt-3 border-t border-transparent footer-meta group-hover:border-border/30 transition-colors">
-                      <div
-                        className="flex items-center gap-1.5"
-                        title="Tokens used"
-                      >
-                        <Zap className="w-3 h-3" />
-                        <span>
-                          {formatTokens(
-                            message.tokens.input + message.tokens.output,
-                          )}{" "}
-                          tokens
-                          {message.tokens.cache &&
-                            message.tokens.cache.read > 0 && (
-                              <span className="opacity-60">
-                                {" "}
-                                ({formatTokens(message.tokens.cache.read)} cached)
-                              </span>
-                            )}
-                        </span>
-                      </div>
-
-                      {message.time && message.time.completed && (
-                        <div
-                          className="flex items-center gap-1.5"
-                          title="Time taken"
-                        >
-                          <Clock className="w-3 h-3" />
-                          <span>
-                            {formatTime(
-                              message.time.completed - message.time.created,
-                            )}
-                          </span>
-                        </div>
-                      )}
-
-                      {message.cost !== undefined && message.cost > 0 && (
-                        <div
-                          className="flex items-center gap-1.5"
-                          title="Estimated cost"
-                        >
-                          <Coins className="w-3 h-3" />
-                          <span>${message.cost.toFixed(5)}</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
             </div>

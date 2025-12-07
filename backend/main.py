@@ -382,8 +382,8 @@ def get_frontend_url() -> str:
         os.path.dirname(__file__), "..", "frontend", "dist", "index.html"
     )
 
-    if os.path.exists(dist_path):
-        return f"file://{os.path.abspath(dist_path)}"
+    # if os.path.exists(dist_path):
+    #     return f"file://{os.path.abspath(dist_path)}"
 
     return dev_url
 

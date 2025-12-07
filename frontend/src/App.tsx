@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { flushSync } from "react-dom";
 import { Header } from "@/components/Header";
 import { ChatTabs, type Tab } from "@/components/ChatTabs";
 import { ChatArea } from "@/components/ChatArea";
@@ -81,11 +80,193 @@ interface FileTab extends Tab {
 
 type AppTab = SessionTab | FileTab;
 
+/**
+ * Pure function to apply a single SSE event to the tabs state.
+ * This enables batching multiple events into a single state update.
+ */
+function applyEventToTabs(tabs: AppTab[], event: Record<string, unknown>): AppTab[] {
+  // Handle message.part.updated - text deltas, tool calls, reasoning
+  if (event.type === "message.part.updated" && event.properties) {
+    const props = event.properties as Record<string, unknown>;
+    const part = props.part as Record<string, unknown>;
+    const delta = props.delta as string | undefined;
+    const sessionId = part.sessionID as string;
+
+    return tabs.map((tab) => {
+      if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
+
+      const messages = [...tab.messages];
+      const lastMsg = messages[messages.length - 1];
+
+      if (!lastMsg || lastMsg.role !== "assistant") return tab;
+
+      const existingParts = lastMsg.parts || [];
+      const updatedParts = [...existingParts];
+
+      // Handle text parts with delta streaming
+      if (part.type === "text" && delta && typeof delta === "string") {
+        const newContent = lastMsg.content + delta;
+
+        const existingTextPart = updatedParts.find(
+          (p): p is TextPart => p.type === "text" && p.id === part.id,
+        );
+        if (existingTextPart) {
+          existingTextPart.text =
+            (part.text as string) || existingTextPart.text + delta;
+        } else {
+          const partTime = part.time as Record<string, number> | undefined;
+          updatedParts.push({
+            id: part.id as string,
+            type: "text",
+            text: (part.text as string) || delta,
+            startTime: partTime?.start || Date.now(),
+          });
+        }
+
+        return {
+          ...tab,
+          messages: [
+            ...messages.slice(0, -1),
+            { ...lastMsg, content: newContent, parts: updatedParts },
+          ],
+        };
+      }
+
+      // Handle reasoning parts
+      if (part.type === "reasoning") {
+        const existingReasoningPart = updatedParts.find(
+          (p): p is ReasoningPart => p.type === "reasoning" && p.id === part.id,
+        );
+        if (existingReasoningPart) {
+          existingReasoningPart.text = (part.text as string) || "";
+        } else if (part.text) {
+          const partTime = part.time as Record<string, number> | undefined;
+          updatedParts.push({
+            id: part.id as string,
+            type: "reasoning",
+            text: part.text as string,
+            startTime: partTime?.start || Date.now(),
+          });
+        }
+        return {
+          ...tab,
+          messages: [
+            ...messages.slice(0, -1),
+            { ...lastMsg, parts: updatedParts },
+          ],
+        };
+      }
+
+      // Handle tool parts
+      if (part.type === "tool") {
+        const existingToolPart = updatedParts.find(
+          (p): p is ToolPart => p.type === "tool" && p.id === part.id,
+        );
+        const partState = part.state as Record<string, unknown> | undefined;
+        const toolState = {
+          status: partState?.status || "pending",
+          input: partState?.input,
+          output: partState?.output,
+          error: partState?.error,
+          time: partState?.time,
+        } as ToolPart["state"];
+
+        if (existingToolPart) {
+          existingToolPart.state = toolState;
+        } else {
+          updatedParts.push({
+            id: part.id as string,
+            type: "tool",
+            tool: (part.tool as string) || "unknown",
+            state: toolState,
+          });
+        }
+        return {
+          ...tab,
+          messages: [
+            ...messages.slice(0, -1),
+            { ...lastMsg, parts: updatedParts },
+          ],
+        };
+      }
+
+      return tab;
+    });
+  }
+
+  // Handle message.updated to capture metadata (tokens, cost, time)
+  if (event.type === "message.updated" && event.properties) {
+    const props = event.properties as Record<string, unknown>;
+    const info = props.info as Record<string, unknown>;
+    if (!info) return tabs;
+
+    const sessionId = info.sessionID as string;
+
+    // Only update assistant messages with metadata
+    if (info.role === "assistant" && info.tokens) {
+      const tokens = info.tokens as Record<string, unknown>;
+      return tabs.map((tab) => {
+        if (tab.type === "session" && tab.sessionId === sessionId) {
+          const messages = [...tab.messages];
+          const lastMsg = messages[messages.length - 1];
+
+          if (lastMsg && lastMsg.role === "assistant") {
+            return {
+              ...tab,
+              messages: [
+                ...messages.slice(0, -1),
+                {
+                  ...lastMsg,
+                  modelID: (info.modelID as string) || lastMsg.modelID,
+                  providerID: (info.providerID as string) || lastMsg.providerID,
+                  cost: info.cost as number,
+                  tokens: {
+                    input: tokens.input as number,
+                    output: tokens.output as number,
+                    cache: tokens.cache as { read: number; write: number },
+                  },
+                  time: info.time as { created: number; completed: number },
+                },
+              ],
+            };
+          }
+        }
+        return tab;
+      });
+    }
+  }
+
+  // Handle session.updated to capture title changes
+  if (event.type === "session.updated" && event.properties) {
+    const props = event.properties as Record<string, unknown>;
+    const info = props.info as Record<string, unknown>;
+    if (!info) return tabs;
+
+    const sessionId = info.id as string;
+    const newTitle = info.title as string;
+
+    if (sessionId && newTitle) {
+      return tabs.map((tab) => {
+        if (
+          tab.type === "session" &&
+          tab.sessionId === sessionId &&
+          tab.label !== newTitle
+        ) {
+          return { ...tab, label: newTitle };
+        }
+        return tab;
+      });
+    }
+  }
+
+  // Event type not handled, return tabs unchanged
+  return tabs;
+}
+
 function App() {
   const [tabs, setTabs] = useState<AppTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [projectPath, setProjectPath] = useState("mars");
   const [isInitialized, setIsInitialized] = useState(false);
   const initStarted = useRef(false); // Prevent double init from StrictMode
 
@@ -306,7 +487,7 @@ function App() {
         // Get current project info
         const project = await api.getCurrentProject();
         if (project?.name) {
-          setProjectPath(project.name);
+          setProjectRoot(project.name);
         }
 
         // Load providers
@@ -387,235 +568,60 @@ function App() {
     init();
   }, [isInitialized, createNewTab]);
 
+  // Event buffer for batching SSE events
+  // This prevents UI freezing/stuttering when many events arrive simultaneously
+  const eventBufferRef = useRef<Array<Record<string, unknown>>>([]);
+  const rafIdRef = useRef<number | null>(null);
+
+  // Process all buffered events in a single state update
+  const processEventBuffer = useCallback(() => {
+    const events = eventBufferRef.current;
+    eventBufferRef.current = [];
+    rafIdRef.current = null;
+
+    if (events.length === 0) return;
+
+    // Apply all events in a single setTabs call for optimal performance
+    setTabs((prevTabs) => {
+      let updatedTabs = prevTabs;
+      for (const event of events) {
+        updatedTabs = applyEventToTabs(updatedTabs, event);
+      }
+      return updatedTabs;
+    });
+  }, []);
+
   // Separate effect for Event Listening using direct SSE connection
   // This bypasses pywebview's evaluate_js buffering
   useEffect(() => {
     if (!isInitialized) return;
 
-    // Define the event handler
+    // Define the event handler - buffers events for batched processing
     const handleEvent = (payload: unknown) => {
       const event = payload as Record<string, unknown>;
-      console.log("Mars Event:", event);
 
-      // Handle message.part.updated - text deltas, tool calls, reasoning
-      if (event.type === "message.part.updated" && event.properties) {
-        const props = event.properties as Record<string, unknown>;
-        const part = props.part as Record<string, unknown>;
-        const delta = props.delta as string | undefined;
-        const sessionId = part.sessionID as string;
+      // Add event to buffer
+      eventBufferRef.current.push(event);
 
-        // Handle text parts with delta streaming - use flushSync for immediate updates
-        if (part.type === "text" && delta && typeof delta === "string") {
-          flushSync(() => {
-            setTabs((prevTabs) =>
-              prevTabs.map((tab) => {
-                if (tab.type !== "session" || tab.sessionId !== sessionId)
-                  return tab;
-
-                const messages = [...tab.messages];
-                const lastMsg = messages[messages.length - 1];
-
-                if (!lastMsg || lastMsg.role !== "assistant") return tab;
-
-                const existingParts = lastMsg.parts || [];
-                const updatedParts = [...existingParts];
-                const newContent = lastMsg.content + delta;
-
-                const existingTextPart = updatedParts.find(
-                  (p): p is TextPart => p.type === "text" && p.id === part.id,
-                );
-                if (existingTextPart) {
-                  existingTextPart.text =
-                    (part.text as string) || existingTextPart.text + delta;
-                } else {
-                  const partTime = part.time as
-                    | Record<string, number>
-                    | undefined;
-                  updatedParts.push({
-                    id: part.id as string,
-                    type: "text",
-                    text: (part.text as string) || delta,
-                    startTime: partTime?.start || Date.now(),
-                  });
-                }
-
-                return {
-                  ...tab,
-                  messages: [
-                    ...messages.slice(0, -1),
-                    { ...lastMsg, content: newContent, parts: updatedParts },
-                  ],
-                };
-              }),
-            );
-          });
-          return;
-        }
-
-        // Handle reasoning and tool parts (non-text)
-        setTabs((prevTabs) =>
-          prevTabs.map((tab) => {
-            if (tab.type !== "session" || tab.sessionId !== sessionId)
-              return tab;
-
-            const messages = [...tab.messages];
-            const lastMsg = messages[messages.length - 1];
-
-            if (!lastMsg || lastMsg.role !== "assistant") return tab;
-
-            const existingParts = lastMsg.parts || [];
-            const updatedParts = [...existingParts];
-
-            // Handle reasoning parts
-            if (part.type === "reasoning") {
-              const existingReasoningPart = updatedParts.find(
-                (p): p is ReasoningPart =>
-                  p.type === "reasoning" && p.id === part.id,
-              );
-              if (existingReasoningPart) {
-                existingReasoningPart.text = (part.text as string) || "";
-              } else if (part.text) {
-                const partTime = part.time as
-                  | Record<string, number>
-                  | undefined;
-                updatedParts.push({
-                  id: part.id as string,
-                  type: "reasoning",
-                  text: part.text as string,
-                  startTime: partTime?.start || Date.now(),
-                });
-              }
-              return {
-                ...tab,
-                messages: [
-                  ...messages.slice(0, -1),
-                  { ...lastMsg, parts: updatedParts },
-                ],
-              };
-            }
-
-            // Handle tool parts
-            if (part.type === "tool") {
-              const existingToolPart = updatedParts.find(
-                (p): p is ToolPart => p.type === "tool" && p.id === part.id,
-              );
-              const partState = part.state as
-                | Record<string, unknown>
-                | undefined;
-              const toolState = {
-                status: partState?.status || "pending",
-                input: partState?.input,
-                output: partState?.output,
-                error: partState?.error,
-                time: partState?.time,
-              } as ToolPart["state"];
-
-              if (existingToolPart) {
-                existingToolPart.state = toolState;
-              } else {
-                updatedParts.push({
-                  id: part.id as string,
-                  type: "tool",
-                  tool: (part.tool as string) || "unknown",
-                  state: toolState,
-                });
-              }
-              return {
-                ...tab,
-                messages: [
-                  ...messages.slice(0, -1),
-                  { ...lastMsg, parts: updatedParts },
-                ],
-              };
-            }
-
-            return tab;
-          }),
-        );
-      }
-
-      // Handle message.updated to capture metadata (tokens, cost, time)
-      if (event.type === "message.updated" && event.properties) {
-        const props = event.properties as Record<string, unknown>;
-        const info = props.info as Record<string, unknown>;
-        if (!info) return;
-
-        const sessionId = info.sessionID as string;
-
-        // Only update assistant messages with metadata
-        if (info.role === "assistant" && info.tokens) {
-          const tokens = info.tokens as Record<string, unknown>;
-          setTabs((prevTabs) =>
-            prevTabs.map((tab) => {
-              if (tab.type === "session" && tab.sessionId === sessionId) {
-                const messages = [...tab.messages];
-                const lastMsg = messages[messages.length - 1];
-
-                if (lastMsg && lastMsg.role === "assistant") {
-                  return {
-                    ...tab,
-                    messages: [
-                      ...messages.slice(0, -1),
-                      {
-                        ...lastMsg,
-                        modelID: (info.modelID as string) || lastMsg.modelID,
-                        providerID:
-                          (info.providerID as string) || lastMsg.providerID,
-                        cost: info.cost as number,
-                        tokens: {
-                          input: tokens.input as number,
-                          output: tokens.output as number,
-                          cache: tokens.cache as {
-                            read: number;
-                            write: number;
-                          },
-                        },
-                        time: info.time as {
-                          created: number;
-                          completed: number;
-                        },
-                      },
-                    ],
-                  };
-                }
-              }
-              return tab;
-            }),
-          );
-        }
-      }
-
-      // Handle session.updated to capture title changes
-      if (event.type === "session.updated" && event.properties) {
-        const props = event.properties as Record<string, unknown>;
-        const info = props.info as Record<string, unknown>;
-        if (!info) return;
-
-        const sessionId = info.id as string;
-        const newTitle = info.title as string;
-
-        if (sessionId && newTitle) {
-          setTabs((prevTabs) =>
-            prevTabs.map((tab) => {
-              if (
-                tab.type === "session" &&
-                tab.sessionId === sessionId &&
-                tab.label !== newTitle
-              ) {
-                return { ...tab, label: newTitle };
-              }
-              return tab;
-            }),
-          );
-        }
+      // Schedule processing on next animation frame (if not already scheduled)
+      // This batches all events that arrive within ~16ms into a single render
+      if (rafIdRef.current === null) {
+        rafIdRef.current = requestAnimationFrame(processEventBuffer);
       }
     };
 
     // Connect directly to SSE stream (bypasses pywebview buffering)
     const cleanup = api.connectToEventStream(handleEvent);
 
-    return () => cleanup();
-  }, [isInitialized]);
+    return () => {
+      cleanup();
+      // Clean up any pending RAF on unmount
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current);
+        rafIdRef.current = null;
+      }
+    };
+  }, [isInitialized, processEventBuffer]);
 
   // Handle sending a message
   const handleSend = async (content: string) => {
