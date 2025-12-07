@@ -115,32 +115,34 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
       const lastAtPos = textBeforeCursor.lastIndexOf("@");
 
       if (lastAtPos !== -1) {
-        // Split the text node
-        // "Hello @src" -> "Hello " | "@src" | "" (rest)
-
-        // We want to delete "@src" (query)
-        // And insert chip
-
-        // 1. Delete the query text
-        // The range starts at end of query.
-        range.setStart(textNode, lastAtPos);
-        range.deleteContents();
-
-        // Now check if folder
+        // For folders, we want to stay in text mode (keep one text node)
         if (filename.endsWith("/")) {
-          // Insert text "@filename"
-          const newNode = document.createTextNode(`@${filename}`);
-          range.insertNode(newNode);
-          range.setStartAfter(newNode);
-          range.setEndAfter(newNode);
+          const beforeAt = textContent.slice(0, lastAtPos);
+          // The text after the cursor (range.startOffset)
+          const afterCursor = textContent.slice(range.startOffset);
+
+          // Update the logic to construct new content
+          const newContent = `${beforeAt}@${filename}${afterCursor}`;
+          textNode.nodeValue = newContent;
+
+          // Reset cursor position to end of inserted folder
+          const newCursorPos = lastAtPos + 1 + filename.length;
+          range.setStart(textNode, newCursorPos);
+          range.setEnd(textNode, newCursorPos);
           selection.removeAllRanges();
           selection.addRange(range);
-          // Trigger search again (programmatically or wait for input?)
-          // We should manually trigger logic or just let user type next char
-          // Better: set cursor and maybe trigger search
-          setTimeout(() => handleInput(), 0);
+
+          // Trigger search immediately
+          // We call handleInput to ensure suggestions are refreshed
+          handleInput();
           return;
         }
+
+        // For files, we do the specific chip insertion (splitting nodes)
+
+        // 1. Delete the query text
+        range.setStart(textNode, lastAtPos);
+        range.deleteContents();
 
         // 2. Insert Chip
         const chip = document.createElement("span");
@@ -208,8 +210,8 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
                   className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
                     }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />
