@@ -395,3 +395,382 @@ html {
 .streaming-text {
   animation: fade-in 0.1s ease-out;
 }
+
+/* ========================================
+   Premium Typography System
+   Inspired by Belgrade's elegant design
+   ======================================== */
+
+/* Prose/Markdown Content Styling */
+.prose {
+  --prose-body: var(--foreground);
+  --prose-headings: var(--foreground);
+  --prose-lead: var(--muted-foreground);
+  --prose-links: var(--foreground);
+  --prose-bold: var(--foreground);
+  --prose-counters: var(--muted-foreground);
+  --prose-bullets: var(--muted-foreground);
+  --prose-hr: var(--border);
+  --prose-quotes: var(--foreground);
+  --prose-quote-borders: var(--border);
+  --prose-captions: var(--muted-foreground);
+  --prose-code: var(--foreground);
+  --prose-pre-code: var(--foreground);
+  --prose-pre-bg: var(--muted);
+  --prose-th-borders: var(--border);
+  --prose-td-borders: var(--border);
+  
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+}
+
+/* Elegant serif headings with italic styling */
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
+  color: var(--foreground);
+  position: relative;
+}
+
+/* Add decorative line under h2 headings (like Belgrade) */
+.prose h2 {
+  font-size: 1.5rem;
+  text-align: center;
+  padding-bottom: 0.75em;
+}
+
+.prose h2::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 1px;
+  background-color: var(--border);
+}
+
+.prose h1 {
+  font-size: 1.875rem;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+}
+
+.prose h4 {
+  font-size: 1.125rem;
+}
+
+/* Paragraphs */
+.prose p {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  color: var(--foreground);
+}
+
+.prose p:first-child {
+  margin-top: 0;
+}
+
+/* Strong/Bold text */
+.prose strong {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+/* Links */
+.prose a {
+  color: var(--foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--border);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.prose a:hover {
+  text-decoration-color: var(--foreground);
+}
+
+/* Code blocks - softer, more refined appearance */
+.prose pre {
+  background-color: oklch(0.98 0 0);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.dark .prose pre {
+  background-color: oklch(0.18 0 0);
+  border-color: oklch(1 0 0 / 8%);
+}
+
+.prose pre code {
+  font-family: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  font-size: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--prose-pre-code);
+}
+
+/* Inline code */
+.prose code {
+  font-family: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  font-size: 0.85em;
+  background-color: var(--muted);
+  border-radius: 0.25rem;
+  padding: 0.15em 0.4em;
+  color: var(--foreground);
+  font-weight: 400;
+}
+
+.prose code::before,
+.prose code::after {
+  content: none;
+}
+
+/* Blockquotes */
+.prose blockquote {
+  border-left: 2px solid var(--border);
+  padding-left: 1.25em;
+  margin-left: 0;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+/* Lists */
+.prose ul,
+.prose ol {
+  margin-top: 1.25em;
+  margin-bottom: 1.25em;
+  padding-left: 1.5em;
+}
+
+.prose li {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+  padding-left: 0.25em;
+}
+
+.prose ul > li::marker {
+  color: var(--muted-foreground);
+}
+
+.prose ol > li::marker {
+  color: var(--muted-foreground);
+  font-weight: 400;
+}
+
+/* Nested lists */
+.prose li > ul,
+.prose li > ol {
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+/* Horizontal rule */
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin-top: 2em;
+  margin-bottom: 2em;
+}
+
+/* Tables */
+.prose table {
+  width: 100%;
+  table-layout: auto;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.prose th,
+.prose td {
+  padding: 0.75em 1em;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.prose th {
+  font-weight: 600;
+  background-color: var(--muted);
+}
+
+.prose td {
+  background-color: transparent;
+}
+
+/* Task lists */
+.prose input[type="checkbox"] {
+  margin-right: 0.5em;
+}
+
+/* Images */
+.prose img {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  border-radius: 0.5rem;
+}
+
+/* Prose size variants */
+.prose-sm {
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.prose-sm h2 {
+  font-size: 1.35rem;
+}
+
+.prose-sm h3 {
+  font-size: 1.125rem;
+}
+
+.prose-sm pre {
+  font-size: 0.75rem;
+  padding: 0.875rem 1rem;
+}
+
+.prose-sm code {
+  font-size: 0.8em;
+}
+
+/* ========================================
+   Quick Win #1: Numbered Heading Contrast
+   Note: CSS :first-letter cannot distinguish numbers from letters,
+   so we rely on markdown rendering for proper numbered lists instead.
+   The italic serif headings now apply uniformly.
+   ======================================== */
+
+/* ========================================
+   Quick Win #2: Premium Input Bar
+   ======================================== */
+
+.input-premium {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  background-color: oklch(0.995 0 0);
+}
+
+.dark .input-premium {
+  background-color: oklch(0.17 0 0);
+}
+
+.input-premium:focus-within {
+  border-color: var(--border);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.dark .input-premium:focus-within {
+  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.02);
+}
+
+/* Placeholder refinement */
+[data-placeholder]::before {
+  color: var(--muted-foreground) !important;
+  opacity: 0.5;
+}
+
+/* ========================================
+   Quick Win #3: Warmer Inline Code Styling
+   ======================================== */
+
+.prose code {
+  background-color: oklch(0.96 0.005 85); /* Warm cream tint */
+  border: 1px solid oklch(0.92 0.01 85);
+  border-radius: 0.375rem;
+  padding: 0.2em 0.45em;
+  font-weight: 450;
+}
+
+.dark .prose code {
+  background-color: oklch(0.22 0.005 85);
+  border-color: oklch(0.28 0.01 85);
+}
+
+/* File mention badges - warmer styling */
+.mention-badge,
+a[href^="#file:"] {
+  background-color: oklch(0.96 0.005 85);
+  border-color: oklch(0.92 0.015 85);
+}
+
+.dark .mention-badge,
+.dark a[href^="#file:"] {
+  background-color: oklch(0.22 0.005 85);
+  border-color: oklch(0.28 0.01 85);
+}
+
+/* ========================================
+   Quick Win #4: Header/Footer Refinement
+   ======================================== */
+
+/* Lighter metadata text */
+.metadata-light {
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  opacity: 0.6;
+}
+
+/* Model badge styling */
+.model-badge {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.model-badge:hover {
+  opacity: 1;
+}
+
+/* Footer token/cost info */
+.footer-meta {
+  font-size: 0.625rem;
+  font-weight: 400;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  transition: opacity 0.15s ease;
+}
+
+.footer-meta:hover {
+  opacity: 0.8;
+}
+
+/* Tab styling refinement */
+.tab-item {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tab-item:hover {
+  background-color: var(--accent);
+}
+
+.tab-item.active {
+  font-weight: 500;
+}
+

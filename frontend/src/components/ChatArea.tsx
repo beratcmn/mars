@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Streamdown } from "streamdown";
@@ -14,6 +14,8 @@ import {
   Loader2,
   CheckCircle2,
   XCircle,
+  Copy,
+  ArrowDown,
 } from "lucide-react";
 
 // Part types for rendering
@@ -154,10 +156,8 @@ function ToolCallPart({ part }: { part: ToolPart }) {
               {part.state.output && (
                 <div>
                   <span className="text-xs font-medium text-muted-foreground">Output</span>
-                  <div className="mt-2 p-3 bg-background rounded-md border border-border/50">
-                    <pre className="text-xs whitespace-pre-wrap text-foreground/90 font-sans leading-relaxed">
-                      {part.state.output}
-                    </pre>
+                  <div className="mt-2 p-3 bg-background rounded-md border border-border/50 prose prose-sm max-w-none dark:prose-invert">
+                    <Streamdown>{part.state.output}</Streamdown>
                   </div>
                 </div>
               )}
@@ -278,19 +278,30 @@ export function ChatArea({
   if (!hasActiveSession) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-center space-y-4 animate-fade-in-up">
-          <h1 className="text-3xl font-serif italic text-foreground">
-            Welcome to Mars
-          </h1>
-          <div className="w-12 h-px bg-border mx-auto" />
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-            Start a new conversation to begin exploring code with AI assistance.
-          </p>
+        <div className="text-center space-y-6 animate-fade-in-up max-w-md px-6">
+          {/* Animated Mars Icon */}
+          <div className="relative mx-auto w-20 h-20">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400/20 to-red-500/20 animate-pulse" />
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-orange-500/30 to-red-600/30" />
+            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-orange-600 to-red-700 shadow-lg shadow-orange-500/25" />
+            <div className="absolute top-6 left-8 w-2 h-2 rounded-full bg-orange-300/60" />
+          </div>
+
+          <div className="space-y-3">
+            <h1 className="text-4xl font-serif italic text-foreground">
+              Welcome to <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">Mars</span>
+            </h1>
+            <div className="w-16 h-px bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
+              Your intelligent coding companion. Start a new conversation to explore code with AI assistance.
+            </p>
+          </div>
+
           <Button
             onClick={onNewChat}
             variant="ghost"
             size="sm"
-            className="gap-2 transition-all duration-150 hover:scale-105 active:scale-95"
+            className="gap-2 transition-all duration-200 hover:scale-105 active:scale-95 hover:bg-primary/5"
           >
             <MessageSquarePlus className="h-4 w-4" />
             Start a new chat
@@ -304,18 +315,70 @@ export function ChatArea({
   if (messages.length === 0) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-center space-y-3 animate-fade-in-up">
-          <h1 className="text-3xl font-serif italic text-foreground">
-            Welcome to Mars
-          </h1>
-          <div className="w-12 h-px bg-border mx-auto" />
-          <p className="text-sm text-muted-foreground">
-            Ask anything to get started
-          </p>
+        <div className="text-center space-y-8 animate-fade-in-up max-w-lg px-6">
+          {/* Pulsing Mars Icon */}
+          <div className="relative mx-auto w-16 h-16">
+            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400/10 to-red-500/10 animate-gentle-pulse" />
+            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-orange-500/20 to-red-600/20" />
+            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-orange-600 to-red-700 shadow-md shadow-orange-500/20" />
+          </div>
+
+          <div className="space-y-3">
+            <h1 className="text-3xl font-serif italic text-foreground">
+              What can I help you build?
+            </h1>
+            <div className="w-12 h-px bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
+          </div>
+
+          {/* Suggestion Cards */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {[
+              "Explain this codebase",
+              "Fix a bug",
+              "Write tests",
+              "Refactor code"
+            ].map((suggestion, i) => (
+              <button
+                key={suggestion}
+                className={`px-4 py-2 text-xs text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground border border-transparent hover:border-border/50 rounded-full transition-all duration-200 animate-fade-in-up`}
+                style={{ animationDelay: `${i * 0.1}s` }}
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
+
+  // Scroll state for scroll-to-bottom button
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  // Check if scrolled away from bottom
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100;
+    setShowScrollButton(!isNearBottom);
+  };
+
+  // Scroll to bottom function
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  };
+
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages.length]);
 
   const formatTokens = (num: number) => {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;
@@ -357,105 +420,144 @@ export function ChatArea({
   };
 
   return (
-    <ScrollArea className="h-full">
-      <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
-        {messages.map((message) => (
-          <div key={message.id} className={`group ${message.role === 'user' ? 'animate-slide-in-right' : 'animate-fade-in-up'}`}>
-            {message.role === "user" ? (
-              <div className="flex justify-end">
-                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm">
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {message.content.split(/(@\[.*?\])/g).map((part, i) => {
-                      const match = part.match(/@\[(.*?)\]/);
-                      if (match) {
-                        const path = match[1];
-                        const basename = path.split("/").pop() || path;
-                        return (
-                          <span
-                            key={i}
-                            className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent"
-                          >
-                            {basename}
-                          </span>
-                        );
-                      }
-                      return part;
-                    })}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {/* Model Badge */}
-                {message.modelID && (
-                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 mb-2">
-                    {message.modelID}
-                  </div>
-                )}
-
-                {/* Render reasoning and tool parts */}
-                {renderParts(message.parts)}
-
-                {/* Text content */}
-                {message.content && (
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <Streamdown>{formatMentions(message.content)}</Streamdown>
-                  </div>
-                )}
-
-                {/* Metadata Footer */}
-                {message.tokens && (
-                  <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground/50">
-                    <div
-                      className="flex items-center gap-1"
-                      title="Tokens used"
+    <div className="relative h-full" ref={scrollAreaRef}>
+      <ScrollArea className="h-full" onScrollCapture={handleScroll}>
+        <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
+          {messages.map((message) => (
+            <div key={message.id} className={`group ${message.role === 'user' ? 'animate-slide-in-right' : 'animate-fade-in-up'}`}>
+              {message.role === "user" ? (
+                <div className="flex justify-end gap-2 items-start">
+                  {/* User message hover actions */}
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pt-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(message.content);
+                      }}
+                      className="p-1.5 rounded-md text-muted-foreground/60 hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                      title="Copy message"
                     >
-                      <Zap className="w-3 h-3" />
-                      <span>
-                        {formatTokens(
-                          message.tokens.input + message.tokens.output,
-                        )}{" "}
-                        tokens
-                        {message.tokens.cache &&
-                          message.tokens.cache.read > 0 && (
-                            <span className="opacity-70">
-                              {" "}
-                              ({formatTokens(message.tokens.cache.read)} cached)
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.content.split(/(@\[.*?\])/g).map((part, i) => {
+                        const match = part.match(/@\[(.*?)\]/);
+                        if (match) {
+                          const path = match[1];
+                          const basename = path.split("/").pop() || path;
+                          return (
+                            <span
+                              key={i}
+                              className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent"
+                            >
+                              {basename}
                             </span>
-                          )}
-                      </span>
+                          );
+                        }
+                        return part;
+                      })}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {/* Model Badge */}
+                  {message.modelID && (
+                    <div className="model-badge mb-2">
+                      {message.modelID}
                     </div>
+                  )}
 
-                    {message.time && message.time.completed && (
+                  {/* Render reasoning and tool parts */}
+                  {renderParts(message.parts)}
+
+                  {/* Text content */}
+                  {message.content && (
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                      <Streamdown>{formatMentions(message.content)}</Streamdown>
+                    </div>
+                  )}
+
+                  {/* Assistant message hover actions */}
+                  <div className="flex items-center gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(message.content);
+                      }}
+                      className="p-1.5 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                      title="Copy response"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Metadata Footer */}
+                  {message.tokens && (
+                    <div className="flex items-center gap-5 pt-3 mt-3 border-t border-transparent footer-meta group-hover:border-border/30 transition-colors">
                       <div
-                        className="flex items-center gap-1"
-                        title="Time taken"
+                        className="flex items-center gap-1.5"
+                        title="Tokens used"
                       >
-                        <Clock className="w-3 h-3" />
+                        <Zap className="w-3 h-3" />
                         <span>
-                          {formatTime(
-                            message.time.completed - message.time.created,
-                          )}
+                          {formatTokens(
+                            message.tokens.input + message.tokens.output,
+                          )}{" "}
+                          tokens
+                          {message.tokens.cache &&
+                            message.tokens.cache.read > 0 && (
+                              <span className="opacity-60">
+                                {" "}
+                                ({formatTokens(message.tokens.cache.read)} cached)
+                              </span>
+                            )}
                         </span>
                       </div>
-                    )}
 
-                    {message.cost !== undefined && message.cost > 0 && (
-                      <div
-                        className="flex items-center gap-1"
-                        title="Estimated cost"
-                      >
-                        <Coins className="w-3 h-3" />
-                        <span>${message.cost.toFixed(5)}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-    </ScrollArea>
+                      {message.time && message.time.completed && (
+                        <div
+                          className="flex items-center gap-1.5"
+                          title="Time taken"
+                        >
+                          <Clock className="w-3 h-3" />
+                          <span>
+                            {formatTime(
+                              message.time.completed - message.time.created,
+                            )}
+                          </span>
+                        </div>
+                      )}
+
+                      {message.cost !== undefined && message.cost > 0 && (
+                        <div
+                          className="flex items-center gap-1.5"
+                          title="Estimated cost"
+                        >
+                          <Coins className="w-3 h-3" />
+                          <span>${message.cost.toFixed(5)}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+
+      {/* Floating scroll to bottom button */}
+      {showScrollButton && (
+        <button
+          onClick={scrollToBottom}
+          className="absolute bottom-6 right-6 p-2.5 rounded-full bg-background border border-border shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all duration-200 animate-fade-in z-10"
+          title="Scroll to bottom"
+        >
+          <ArrowDown className="w-4 h-4 text-muted-foreground" />
+        </button>
+      )}
+    </div>
   );
 }
+

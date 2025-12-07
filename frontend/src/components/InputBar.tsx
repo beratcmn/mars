@@ -267,7 +267,7 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
 
   return (
     <div
-      className="border-t border-border/50 p-4 relative"
+      className="border-t border-border/40 py-4 px-6 relative bg-gradient-to-t from-background to-transparent shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";
@@ -296,8 +296,8 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertCommand(cmd.name)}
                   className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${index === commandSelectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
                     }`}
                 >
                   <Terminal className="h-4 w-4 opacity-70 shrink-0" />
@@ -333,13 +333,13 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             </div>
           </div>
         )}
-        <div className="relative flex items-center bg-transparent border border-border/50 rounded-md input-premium shadow-sm hover:border-border/70">
+        <div className="relative flex items-center bg-background border border-border/40 rounded-xl input-premium shadow-sm hover:border-border/60 hover:shadow-md transition-all duration-200">
           <div
             ref={editorRef}
             contentEditable
             onInput={handleInput}
             onKeyDown={handleKeyDown}
-            className="w-full min-h-[40px] max-h-[200px] overflow-y-auto py-2.5 pl-4 pr-12 text-sm outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/60"
+            className="w-full min-h-[48px] max-h-[200px] overflow-y-auto py-3 pl-5 pr-14 text-sm outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40 empty:before:font-light"
             data-placeholder="Ask to make changes, @mention files, run /commands"
             role="textbox"
             aria-multiline="true"
@@ -349,7 +349,7 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             size="icon"
             onClick={handleSend}
             disabled={isLoading}
-            className="absolute right-1.5 h-7 w-7 top-1.5 btn-press transition-all duration-150 hover:scale-105 active:scale-95"
+            className="absolute right-2 h-8 w-8 top-1/2 -translate-y-1/2 rounded-lg btn-press transition-all duration-150 hover:scale-105 active:scale-95"
           >
             <ArrowUp className="h-4 w-4" />
           </Button>

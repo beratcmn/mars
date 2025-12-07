@@ -6,23 +6,52 @@
     "modelName": "GLM-4.6"
   },
   "selectedAgent": {
-    "name": "general",
-    "description": "General-purpose agent for researching complex questions and executing multi-step tasks. Use this agent to execute multiple units of work in parallel.",
-    "tools": {
-      "todoread": false,
-      "todowrite": false
-    },
+    "name": "plan",
     "options": {},
     "permission": {
-      "edit": "allow",
+      "edit": "deny",
       "webfetch": "allow",
       "bash": {
-        "*": "allow"
-      },
-      "doom_loop": "ask",
-      "external_directory": "ask"
+        "*": "ask",
+        "cut*": "allow",
+        "diff*": "allow",
+        "du*": "allow",
+        "file *": "allow",
+        "find * -delete*": "ask",
+        "find * -exec*": "ask",
+        "find * -fprint*": "ask",
+        "find * -fls*": "ask",
+        "find * -fprintf*": "ask",
+        "find * -ok*": "ask",
+        "find *": "allow",
+        "git diff*": "allow",
+        "git log*": "allow",
+        "git show*": "allow",
+        "git status*": "allow",
+        "git branch": "allow",
+        "git branch -v": "allow",
+        "grep*": "allow",
+        "head*": "allow",
+        "less*": "allow",
+        "ls*": "allow",
+        "more*": "allow",
+        "pwd*": "allow",
+        "rg*": "allow",
+        "sort --output=*": "ask",
+        "sort -o *": "ask",
+        "sort*": "allow",
+        "stat*": "allow",
+        "tail*": "allow",
+        "tree -o *": "ask",
+        "tree*": "allow",
+        "uniq*": "allow",
+        "wc*": "allow",
+        "whereis*": "allow",
+        "which*": "allow"
+      }
     },
-    "mode": "subagent",
+    "tools": {},
+    "mode": "primary",
     "builtIn": true
   }
 }

@@ -9,6 +9,7 @@ import { FileExplorer } from "@/components/FileExplorer";
 import { CodeViewer } from "@/components/CodeViewer";
 import { TaskPanel } from "@/components/TaskPanel";
 import { type SelectedModel } from "@/components/ModelSelector";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import * as api from "@/lib/api";
 import type { Provider, Agent, FileEntry } from "@/lib/api";
 import { cn } from "@/lib/utils";
