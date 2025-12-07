@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Streamdown } from "streamdown";
 import {
   MessageSquarePlus,
   Zap,
@@ -278,9 +279,7 @@ export function ChatArea({
                 {/* Text content */}
                 {message.content && (
                   <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <div className="text-foreground leading-relaxed whitespace-pre-wrap">
-                      {message.content}
-                    </div>
+                    <Streamdown>{message.content}</Streamdown>
                   </div>
                 )}
 
