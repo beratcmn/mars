@@ -174,8 +174,11 @@ function ReasoningParts({ part }: { part: ReasoningPart }) {
 // Helper to format @mentions into markdown links that can be styled as badges
 function formatMentions(text: string): string {
   if (!text) return "";
-  // Replace @[path] with [path](#file:path)
-  return text.replace(/@\[(.*?)\]/g, "[$1](#file:$1)");
+  // Replace @[path] with [basename](#file:path)
+  return text.replace(/@\[(.*?)\]/g, (_match, path) => {
+    const basename = path.split("/").pop() || path;
+    return `[${basename}](#file:${path})`;
+  });
 }
 
 export function ChatArea({
@@ -183,6 +186,7 @@ export function ChatArea({
   hasActiveSession,
   onNewChat,
 }: ChatAreaProps) {
+
   // No active session - show start new chat prompt
   if (!hasActiveSession) {
     return (
@@ -267,8 +271,22 @@ export function ChatArea({
           <div key={message.id} className="group">
             {message.role === "user" ? (
               <div className="flex justify-end">
-                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%]">
-                  <p className="text-sm leading-relaxed">{message.content}</p>
+                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-2xl">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {message.content.split(/(@\[.*?\])/g).map((part, i) => {
+                      const match = part.match(/@\[(.*?)\]/);
+                      if (match) {
+                        const path = match[1];
+                        const basename = path.split("/").pop() || path;
+                        return (
+                          <span key={i} className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent">
+                            {basename}
+                          </span>
+                        );
+                      }
+                      return part;
+                    })}
+                  </p>
                 </div>
               </div>
             ) : (

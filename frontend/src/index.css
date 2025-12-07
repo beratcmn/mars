@@ -129,44 +129,42 @@ a[href^="#file:"] {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  background-color: var(--muted);
+  background-color: var(--secondary);
   border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 0 6px;
-  font-size: 0.85em;
+  border-radius: 9999px; /* Pill shape */
+  padding: 2px 10px;
+  font-size: 0.8em;
   font-family: var(--font-sans);
   color: var(--foreground);
   text-decoration: none;
   vertical-align: middle;
-  line-height: normal;
+  line-height: 1.2;
   transition: all 0.2s ease;
   cursor: default;
-  white-space: nowrap; /* Prevent breaking inside badge */
+  white-space: nowrap;
+  font-weight: 500;
+  opacity: 0.9;
 }
 
 /* Specifics for links (chat area) */
+a[href^="#file:"]:hover {
+  opacity: 1;
+  background-color: var(--secondary);
+  border-color: var(--ring);
+}
+
 a[href^="#file:"] {
-  pointer-events: none; /* Prevent navigation */
+  pointer-events: none;
 }
 
 /* Specifics for input chips */
 .mention-badge {
-  user-select: none; /* Treat as a unit */
+  user-select: none;
+  background-color: var(--secondary);
 }
 
-.mention-badge::before,
-a[href^="#file:"]::before {
-  content: "";
-  display: block;
-  width: 10px;
-  height: 10px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.6;
-}
-
-.dark .mention-badge::before,
-.dark a[href^="#file:"]::before {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e5e5e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' %3E%3Cpath d='M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z'/%3E%3Cpolyline points='14 2 14 8 20 8'/%3E%3C/svg%3E");
+/* Specifics for dark theme refinement */
+.dark .mention-badge,
+.dark a[href^="#file:"] {
+    background-color: var(--muted);
 }

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { useState, useRef, type KeyboardEvent } from "react";
 import { ArrowUp, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { searchFiles } from "@/lib/api";
@@ -16,7 +16,7 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
   // cursorPosition is no longer directly managed by state for contentEditable,
   // but the concept of where the cursor is relative to text is handled by Selection API.
   // Keeping it here for now, but it's not used in the new logic.
-  const [cursorPosition, setCursorPosition] = useState(0);
+
 
   // We need to sync the innerHTML/innerText to detect mentions
   // But standard React onChange doesn't work well with contentEditable for this specific rich text case
@@ -24,12 +24,6 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
 
   const getInputValue = () => {
     if (!editorRef.current) return "";
-    // We want the text content but preserving the logical structure for parsing if needed
-    // For now, simple text content is enough for the regex check, 
-    // BUT we need to be careful about not stripping the chip markers if we parse back.
-    // Actually, for the backend, we want standard text `@[path]`.
-    // So we can walk the nodes: text nodes are text, .mention-badge nodes are `@[textContent]`.
-
     let text = "";
     editorRef.current.childNodes.forEach((node) => {
       if (node.nodeType === Node.TEXT_NODE) {
@@ -37,14 +31,14 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         const el = node as HTMLElement;
         if (el.classList.contains("mention-badge")) {
-          // The chip displays "path", we want "@[path]"
-          // But wait, the chip content IS just the path usually? 
-          // If we put "@[path]" visually in chip, it might be double.
-          // Let's assume chip VISUALLY shows "path" or "@path".
-          // If we change insertMention to put the raw text inside, we are good.
-          // Let's stick to the plan: insert <span class="mention-badge">@[path]</span>
-          // So textContent will be "@[path]". Perfect.
-          text += el.textContent;
+          // Reconstruct the mention format from data attribute
+          const fullPath = el.getAttribute("data-full-path");
+          if (fullPath) {
+            text += `@[${fullPath}]`;
+          } else {
+            // Fallback if something weird happens (shouldn't)
+            text += el.textContent;
+          }
         } else {
           text += el.textContent; // fallback
         }
@@ -56,10 +50,6 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
   const handleInput = () => {
     // Check for trigger
     if (!editorRef.current) return;
-
-    // We need to find the cursor position relative to text content to support the existing regex logic
-    // This is hard with mixed nodes.
-    // Simplified approach: formatting check.
 
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
@@ -133,7 +123,6 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
           selection.addRange(range);
 
           // Trigger search immediately
-          // We call handleInput to ensure suggestions are refreshed
           handleInput();
           return;
         }
@@ -144,11 +133,15 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
         range.setStart(textNode, lastAtPos);
         range.deleteContents();
 
-        // 2. Insert Chip
+        // 2. Insert Chip with display name only
         const chip = document.createElement("span");
         chip.className = "mention-badge";
         chip.contentEditable = "false";
-        chip.textContent = `@[${filename}]`;
+        // Extract basename for display
+        const basename = filename.split("/").pop() || filename;
+        chip.textContent = basename;
+        // Store full path for retrieval
+        chip.setAttribute("data-full-path", filename);
 
         range.insertNode(chip);
 
