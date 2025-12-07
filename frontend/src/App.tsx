@@ -197,6 +197,20 @@ function App() {
     await createNewTab();
   }, [createNewTab]);
 
+  // Handle closing current active tab
+  const handleCloseActiveTab = useCallback(async () => {
+    if (activeTabId) {
+      await handleTabClose(activeTabId);
+    }
+  }, [activeTabId]);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onNewTab: handleNewTab,
+    onCloseTab: handleCloseActiveTab,
+    onToggleSidebar: () => setIsSidebarOpen((prev) => !prev),
+  });
+
   // Handle selecting a session from history
   const handleSessionSelect = useCallback(async (session: { id: string; title?: string }) => {
     // Check if this session is already open in a tab
