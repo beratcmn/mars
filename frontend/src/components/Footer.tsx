@@ -1,13 +1,17 @@
 import { Settings, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModelSelector, type SelectedModel } from "@/components/ModelSelector";
-import type { Provider } from "@/lib/api";
+import { AgentSelector } from "@/components/AgentSelector";
+import type { Provider, Agent } from "@/lib/api";
 
 interface FooterProps {
   providers: Provider[];
   connectedProviders: string[];
   selectedModel: SelectedModel | null;
   onModelChange: (model: SelectedModel) => void;
+  agents: Agent[];
+  selectedAgent: Agent | null;
+  onAgentChange: (agent: Agent) => void;
 }
 
 export function Footer({
@@ -15,6 +19,9 @@ export function Footer({
   connectedProviders,
   selectedModel,
   onModelChange,
+  agents,
+  selectedAgent,
+  onAgentChange,
 }: FooterProps) {
   return (
     <footer className="flex h-9 items-center justify-between border-t border-border/50 px-4 text-xs">
@@ -24,6 +31,12 @@ export function Footer({
           connectedProviders={connectedProviders}
           selectedModel={selectedModel}
           onModelChange={onModelChange}
+        />
+        <div className="w-px h-4 bg-border/50 mx-1" />
+        <AgentSelector
+          agents={agents}
+          selectedAgent={selectedAgent}
+          onAgentChange={onAgentChange}
         />
       </div>
       <div className="flex items-center gap-1">

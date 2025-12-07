@@ -68,6 +68,12 @@ export interface ProvidersResponse {
   default: { [key: string]: string };
 }
 
+export interface Agent {
+  name: string; // The identifier found in "name" field
+  description?: string;
+  [key: string]: unknown;
+}
+
 // PyWebView injects the `pywebview` object into the window
 declare global {
   interface Window {
@@ -106,6 +112,7 @@ interface MarsApiInterface {
     session_id: string,
     content: string,
     model?: Record<string, unknown>,
+    agent?: string,
   ): Promise<ApiResponse<boolean>>;
   list_messages(
     session_id?: string,
@@ -325,9 +332,10 @@ export async function streamMessage(
   sessionId: string,
   content: string,
   model?: Record<string, unknown>,
+  agent?: string,
 ): Promise<boolean> {
   if (!isPyWebView()) return false;
-  const result = await getApi().stream_message(sessionId, content, model);
+  const result = await getApi().stream_message(sessionId, content, model, agent);
   return result.success;
 }
 
@@ -384,10 +392,15 @@ export async function getProviders(): Promise<ProvidersResponse | null> {
   return result.success ? (result.providers as ProvidersResponse) : null;
 }
 
-export async function listAgents(): Promise<unknown[]> {
-  if (!isPyWebView()) return [];
+export async function listAgents(): Promise<Agent[]> {
+  if (!isPyWebView()) {
+      return [
+          { name: "default", description: "Default agent" },
+          { name: "coder", description: "Coding specialist" }
+      ];
+  }
   const result = await getApi().list_agents();
-  return (result.agents as unknown[]) || [];
+  return (result.agents as Agent[]) || [];
 }
 
 export async function getCurrentProject(): Promise<Project | null> {

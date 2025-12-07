@@ -4,5 +4,25 @@
     "providerName": "Z.AI Coding Plan",
     "modelId": "glm-4.6",
     "modelName": "GLM-4.6"
+  },
+  "selectedAgent": {
+    "name": "general",
+    "description": "General-purpose agent for researching complex questions and executing multi-step tasks. Use this agent to execute multiple units of work in parallel.",
+    "tools": {
+      "todoread": false,
+      "todowrite": false
+    },
+    "options": {},
+    "permission": {
+      "edit": "allow",
+      "webfetch": "allow",
+      "bash": {
+        "*": "allow"
+      },
+      "doom_loop": "ask",
+      "external_directory": "ask"
+    },
+    "mode": "subagent",
+    "builtIn": true
   }
 }

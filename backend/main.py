@@ -276,7 +276,11 @@ class MarsAPI:
                     logger.error(f"Failed to dispatch event to frontend: {e}")
 
     def stream_message(
-        self, session_id: str, content: str, model: Optional[dict] = None
+        self,
+        session_id: str,
+        content: str,
+        model: Optional[dict] = None,
+        agent: Optional[str] = None,
     ) -> dict:
         """Send a message asynchronously to trigger streaming events.
         
@@ -287,7 +291,7 @@ class MarsAPI:
             # Frontend now handles events directly via EventSource
             # No need to start the backend event listener
             self.client.send_message_async(
-                session_id=session_id, content=content, model=model
+                session_id=session_id, content=content, model=model, agent=agent
             )
             return {"success": True, "error": None}
         except Exception as e:

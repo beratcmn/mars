@@ -7,7 +7,7 @@ import { InputBar } from "@/components/InputBar";
 import { Footer } from "@/components/Footer";
 import { type SelectedModel } from "@/components/ModelSelector";
 import * as api from "@/lib/api";
-import type { Provider } from "@/lib/api";
+import type { Provider, Agent } from "@/lib/api";
 
 // Part types for streaming message content
 interface TextPart {
@@ -82,6 +82,8 @@ function App() {
   const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(
     null,
   );
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -196,7 +198,27 @@ function App() {
             }
           }
 
+
           if (modelToSelect) setSelectedModel(modelToSelect);
+
+          // Local Agents
+          const agentsList = await api.listAgents();
+          setAgents(agentsList);
+
+          // Load agent settings
+          try {
+            // Re-load settings as they might have been loaded above for model. 
+            // Ideally we load once, but for minimal diff we just call again or reuse if we stored it (we didn't).
+            const settings = await api.loadSettings();
+            if (settings.selectedAgent) {
+              const savedAgent = settings.selectedAgent as Agent;
+              // Verify it exists in the fetched list
+              const found = agentsList.find(a => a.name === savedAgent.name);
+              if (found) setSelectedAgent(savedAgent);
+            }
+          } catch (e) {
+            console.error("Failed to load agent settings:", e);
+          }
         }
 
         // Always start with a fresh session for simplicity
@@ -503,7 +525,14 @@ function App() {
           }
           : undefined;
 
-        await api.streamMessage(currentSessionId, content, modelParam);
+        const agentParam = selectedAgent ? selectedAgent.name : undefined;
+
+        await api.streamMessage(
+          currentSessionId,
+          content,
+          modelParam,
+          agentParam,
+        );
       } else {
         // Browser Mock
         await new Promise((r) => setTimeout(r, 500));
@@ -581,6 +610,20 @@ function App() {
             } catch (e) {
               console.error("Failed to save settings:", e);
             }
+          }
+        }}
+        agents={agents}
+        selectedAgent={selectedAgent}
+        onAgentChange={async (agent) => {
+          setSelectedAgent(agent);
+          try {
+            const currentSettings = await api.loadSettings();
+            await api.saveSettings({
+              ...currentSettings,
+              selectedAgent: agent,
+            });
+          } catch (e) {
+            console.error("Failed to save settings:", e);
           }
         }}
       />
