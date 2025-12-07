@@ -10,6 +10,10 @@ import logging
 from typing import Optional, Union
 from opencode_client import OpenCodeClient, OpenCodeServer, OpenCodeConfig
 
+# Preserve the launch working directory so subprocesses (opencode) can inherit it
+LAUNCH_CWD = os.getcwd()
+os.environ.setdefault("MARS_LAUNCH_CWD", LAUNCH_CWD)
+
 # Configure logging
 logging.basicConfig(
     level=logging.DEBUG,

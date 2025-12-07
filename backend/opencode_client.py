@@ -3,6 +3,7 @@ OpenCode API Client
 Wrapper for interacting with the OpenCode HTTP server.
 """
 
+import os
 import requests
 import subprocess
 import time
@@ -33,6 +34,35 @@ class OpenCodeServer:
         self._process: Optional[subprocess.Popen] = None
         self._running = False
 
+    def _resolve_workdir(self) -> Optional[str]:
+        """Prefer a user-visible working directory for opencode.
+
+        We capture the launch cwd in main.py (`MARS_LAUNCH_CWD`) so that when the
+        app is started via `open`/Finder the opencode subprocess still runs in the
+        directory the user launched from rather than inside the .app bundle.
+        """
+
+        candidates = [
+            os.environ.get("MARS_WORKDIR"),
+            os.environ.get("OPENCODE_WORKDIR"),
+            os.environ.get("MARS_LAUNCH_CWD"),
+            os.environ.get("PWD"),
+        ]
+
+        for path in candidates:
+            if path and os.path.isdir(path):
+                return path
+
+        try:
+            here = os.path.abspath(os.path.dirname(__file__))
+            fallback = os.path.abspath(os.path.join(here, "..", ".."))
+            if os.path.isdir(fallback):
+                return fallback
+        except Exception:
+            pass
+
+        return None
+
     def start(self) -> bool:
         """Start the OpenCode server process."""
         logger.info("Starting OpenCode server...")
@@ -47,7 +77,12 @@ class OpenCodeServer:
             return True
 
         try:
-            logger.info(f"Spawning opencode serve on port {self.config.port}")
+            workdir = self._resolve_workdir()
+            if workdir:
+                logger.info(f"Spawning opencode serve in cwd={workdir} on port {self.config.port}")
+            else:
+                logger.warning("Spawning opencode serve without explicit cwd (fallback)")
+
             self._process = subprocess.Popen(
                 [
                     "opencode",
@@ -59,6 +94,7 @@ class OpenCodeServer:
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                cwd=workdir or None,
             )
 
             # Wait for server to be ready
