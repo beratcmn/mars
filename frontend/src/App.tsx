@@ -655,12 +655,40 @@ function App() {
     try {
       if (api.isPyWebView()) {
         if (isSlashCommand) {
-          // Execute slash command - this triggers streaming events just like regular messages
-          await api.executeCommand(
+          // Execute slash command - returns result synchronously (not streaming)
+          const result = await api.executeCommand(
             commandName,
             commandArgs ? { text: commandArgs } : undefined,
             currentSessionId,
           );
+
+          // Handle the synchronous response - extract text from parts
+          if (result && typeof result === "object") {
+            const cmdResult = result as { info?: unknown; parts?: Array<{ type: string; text?: string }> };
+            const textContent = cmdResult.parts
+              ?.filter((p) => p.type === "text" && p.text)
+              .map((p) => p.text)
+              .join("") || "Command executed.";
+
+            setTabs((prev) =>
+              prev.map((tab) => {
+                if (tab.id === currentTabId && tab.type === "session") {
+                  const msgs = [...tab.messages];
+                  const lastMsg = msgs[msgs.length - 1];
+                  if (lastMsg && lastMsg.role === "assistant") {
+                    return {
+                      ...tab,
+                      messages: [
+                        ...msgs.slice(0, -1),
+                        { ...lastMsg, content: textContent },
+                      ],
+                    };
+                  }
+                }
+                return tab;
+              }),
+            );
+          }
         } else {
           // Regular message
           const modelParam = selectedModel
