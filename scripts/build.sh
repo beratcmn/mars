@@ -24,6 +24,7 @@ echo "==> Ensuring PyInstaller is available (via uv)"
 cd "$BACKEND"
 uv run python -m pip install --upgrade pip >/dev/null
 uv run python -m pip install --upgrade pyinstaller >/dev/null
+uv run python -m pip install --upgrade pillow >/dev/null
 
 echo "==> Packaging desktop app with PyInstaller (macOS) via uv"
 rm -rf "$PYI_DIST" "$PYI_WORK" "$PYI_SPEC/mars.spec"
