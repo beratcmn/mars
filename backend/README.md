@@ -93,13 +93,9 @@ def load_settings() -> dict
 ```
 
 ### Event System
-The backend implements a streaming event system that:
-1. Listens to OpenCode's global event stream
-2. Dispatches events to the frontend via CustomEvents
-3. Handles real-time updates for:
-   - Message part updates (text deltas, tool calls, reasoning)
-   - Message metadata (tokens, cost, timing)
-   - Session updates (title changes)
+The frontend connects directly to OpenCode's global SSE stream for real-time updates
+to avoid PyWebView's JS bridge buffering. No server-side dispatch via `evaluate_js`
+is used anymore.
 
 ## Development
 

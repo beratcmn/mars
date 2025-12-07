@@ -242,39 +242,6 @@ class MarsAPI:
 
     # === Streaming ===
 
-    def start_event_listener(self):
-        """Start the background thread to listen for server events."""
-        import threading
-
-        if not hasattr(self, "_event_thread") or not self._event_thread.is_alive():
-            self._event_thread = threading.Thread(target=self._event_loop, daemon=True)
-            self._event_thread.start()
-
-    def _event_loop(self):
-        """Listen for events and dispatch them to the frontend."""
-        import json
-        import time
-
-        logger.info("Starting event loop listener...")
-        for event in self.client.listen_events():
-            recv_time = time.time()
-            event_type = event.get('type', 'unknown')
-            
-            # Create JS code to dispatch a custom event
-            # We use 'mars:event' as the event name
-            json_event = json.dumps(event)
-            js_code = f"window.dispatchEvent(new CustomEvent('mars:event', {{ detail: {json_event} }}))"
-
-            if self.window:
-                # Dispatch to main window
-                try:
-                    self.window.evaluate_js(js_code)
-                    dispatch_time = time.time()
-                    # Log timing for debugging
-                    logger.debug(f"Event {event_type}: dispatched in {(dispatch_time - recv_time)*1000:.1f}ms")
-                except Exception as e:
-                    logger.error(f"Failed to dispatch event to frontend: {e}")
-
     def stream_message(
         self,
         session_id: str,
