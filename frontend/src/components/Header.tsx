@@ -1,18 +1,35 @@
 import { FolderOpen, ChevronDown, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SessionHistory } from "@/components/SessionHistory";
+
+interface Session {
+  id: string;
+  title?: string;
+  createdAt?: string;
+}
 
 interface HeaderProps {
   projectPath: string;
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
+  activeSessionId?: string;
+  onSessionSelect: (session: Session) => void;
+  onSessionDelete?: (sessionId: string) => void;
 }
 
-export function Header({ projectPath, isSidebarOpen, onToggleSidebar }: HeaderProps) {
+export function Header({
+  projectPath,
+  isSidebarOpen,
+  onToggleSidebar,
+  activeSessionId,
+  onSessionSelect,
+  onSessionDelete,
+}: HeaderProps) {
   return (
     <header className="flex h-11 items-center justify-between border-b border-border/50 px-4 relative">
 
-      {/* Left: Sidebar Toggle */}
-      <div className="flex items-center">
+      {/* Left: Sidebar Toggle + Session History */}
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
@@ -21,6 +38,11 @@ export function Header({ projectPath, isSidebarOpen, onToggleSidebar }: HeaderPr
         >
           <PanelLeft className={`h-4 w-4 ${isSidebarOpen ? "text-foreground" : ""}`} />
         </Button>
+        <SessionHistory
+          activeSessionId={activeSessionId}
+          onSessionSelect={onSessionSelect}
+          onSessionDelete={onSessionDelete}
+        />
       </div>
 
       {/* Center: Project Path */}

@@ -194,6 +194,78 @@ function App() {
     await createNewTab();
   }, [createNewTab]);
 
+  // Handle selecting a session from history
+  const handleSessionSelect = useCallback(async (session: { id: string; title?: string }) => {
+    // Check if this session is already open in a tab
+    const existingTab = tabs.find(
+      (t) => t.type === "session" && (t as SessionTab).sessionId === session.id
+    );
+
+    if (existingTab) {
+      setActiveTabId(existingTab.id);
+      if (api.isPyWebView()) {
+        await api.setCurrentSession(session.id);
+      }
+      return;
+    }
+
+    // Create a new tab for this session and load its messages
+    const tabId = `tab-${Date.now()}`;
+    let messages: Message[] = [];
+
+    if (api.isPyWebView()) {
+      try {
+        // Load existing messages for this session
+        const rawMessages = await api.listMessages(session.id);
+        messages = rawMessages.map((msg) => {
+          const textParts = msg.parts
+            .filter((p) => p.type === "text")
+            .map((p) => p.text || "")
+            .join("");
+          return {
+            id: msg.info.id,
+            role: msg.info.role as "user" | "assistant",
+            content: textParts,
+            modelID: msg.info.modelID,
+            providerID: msg.info.providerID,
+            cost: msg.info.cost,
+            tokens: msg.info.tokens,
+            time: msg.info.time,
+          };
+        });
+      } catch (error) {
+        console.error("Failed to load session messages:", error);
+      }
+      await api.setCurrentSession(session.id);
+    }
+
+    const newTab: SessionTab = {
+      id: tabId,
+      type: "session",
+      sessionId: session.id,
+      label: session.title || "Untitled",
+      icon: "sparkles",
+      messages,
+    };
+
+    setTabs((prev) => [...prev, newTab]);
+    setActiveTabId(tabId);
+  }, [tabs]);
+
+  // Handle deleting a session from history
+  const handleSessionDeleteFromHistory = useCallback(async (sessionId: string) => {
+    // Close the tab if it's open
+    const existingTab = tabs.find(
+      (t) => t.type === "session" && (t as SessionTab).sessionId === sessionId
+    );
+    if (existingTab) {
+      await handleTabClose(existingTab.id);
+    } else if (api.isPyWebView()) {
+      // Just delete from backend if not open
+      await api.deleteSession(sessionId);
+    }
+  }, [tabs, handleTabClose]);
+
   // Initialize on first load & Listen for events
   useEffect(() => {
     const init = async () => {
@@ -625,6 +697,9 @@ function App() {
         projectPath={projectRoot}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        activeSessionId={activeTab?.type === "session" ? (activeTab as SessionTab).sessionId : undefined}
+        onSessionSelect={handleSessionSelect}
+        onSessionDelete={handleSessionDeleteFromHistory}
       />
 
       <div className="flex flex-1 overflow-hidden">
