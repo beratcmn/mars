@@ -119,8 +119,8 @@ Prerequisites:
 - OpenCode CLI available on PATH (the packaged app will run it)
 - [uv](https://github.com/astral-sh/uv) installed (build script runs PyInstaller via `uv run`)
 
-Output binary:
-- `backend/build/mars`
+Output app bundle:
+- `backend/build/mars.app`
 
 ## Project Structure
 

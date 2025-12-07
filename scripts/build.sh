@@ -9,6 +9,7 @@ BACKEND="$ROOT/backend"
 PYI_DIST="$BACKEND/build"
 PYI_WORK="$BACKEND/build/.pyi-build"
 PYI_SPEC="$BACKEND/build"
+ICON="$BACKEND/assets/logo.png"
 
 echo "==> Building frontend (npm install + npm run build)"
 cd "$FRONTEND"
@@ -21,18 +22,20 @@ rsync -a "$FRONTEND/dist/" "$BACKEND/dist/"
 
 echo "==> Ensuring PyInstaller is available (via uv)"
 cd "$BACKEND"
-uv pip install --upgrade pip >/dev/null
-uv pip install --upgrade pyinstaller >/dev/null
+uv run python -m pip install --upgrade pip >/dev/null
+uv run python -m pip install --upgrade pyinstaller >/dev/null
 
 echo "==> Packaging desktop app with PyInstaller (macOS) via uv"
+rm -rf "$PYI_DIST" "$PYI_WORK" "$PYI_SPEC/mars.spec"
 mkdir -p "$PYI_DIST" "$PYI_WORK"
-uv run pyinstaller --noconfirm --onefile --windowed --name mars \
-  --icon assets/logo.png \
-  --add-data "dist:dist" \
+# Use onedir bundle for macOS (onefile + windowed is deprecated on macOS)
+uv run pyinstaller --noconfirm --windowed --name mars \
+  --icon "$ICON" \
+  --add-data "$BACKEND/dist:dist" \
   --distpath "$PYI_DIST" \
   --workpath "$PYI_WORK" \
   --specpath "$PYI_SPEC" \
   main.py
 
-APP_PATH="$PYI_DIST/mars"
+APP_PATH="$PYI_DIST/mars.app"
 echo "==> Build complete: $APP_PATH"
