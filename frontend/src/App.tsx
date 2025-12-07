@@ -76,7 +76,9 @@ function App() {
       if (api.isPyWebView()) {
         // Check if server is running
         const running = await api.isServerRunning();
+        console.log("Server running:", running);
         if (!running) {
+          console.log("Starting server...");
           await api.startServer();
         }
 
@@ -86,24 +88,10 @@ function App() {
           setProjectPath(project.name);
         }
 
-        // Load existing sessions or create new one
-        const sessions = await api.listSessions();
-        if (sessions.length > 0) {
-          // Load existing sessions as tabs
-          const sessionTabs: SessionTab[] = sessions.map((session, index) => ({
-            id: `tab-${session.id}`,
-            sessionId: session.id,
-            label: session.title || `Session ${index + 1}`,
-            icon: "sparkles" as const,
-            messages: [],
-          }));
-          setTabs(sessionTabs);
-          setActiveTabId(sessionTabs[0].id);
-          await api.setCurrentSession(sessionTabs[0].sessionId);
-        } else {
-          // Create first session
-          await createNewTab();
-        }
+        // Always start with a fresh session for simplicity
+        // (Old sessions might be stale and cause API errors)
+        console.log("Creating fresh session on startup...");
+        await createNewTab();
       } else {
         // Browser mode - create a mock tab
         await createNewTab();
