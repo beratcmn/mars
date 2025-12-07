@@ -36,10 +36,14 @@ function App() {
     let title = "Untitled";
 
     if (api.isPyWebView()) {
+      console.log("Creating session via PyWebView...");
       const session = await api.createSession();
+      console.log("Session creation result:", session);
       if (session) {
         sessionId = session.id;
         title = session.title || "Untitled";
+      } else {
+        console.error("Failed to create session! Will use fallback tab ID.");
       }
     }
 
@@ -51,11 +55,13 @@ function App() {
       messages: [],
     };
 
+    console.log("New tab created:", newTab);
+
     setTabs((prev) => [...prev, newTab]);
     setActiveTabId(tabId);
 
     // Set as current session in backend
-    if (api.isPyWebView()) {
+    if (api.isPyWebView() && sessionId !== tabId) {
       await api.setCurrentSession(sessionId);
     }
 
@@ -125,7 +131,16 @@ function App() {
 
   // Handle sending a message
   const handleSend = async (content: string) => {
-    if (!activeTab) return;
+    if (!activeTab) {
+      console.error("No active tab!");
+      return;
+    }
+
+    console.log("Sending message:", content);
+    console.log("Active tab:", activeTab.id, "Session:", activeTab.sessionId);
+
+    // Store the tab id locally to avoid closure issues
+    const currentTabId = activeTab.id;
 
     // Add user message to current tab
     const userMessage: Message = {
@@ -136,7 +151,7 @@ function App() {
 
     setTabs((prev) =>
       prev.map((tab) =>
-        tab.id === activeTabId
+        tab.id === currentTabId
           ? { ...tab, messages: [...tab.messages, userMessage] }
           : tab
       )
@@ -145,33 +160,52 @@ function App() {
 
     try {
       if (api.isPyWebView()) {
+        console.log("Using PyWebView API");
         // Real API call via PyWebView
         const { response } = await api.sendMessage(content, {
           sessionId: activeTab.sessionId,
         });
 
+        console.log("Response received:", response);
+
         if (response) {
-          // Extract text from response parts
-          const textParts = response.parts
+          // Extract text from response parts (with null checks)
+          const parts = response.parts || [];
+          const textParts = parts
             .filter((p) => p.type === "text" && p.text)
             .map((p) => p.text)
             .join("\n");
 
           const assistantMessage: Message = {
-            id: response.info.id,
+            id: response.info?.id || Date.now().toString(),
             role: "assistant",
-            content: textParts || "No response",
+            content: textParts || "No response content",
           };
 
           setTabs((prev) =>
             prev.map((tab) =>
-              tab.id === activeTabId
+              tab.id === currentTabId
                 ? { ...tab, messages: [...tab.messages, assistantMessage] }
+                : tab
+            )
+          );
+        } else {
+          // No response received
+          const errorMessage: Message = {
+            id: Date.now().toString(),
+            role: "assistant",
+            content: "Error: No response received from server",
+          };
+          setTabs((prev) =>
+            prev.map((tab) =>
+              tab.id === currentTabId
+                ? { ...tab, messages: [...tab.messages, errorMessage] }
                 : tab
             )
           );
         }
       } else {
+        console.log("Using browser mock mode");
         // Mock response for browser development
         await new Promise((resolve) => setTimeout(resolve, 1000));
         const assistantMessage: Message = {
@@ -180,15 +214,18 @@ function App() {
           content: `[Browser Dev Mode]\n\nThis is a placeholder response. Run with PyWebView for real OpenCode integration.\n\nYou said: "${content}"`,
         };
 
+        console.log("Adding mock response to tab:", currentTabId);
+
         setTabs((prev) =>
           prev.map((tab) =>
-            tab.id === activeTabId
+            tab.id === currentTabId
               ? { ...tab, messages: [...tab.messages, assistantMessage] }
               : tab
           )
         );
       }
     } catch (error) {
+      console.error("Error sending message:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
@@ -197,7 +234,7 @@ function App() {
 
       setTabs((prev) =>
         prev.map((tab) =>
-          tab.id === activeTabId
+          tab.id === currentTabId
             ? { ...tab, messages: [...tab.messages, errorMessage] }
             : tab
         )

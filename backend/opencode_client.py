@@ -6,8 +6,11 @@ Wrapper for interacting with the OpenCode HTTP server.
 import requests
 import subprocess
 import time
+import logging
 from typing import Optional, Any
 from dataclasses import dataclass
+
+logger = logging.getLogger("mars.opencode")
 
 
 @dataclass
@@ -32,10 +35,19 @@ class OpenCodeServer:
 
     def start(self) -> bool:
         """Start the OpenCode server process."""
+        logger.info("Starting OpenCode server...")
+
+        # First check if server is already running externally
+        if self._check_connectivity():
+            logger.info("OpenCode server already running externally")
+            self._running = True
+            return True
+
         if self._running:
             return True
 
         try:
+            logger.info(f"Spawning opencode serve on port {self.config.port}")
             self._process = subprocess.Popen(
                 [
                     "opencode",
@@ -51,23 +63,20 @@ class OpenCodeServer:
 
             # Wait for server to be ready
             max_attempts = 30
-            for _ in range(max_attempts):
-                try:
-                    response = requests.get(f"{self.config.base_url}/config", timeout=1)
-                    if response.status_code == 200:
-                        self._running = True
-                        return True
-                except requests.exceptions.ConnectionError:
-                    time.sleep(0.5)
+            for attempt in range(max_attempts):
+                if self._check_connectivity():
+                    logger.info(f"Server ready after {attempt + 1} attempts")
+                    self._running = True
+                    return True
+                time.sleep(0.5)
 
+            logger.error("Server failed to start within timeout")
             return False
         except FileNotFoundError:
-            print(
-                "Error: 'opencode' command not found. Make sure it's installed and in PATH."
-            )
+            logger.error("'opencode' command not found. Make sure it's installed and in PATH.")
             return False
         except Exception as e:
-            print(f"Error starting OpenCode server: {e}")
+            logger.error(f"Error starting OpenCode server: {e}", exc_info=True)
             return False
 
     def stop(self) -> bool:
@@ -82,15 +91,17 @@ class OpenCodeServer:
             self._running = False
         return True
 
-    def is_running(self) -> bool:
-        """Check if the server is running."""
-        if not self._running:
-            return False
+    def _check_connectivity(self) -> bool:
+        """Check if we can connect to the server."""
         try:
             response = requests.get(f"{self.config.base_url}/config", timeout=1)
             return response.status_code == 200
         except:
             return False
+
+    def is_running(self) -> bool:
+        """Check if the server is running (either by us or externally)."""
+        return self._check_connectivity()
 
 
 class OpenCodeClient:

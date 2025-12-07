@@ -5,8 +5,16 @@ Main entry point for the desktop application.
 
 import webview
 import os
+import logging
 from typing import Optional
 from opencode_client import OpenCodeClient, OpenCodeServer, OpenCodeConfig
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger("mars")
 
 
 class MarsAPI:
@@ -25,10 +33,13 @@ class MarsAPI:
 
     def start_server(self) -> dict:
         """Start the OpenCode server."""
+        logger.info("start_server called")
         try:
             success = self.server.start()
+            logger.info(f"Server start result: {success}")
             return {"success": success, "error": None}
         except Exception as e:
+            logger.error(f"Error starting server: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
     def stop_server(self) -> dict:
@@ -41,7 +52,9 @@ class MarsAPI:
 
     def is_server_running(self) -> bool:
         """Check if the server is running."""
-        return self.server.is_running()
+        running = self.server.is_running()
+        logger.info(f"is_server_running: {running}")
+        return running
 
     # === Session Management ===
 
@@ -96,17 +109,25 @@ class MarsAPI:
         agent: Optional[str] = None,
     ) -> dict:
         """Send a message and get a response."""
+        logger.info(f"send_message called with content: {content[:50]}...")
+        logger.info(f"session_id: {session_id}, current: {self._current_session_id}")
+
         try:
             sid = session_id or self._current_session_id
             if not sid:
+                logger.info("No session, creating new one...")
                 # Create a new session if none exists
                 session = self.client.create_session()
                 sid = session.get("id")
                 self._current_session_id = sid
+                logger.info(f"Created session: {sid}")
 
+            logger.info(f"Sending message to session: {sid}")
             response = self.client.send_message(
                 session_id=sid, content=content, model=model, agent=agent
             )
+            logger.info(f"Got response: {response}")
+
             return {
                 "success": True,
                 "response": response,
@@ -114,6 +135,7 @@ class MarsAPI:
                 "error": None,
             }
         except Exception as e:
+            logger.error(f"Error in send_message: {e}", exc_info=True)
             return {
                 "success": False,
                 "response": None,
