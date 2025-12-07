@@ -655,10 +655,29 @@ function App() {
     try {
       if (api.isPyWebView()) {
         if (isSlashCommand) {
+          // Find the command definition to get argument names
+          const availableCommands = await api.listCommands();
+          const commandDef = availableCommands.find((c) => c.name === commandName);
+
+          // Construct arguments
+          let args: Record<string, unknown> | undefined;
+
+          if (commandArgs) {
+            const cmdArgsDef = commandDef?.args || (commandDef as any)?.arguments;
+            if (cmdArgsDef && cmdArgsDef.length > 0) {
+              // Use the name of the first argument
+              const argName = cmdArgsDef[0].name;
+              args = { [argName]: commandArgs };
+            } else {
+              // Fallback: send as "text" if no definition found, or maybe the command expects raw text
+              args = { text: commandArgs };
+            }
+          }
+
           // Execute slash command - returns result synchronously (not streaming)
           const result = await api.executeCommand(
             commandName,
-            commandArgs ? { text: commandArgs } : undefined,
+            args,
             currentSessionId,
           );
 
@@ -681,6 +700,26 @@ function App() {
                       messages: [
                         ...msgs.slice(0, -1),
                         { ...lastMsg, content: textContent },
+                      ],
+                    };
+                  }
+                }
+                return tab;
+              }),
+            );
+          } else {
+            // Handle failure (result is null)
+            setTabs((prev) =>
+              prev.map((tab) => {
+                if (tab.id === currentTabId && tab.type === "session") {
+                  const msgs = [...tab.messages];
+                  const lastMsg = msgs[msgs.length - 1];
+                  if (lastMsg && lastMsg.role === "assistant") {
+                    return {
+                      ...tab,
+                      messages: [
+                        ...msgs.slice(0, -1),
+                        { ...lastMsg, content: "Command execution failed. Please check the command and arguments." },
                       ],
                     };
                   }
