@@ -92,6 +92,36 @@ export function isPyWebView(): boolean {
 }
 
 /**
+ * Wait for PyWebView to be ready
+ */
+export function waitForPyWebView(): Promise<boolean> {
+  return new Promise((resolve) => {
+    // If already available, resolve immediately
+    if (isPyWebView()) {
+      console.log("PyWebView already available");
+      resolve(true);
+      return;
+    }
+
+    // Wait for pywebviewready event
+    console.log("Waiting for pywebviewready event...");
+    const handleReady = () => {
+      console.log("PyWebView ready event fired!");
+      window.removeEventListener("pywebviewready", handleReady);
+      resolve(true);
+    };
+    window.addEventListener("pywebviewready", handleReady);
+
+    // Timeout after 5 seconds
+    setTimeout(() => {
+      window.removeEventListener("pywebviewready", handleReady);
+      console.log("PyWebView timeout - running in browser mode");
+      resolve(false);
+    }, 5000);
+  });
+}
+
+/**
  * Get the PyWebView API, or throw if not available
  */
 function getApi(): MarsApiInterface {

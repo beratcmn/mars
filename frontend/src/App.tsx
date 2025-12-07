@@ -73,7 +73,11 @@ function App() {
     const init = async () => {
       if (isInitialized) return;
 
-      if (api.isPyWebView()) {
+      // Wait for PyWebView to be ready (handles race condition)
+      const isPyWebViewReady = await api.waitForPyWebView();
+      console.log("PyWebView ready:", isPyWebViewReady);
+
+      if (isPyWebViewReady) {
         // Check if server is running
         const running = await api.isServerRunning();
         console.log("Server running:", running);
@@ -89,11 +93,11 @@ function App() {
         }
 
         // Always start with a fresh session for simplicity
-        // (Old sessions might be stale and cause API errors)
         console.log("Creating fresh session on startup...");
         await createNewTab();
       } else {
         // Browser mode - create a mock tab
+        console.log("Browser mode - creating mock tab");
         await createNewTab();
       }
 
