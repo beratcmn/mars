@@ -57,6 +57,20 @@ fi
 
 echo "Opening Mars in: $WORKDIR"
 
-# Launch mars.app with the absolute path as an argument
-# The path is now absolute, so it doesn't matter what cwd the app starts with
-open -a "$MARS_APP" --args "$WORKDIR"
+# Export environment variables that the app will inherit
+export MARS_WORKDIR="$WORKDIR"
+
+# Find the actual executable inside the .app bundle
+MARS_EXECUTABLE="$MARS_APP/Contents/MacOS/mars"
+
+if [ ! -x "$MARS_EXECUTABLE" ]; then
+    echo "Error: Could not find mars executable at $MARS_EXECUTABLE" >&2
+    exit 1
+fi
+
+# Launch the executable DIRECTLY (not via `open`) so it inherits our environment
+# This ensures PATH, MARS_WORKDIR, etc. are available to the app
+# Run in background and detach from terminal
+nohup "$MARS_EXECUTABLE" "$WORKDIR" > /dev/null 2>&1 &
+
+echo "Mars launched (PID: $!)"

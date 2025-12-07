@@ -63,6 +63,57 @@ class OpenCodeServer:
 
         return None
 
+    def _find_opencode_binary(self) -> str:
+        """Find the opencode binary, searching common locations if not in PATH.
+        
+        macOS .app bundles often have a minimal PATH, so we need to search
+        common installation locations for the opencode binary.
+        """
+        import shutil
+        
+        # First try the standard way (works if PATH is set correctly)
+        opencode_path = shutil.which("opencode")
+        if opencode_path:
+            logger.info(f"Found opencode in PATH: {opencode_path}")
+            return opencode_path
+        
+        # Common locations to search
+        home = os.path.expanduser("~")
+        candidates = [
+            # npm/node installations
+            f"{home}/.nvm/versions/node/v22.7.0/bin/opencode",
+            f"{home}/.nvm/versions/node/v20.0.0/bin/opencode",
+            f"{home}/.nvm/versions/node/v21.0.0/bin/opencode",
+            # Get current node version from environment if available
+            os.path.join(os.environ.get("NVM_BIN", ""), "opencode"),
+            # Global npm
+            "/usr/local/bin/opencode",
+            f"{home}/.npm-global/bin/opencode",
+            # Homebrew
+            "/opt/homebrew/bin/opencode",
+            # Bun
+            f"{home}/.bun/bin/opencode",
+            # Cargo (if installed via cargo)
+            f"{home}/.cargo/bin/opencode",
+            # Local bin
+            f"{home}/.local/bin/opencode",
+        ]
+        
+        # Also search any paths in the inherited PATH env var
+        path_env = os.environ.get("PATH", "")
+        for path_dir in path_env.split(os.pathsep):
+            candidate = os.path.join(path_dir, "opencode")
+            if candidate not in candidates:
+                candidates.append(candidate)
+        
+        for path in candidates:
+            if path and os.path.isfile(path) and os.access(path, os.X_OK):
+                logger.info(f"Found opencode at: {path}")
+                return path
+        
+        logger.warning(f"Could not find opencode binary. Searched: {candidates[:5]}...")
+        return "opencode"  # Fall back to hoping it's in PATH
+
     def _check_workdir_matches(self, desired_workdir: Optional[str]) -> bool:
         """Check if the running server is using the desired working directory."""
         if not desired_workdir:
@@ -139,8 +190,9 @@ class OpenCodeServer:
                     "Spawning opencode serve without explicit cwd (fallback)"
                 )
 
+            opencode_bin = self._find_opencode_binary()
             cmd = [
-                "opencode",
+                opencode_bin,
                 "serve",
                 "--port",
                 str(self.config.port),
