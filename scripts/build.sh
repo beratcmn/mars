@@ -32,6 +32,7 @@ mkdir -p "$PYI_DIST" "$PYI_WORK"
 # Use onedir bundle for macOS (onefile + windowed is deprecated on macOS)
 uv run pyinstaller --noconfirm --windowed --name mars \
   --icon "$ICON" \
+  --argv-emulation \
   --add-data "$BACKEND/dist:dist" \
   --distpath "$PYI_DIST" \
   --workpath "$PYI_WORK" \

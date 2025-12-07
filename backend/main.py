@@ -3,16 +3,50 @@ Mars Code Agent - PyWebView Backend
 Main entry point for the desktop application.
 """
 
-import webview
+import argparse
+import logging
 import os
 import sys
-import logging
 from typing import Optional, Union
+
+import webview
 from opencode_client import OpenCodeClient, OpenCodeServer, OpenCodeConfig
 
 # Preserve the launch working directory so subprocesses (opencode) can inherit it
 LAUNCH_CWD = os.getcwd()
 os.environ.setdefault("MARS_LAUNCH_CWD", LAUNCH_CWD)
+
+
+def capture_cli_workdir() -> None:
+    """Look for a workdir hint in CLI args and expose it via env.
+
+    When launched via `open ... --args` or with argv emulation on macOS, users can
+    pass a directory (positional or --workdir/-C) so opencode runs from there.
+    """
+
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("path", nargs="?")
+    parser.add_argument("-C", "--workdir")
+
+    try:
+        args, _ = parser.parse_known_args()
+    except Exception as exc:
+        logger.warning(f"Could not parse CLI args: {exc}")
+        return
+
+    for candidate in (args.workdir, args.path):
+        if not candidate:
+            continue
+
+        resolved = os.path.abspath(candidate)
+        if os.path.isdir(resolved):
+            os.environ.setdefault("MARS_WORKDIR", resolved)
+            logger.info(f"Using CLI workdir override: {resolved}")
+            return
+
+    # If args were provided but unusable, log once for visibility
+    if args.workdir or args.path:
+        logger.warning("CLI workdir argument provided but not a directory")
 
 # Configure logging
 logging.basicConfig(
@@ -463,6 +497,9 @@ def get_frontend_url() -> str:
 
 def main():
     """Main entry point."""
+    # Capture a user-supplied working directory (e.g., `open ... --args .`)
+    capture_cli_workdir()
+
     # Normalize working directory so bundled assets and opencode run relative to app root
     set_working_directory()
 
