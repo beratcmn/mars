@@ -60,11 +60,14 @@ class MarsAPI:
 
     def create_session(self, title: Optional[str] = None) -> dict:
         """Create a new session."""
+        logger.info(f"create_session called with title: {title}")
         try:
             session = self.client.create_session(title=title)
+            logger.info(f"Session created: {session}")
             self._current_session_id = session.get("id")
             return {"success": True, "session": session, "error": None}
         except Exception as e:
+            logger.error(f"Error creating session: {e}", exc_info=True)
             return {"success": False, "session": None, "error": str(e)}
 
     def list_sessions(self) -> dict:
