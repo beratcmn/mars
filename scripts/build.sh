@@ -39,5 +39,5 @@ uv run pyinstaller --noconfirm --windowed --name mars \
   --specpath "$PYI_SPEC" \
   main.py
 
-APP_PATH="$PYI_DIST/mars.app"
+APP_PATH="$PYI_DIST/Mars.app"
 echo "==> Build complete: $APP_PATH"
