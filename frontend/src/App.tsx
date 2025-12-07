@@ -13,12 +13,14 @@ interface TextPart {
   id: string;
   type: "text";
   text: string;
+  startTime?: number; // For ordering
 }
 
 interface ReasoningPart {
   id: string;
   type: "reasoning";
   text: string;
+  startTime?: number; // For ordering
 }
 
 interface ToolPart {
@@ -254,6 +256,7 @@ function App() {
                     id: part.id,
                     type: "text",
                     text: part.text || delta,
+                    startTime: part.time?.start || Date.now(),
                   });
                 }
 
@@ -280,6 +283,7 @@ function App() {
                   id: part.id,
                   type: "reasoning",
                   text: part.text,
+                  startTime: part.time?.start || Date.now(),
                 });
               }
               return {

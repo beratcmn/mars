@@ -20,12 +20,14 @@ interface TextPart {
   id: string;
   type: "text";
   text: string;
+  startTime?: number;
 }
 
 interface ReasoningPart {
   id: string;
   type: "reasoning";
   text: string;
+  startTime?: number;
 }
 
 interface ToolPart {
@@ -234,11 +236,24 @@ export function ChatArea({
     return `${s.toFixed(1)}s`;
   };
 
-  // Render parts for an assistant message
+  // Helper to get the start time for a part for sorting
+  const getPartStartTime = (part: MessagePart): number => {
+    if (part.type === "tool") {
+      return part.state.time?.start || 0;
+    }
+    return part.startTime || 0;
+  };
+
+  // Render parts for an assistant message - sorted by time
   const renderParts = (parts: MessagePart[] | undefined) => {
     if (!parts || parts.length === 0) return null;
 
-    return parts.map((part) => {
+    // Sort parts by their start time
+    const sortedParts = [...parts].sort(
+      (a, b) => getPartStartTime(a) - getPartStartTime(b)
+    );
+
+    return sortedParts.map((part) => {
       if (part.type === "reasoning") {
         return <ReasoningParts key={part.id} part={part} />;
       }

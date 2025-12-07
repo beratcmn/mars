@@ -259,6 +259,7 @@ class OpenCodeClient:
 
         url = f"{self.base_url}/global/event"
         try:
+            # Use stream=True with no buffering for real-time events
             with requests.get(url, stream=True) as response:
                 if response.status_code != 200:
                     logger.error(
@@ -266,21 +267,26 @@ class OpenCodeClient:
                     )
                     return
 
-                for line in response.iter_lines():
-                    if line:
-                        decoded_line = line.decode("utf-8")
-                        if decoded_line.startswith("data: "):
-                            data_str = decoded_line[6:]
-                            try:
-                                data = json.loads(data_str)
-                                # The useful part is usually in 'payload' based on our debug
-                                if "payload" in data:
-                                    yield data["payload"]
-                                else:
-                                    yield data
-                            except json.JSONDecodeError:
-                                logger.warning(
-                                    f"Failed to decode event data: {data_str}"
-                                )
+                # Use a buffer to accumulate partial lines
+                buffer = ""
+                # iter_content with small chunk_size for real-time streaming
+                for chunk in response.iter_content(chunk_size=1, decode_unicode=True):
+                    if chunk:
+                        buffer += chunk
+                        # Process complete lines
+                        while "\n" in buffer:
+                            line, buffer = buffer.split("\n", 1)
+                            line = line.strip()
+                            if line.startswith("data: "):
+                                data_str = line[6:]
+                                try:
+                                    data = json.loads(data_str)
+                                    # The useful part is usually in 'payload'
+                                    if "payload" in data:
+                                        yield data["payload"]
+                                    else:
+                                        yield data
+                                except json.JSONDecodeError:
+                                    logger.warning(f"Failed to decode event data: {data_str}")
         except Exception as e:
             logger.error(f"Error in event listener: {e}")
