@@ -101,6 +101,27 @@ python main.py
 
 The application will now load the production build from `frontend/dist/`.
 
+### Build desktop app (macOS, PyInstaller)
+
+From the repo root:
+
+```bash
+./scripts/build.sh
+```
+
+What it does:
+- Installs/builds the frontend with Vite
+- Copies the built `dist/` into `backend/dist/`
+- Packages the app with PyInstaller (icon from `backend/assets/logo.png`)
+
+Prerequisites:
+- macOS, Python 3.10+, Node.js 18+
+- OpenCode CLI available on PATH (the packaged app will run it)
+- [uv](https://github.com/astral-sh/uv) installed (build script runs PyInstaller via `uv run`)
+
+Output binary:
+- `backend/build/mars`
+
 ## Project Structure
 
 ```

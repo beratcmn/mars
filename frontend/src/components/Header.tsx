@@ -1,4 +1,4 @@
-import { FolderOpen, PanelLeft } from "lucide-react";
+import { PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SessionHistory } from "@/components/SessionHistory";
 import * as api from "@/lib/api";

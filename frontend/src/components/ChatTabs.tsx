@@ -1,4 +1,4 @@
-import { File, Sparkles, Plus, X } from "lucide-react";
+import { File, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Tab {

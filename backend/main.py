@@ -5,6 +5,7 @@ Main entry point for the desktop application.
 
 import webview
 import os
+import sys
 import logging
 from typing import Optional, Union
 from opencode_client import OpenCodeClient, OpenCodeServer, OpenCodeConfig
@@ -420,14 +421,20 @@ def get_frontend_url() -> str:
     # In development, use Vite dev server
     dev_url = "http://localhost:5173"
 
-    # In production, load from built files
-    dist_path = os.path.join(
-        os.path.dirname(__file__), "..", "frontend", "dist", "index.html"
+    # When bundled with PyInstaller, assets are extracted to _MEIPASS
+    if getattr(sys, "_MEIPASS", None):
+        bundled_dist = os.path.join(sys._MEIPASS, "dist", "index.html")
+        if os.path.exists(bundled_dist):
+            return f"file://{bundled_dist}"
+
+    # When running from source, prefer local built dist inside backend/
+    dist_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "dist", "index.html")
     )
+    if os.path.exists(dist_path):
+        return f"file://{dist_path}"
 
-    # if os.path.exists(dist_path):
-    #     return f"file://{os.path.abspath(dist_path)}"
-
+    # Fallback to dev server
     return dev_url
 
 
