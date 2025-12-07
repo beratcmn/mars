@@ -278,11 +278,14 @@ class MarsAPI:
     def stream_message(
         self, session_id: str, content: str, model: Optional[dict] = None
     ) -> dict:
-        """Send a message asynchronously to trigger streaming events."""
+        """Send a message asynchronously to trigger streaming events.
+        
+        Note: The frontend now connects directly to the OpenCode SSE endpoint
+        via EventSource for real-time streaming without buffering.
+        """
         try:
-            # Ensure event listener is running
-            self.start_event_listener()
-
+            # Frontend now handles events directly via EventSource
+            # No need to start the backend event listener
             self.client.send_message_async(
                 session_id=session_id, content=content, model=model
             )

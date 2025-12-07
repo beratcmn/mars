@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { flushSync } from "react-dom";
 import { Header } from "@/components/Header";
 import { ChatTabs, type Tab } from "@/components/ChatTabs";
 import { ChatArea } from "@/components/ChatArea";
@@ -229,25 +230,22 @@ function App() {
         const delta = props.delta as string | undefined;
         const sessionId = part.sessionID as string;
 
-        setTabs((prevTabs) =>
-          prevTabs.map((tab) => {
-            if (tab.sessionId !== sessionId) return tab;
+        // Handle text parts with delta streaming - use flushSync for immediate updates
+        if (part.type === "text" && delta && typeof delta === "string") {
+          flushSync(() => {
+            setTabs((prevTabs) =>
+              prevTabs.map((tab) => {
+                if (tab.sessionId !== sessionId) return tab;
 
-            const messages = [...tab.messages];
-            const lastMsg = messages[messages.length - 1];
+                const messages = [...tab.messages];
+                const lastMsg = messages[messages.length - 1];
 
-            if (!lastMsg || lastMsg.role !== "assistant") return tab;
+                if (!lastMsg || lastMsg.role !== "assistant") return tab;
 
-            const existingParts = lastMsg.parts || [];
-            let updatedParts = [...existingParts];
-
-            // Handle text parts with delta streaming
-            if (part.type === "text") {
-              if (delta && typeof delta === "string") {
-                // Update content for backwards compatibility
+                const existingParts = lastMsg.parts || [];
+                const updatedParts = [...existingParts];
                 const newContent = lastMsg.content + delta;
 
-                // Also track in parts
                 const existingTextPart = updatedParts.find(
                   (p): p is TextPart => p.type === "text" && p.id === part.id,
                 );
@@ -271,8 +269,24 @@ function App() {
                     { ...lastMsg, content: newContent, parts: updatedParts },
                   ],
                 };
-              }
-            }
+              }),
+            );
+          });
+          return;
+        }
+
+        // Handle reasoning and tool parts (non-text)
+        setTabs((prevTabs) =>
+          prevTabs.map((tab) => {
+            if (tab.sessionId !== sessionId) return tab;
+
+            const messages = [...tab.messages];
+            const lastMsg = messages[messages.length - 1];
+
+            if (!lastMsg || lastMsg.role !== "assistant") return tab;
+
+            const existingParts = lastMsg.parts || [];
+            const updatedParts = [...existingParts];
 
             // Handle reasoning parts
             if (part.type === "reasoning") {
