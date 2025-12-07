@@ -49,7 +49,7 @@ export function ChatTabs({
             className="flex items-center gap-2 px-3 py-2 text-sm"
           >
             {getIcon(tab.icon)}
-            <span className="truncate max-w-[200px]">{tab.label}</span>
+            <span className={`truncate max-w-[200px] ${activeTabId === tab.id ? 'serif-title-sm' : ''}`}>{tab.label}</span>
           </button>
           {/* Close button */}
           <button

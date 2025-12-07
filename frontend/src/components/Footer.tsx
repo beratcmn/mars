@@ -40,6 +40,7 @@ export function Footer({
         />
       </div>
       <div className="flex items-center gap-1">
+        <span className="serif-title-sm text-muted-foreground/40 mr-2">Mars</span>
         <Button
           variant="ghost"
           size="icon"

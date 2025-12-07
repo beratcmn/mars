@@ -98,7 +98,7 @@ export function SessionHistory({
                 sideOffset={8}
             >
                 <div className="p-3 border-b border-border/50">
-                    <h3 className="text-sm font-medium flex items-center gap-2">
+                    <h3 className="serif-title text-base flex items-center gap-2">
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         Session History
                     </h3>
@@ -110,7 +110,7 @@ export function SessionHistory({
                             Loading sessions...
                         </div>
                     ) : sessions.length === 0 ? (
-                        <div className="p-4 text-center text-sm text-muted-foreground">
+                        <div className="p-4 text-center serif-title-sm text-muted-foreground">
                             No sessions yet
                         </div>
                     ) : (

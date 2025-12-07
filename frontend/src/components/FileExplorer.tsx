@@ -31,7 +31,7 @@ export function FileExplorer({ onFileSelect, className, onRootLoaded }: FileExpl
 
   return (
     <div className={cn("h-full overflow-y-auto bg-muted/20", className)}>
-      <div className="p-2 font-semibold text-xs text-muted-foreground uppercase tracking-wider mb-2">
+      <div className="p-2 serif-title text-base text-muted-foreground mb-2">
         Explorer
       </div>
       <div className="text-sm">

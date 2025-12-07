@@ -657,11 +657,40 @@ html {
 }
 
 /* ========================================
-   Quick Win #1: Numbered Heading Contrast
-   Note: CSS :first-letter cannot distinguish numbers from letters,
-   so we rely on markdown rendering for proper numbered lists instead.
-   The italic serif headings now apply uniformly.
+   Premium Serif Title Utilities
+   Elegant italic serif for titles and headings
    ======================================== */
+
+.serif-title {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.serif-title-sm {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+}
+
+.serif-title-lg {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.serif-title-xl {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
 
 /* ========================================
    Quick Win #2: Premium Input Bar

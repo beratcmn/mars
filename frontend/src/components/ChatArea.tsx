@@ -113,7 +113,7 @@ function ToolCallPart({ part }: { part: ToolPart }) {
             </div>
             <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-sm text-foreground">Task</span>
+                <span className="serif-title-sm text-foreground">Task</span>
                 {isRunning && (
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase tracking-wider font-medium">
                     Running
@@ -245,7 +245,7 @@ function ReasoningParts({ part }: { part: ReasoningPart }) {
           <ChevronRight className="w-3 h-3" />
         )}
         <Brain className="w-3 h-3" />
-        <span className="italic">Thinking...</span>
+        <span className="serif-title-sm">Thinking...</span>
       </button>
 
       {isExpanded && (
