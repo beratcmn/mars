@@ -191,6 +191,52 @@ export function onEvent(
   return () => window.removeEventListener(eventName, handler);
 }
 
+// OpenCode server port (same as backend config)
+const OPENCODE_PORT = 4096;
+
+/**
+ * Connect directly to OpenCode SSE event stream using browser's native EventSource.
+ * This bypasses pywebview's evaluate_js which causes buffering.
+ * Returns a cleanup function to close the connection.
+ */
+export function connectToEventStream(
+  onEvent: (payload: unknown) => void,
+): () => void {
+  const url = `http://127.0.0.1:${OPENCODE_PORT}/global/event`;
+  
+  console.log("Connecting to SSE stream:", url);
+  const eventSource = new EventSource(url);
+  
+  eventSource.onopen = () => {
+    console.log("SSE connection opened");
+  };
+  
+  eventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      // The useful part is usually in 'payload'
+      if (data.payload) {
+        onEvent(data.payload);
+      } else {
+        onEvent(data);
+      }
+    } catch (e) {
+      console.error("Failed to parse SSE event:", e);
+    }
+  };
+  
+  eventSource.onerror = (error) => {
+    console.error("SSE connection error:", error);
+    // EventSource will automatically try to reconnect
+  };
+  
+  // Return cleanup function
+  return () => {
+    console.log("Closing SSE connection");
+    eventSource.close();
+  };
+}
+
 // === Server Management ===
 
 export async function checkServerStatus(): Promise<boolean> {

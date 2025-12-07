@@ -212,19 +212,22 @@ function App() {
     init();
   }, [isInitialized, createNewTab]);
 
-  // Separate effect for Event Listening to avoid stale state issues if possible
-  // However, since we need access to setTabs, we can put it here.
+  // Separate effect for Event Listening using direct SSE connection
+  // This bypasses pywebview's evaluate_js buffering
   useEffect(() => {
     if (!isInitialized) return;
 
-    const cleanup = api.onEvent("mars:event", (event: CustomEvent) => {
-      const payload = event.detail;
-      console.log("Mars Event:", payload);
+    // Define the event handler
+    const handleEvent = (payload: unknown) => {
+      const event = payload as Record<string, unknown>;
+      console.log("Mars Event:", event);
 
       // Handle message.part.updated - text deltas, tool calls, reasoning
-      if (payload.type === "message.part.updated" && payload.properties) {
-        const { part, delta } = payload.properties;
-        const sessionId = part.sessionID;
+      if (event.type === "message.part.updated" && event.properties) {
+        const props = event.properties as Record<string, unknown>;
+        const part = props.part as Record<string, unknown>;
+        const delta = props.delta as string | undefined;
+        const sessionId = part.sessionID as string;
 
         setTabs((prevTabs) =>
           prevTabs.map((tab) => {
@@ -250,13 +253,14 @@ function App() {
                 );
                 if (existingTextPart) {
                   existingTextPart.text =
-                    part.text || existingTextPart.text + delta;
+                    (part.text as string) || existingTextPart.text + delta;
                 } else {
+                  const partTime = part.time as Record<string, number> | undefined;
                   updatedParts.push({
-                    id: part.id,
+                    id: part.id as string,
                     type: "text",
-                    text: part.text || delta,
-                    startTime: part.time?.start || Date.now(),
+                    text: (part.text as string) || delta,
+                    startTime: partTime?.start || Date.now(),
                   });
                 }
 
@@ -277,13 +281,14 @@ function App() {
                   p.type === "reasoning" && p.id === part.id,
               );
               if (existingReasoningPart) {
-                existingReasoningPart.text = part.text || "";
+                existingReasoningPart.text = (part.text as string) || "";
               } else if (part.text) {
+                const partTime = part.time as Record<string, number> | undefined;
                 updatedParts.push({
-                  id: part.id,
+                  id: part.id as string,
                   type: "reasoning",
-                  text: part.text,
-                  startTime: part.time?.start || Date.now(),
+                  text: part.text as string,
+                  startTime: partTime?.start || Date.now(),
                 });
               }
               return {
@@ -300,21 +305,22 @@ function App() {
               const existingToolPart = updatedParts.find(
                 (p): p is ToolPart => p.type === "tool" && p.id === part.id,
               );
+              const partState = part.state as Record<string, unknown> | undefined;
               const toolState = {
-                status: part.state?.status || "pending",
-                input: part.state?.input,
-                output: part.state?.output,
-                error: part.state?.error,
-                time: part.state?.time,
+                status: partState?.status || "pending",
+                input: partState?.input,
+                output: partState?.output,
+                error: partState?.error,
+                time: partState?.time,
               } as ToolPart["state"];
 
               if (existingToolPart) {
                 existingToolPart.state = toolState;
               } else {
                 updatedParts.push({
-                  id: part.id,
+                  id: part.id as string,
                   type: "tool",
-                  tool: part.tool || "unknown",
+                  tool: (part.tool as string) || "unknown",
                   state: toolState,
                 });
               }
@@ -333,12 +339,16 @@ function App() {
       }
 
       // Handle message.updated to capture metadata (tokens, cost, time)
-      if (payload.type === "message.updated" && payload.properties?.info) {
-        const info = payload.properties.info;
-        const sessionId = info.sessionID;
+      if (event.type === "message.updated" && event.properties) {
+        const props = event.properties as Record<string, unknown>;
+        const info = props.info as Record<string, unknown>;
+        if (!info) return;
+
+        const sessionId = info.sessionID as string;
 
         // Only update assistant messages with metadata
         if (info.role === "assistant" && info.tokens) {
+          const tokens = info.tokens as Record<string, unknown>;
           setTabs((prevTabs) =>
             prevTabs.map((tab) => {
               if (tab.sessionId === sessionId) {
@@ -352,15 +362,15 @@ function App() {
                       ...messages.slice(0, -1),
                       {
                         ...lastMsg,
-                        modelID: info.modelID || lastMsg.modelID,
-                        providerID: info.providerID || lastMsg.providerID,
-                        cost: info.cost,
+                        modelID: (info.modelID as string) || lastMsg.modelID,
+                        providerID: (info.providerID as string) || lastMsg.providerID,
+                        cost: info.cost as number,
                         tokens: {
-                          input: info.tokens.input,
-                          output: info.tokens.output,
-                          cache: info.tokens.cache,
+                          input: tokens.input as number,
+                          output: tokens.output as number,
+                          cache: tokens.cache as { read: number; write: number },
                         },
-                        time: info.time,
+                        time: info.time as { created: number; completed: number },
                       },
                     ],
                   };
@@ -373,10 +383,13 @@ function App() {
       }
 
       // Handle session.updated to capture title changes
-      if (payload.type === "session.updated" && payload.properties?.info) {
-        const info = payload.properties.info;
-        const sessionId = info.id;
-        const newTitle = info.title;
+      if (event.type === "session.updated" && event.properties) {
+        const props = event.properties as Record<string, unknown>;
+        const info = props.info as Record<string, unknown>;
+        if (!info) return;
+
+        const sessionId = info.id as string;
+        const newTitle = info.title as string;
 
         if (sessionId && newTitle) {
           setTabs((prevTabs) =>
@@ -389,7 +402,10 @@ function App() {
           );
         }
       }
-    });
+    };
+
+    // Connect directly to SSE stream (bypasses pywebview buffering)
+    const cleanup = api.connectToEventStream(handleEvent);
 
     return () => cleanup();
   }, [isInitialized]);
