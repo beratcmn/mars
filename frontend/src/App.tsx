@@ -127,24 +127,49 @@ function App() {
           setProviders(providersData.all);
           setConnectedProviders(providersData.connected || []);
 
-          // Set default model from first connected provider
+          // Set default model: check backend settings first, then fallback to API default
           const connectedList = providersData.connected || [];
-          const defaultProvider = providersData.all.find((p) =>
-            connectedList.includes(p.id),
-          );
-          if (defaultProvider && defaultProvider.models?.length > 0) {
-            const defaultModelId =
-              providersData.default?.[defaultProvider.id] ||
-              defaultProvider.models[0].id;
-            const defaultModel = defaultProvider.models.find(
-              (m) => m.id === defaultModelId,
+          let modelToSelect: SelectedModel | null = null;
+
+          try {
+            // Load settings from backend JSON
+            const settings = await api.loadSettings();
+            console.log("Loaded settings:", settings);
+
+            if (settings.selectedModel) {
+              const saved = settings.selectedModel as SelectedModel;
+              // Verify it still exists/is valid
+              const provider = providersData.all.find(p => p.id === saved.providerId);
+              if (provider) {
+                modelToSelect = saved;
+              }
+            }
+          } catch (e) {
+            console.error("Failed to load settings:", e);
+          }
+
+          if (!modelToSelect) {
+            const defaultProvider = providersData.all.find((p) =>
+              connectedList.includes(p.id),
             );
-            setSelectedModel({
-              providerId: defaultProvider.id,
-              providerName: defaultProvider.name,
-              modelId: defaultModelId,
-              modelName: defaultModel?.name || defaultModelId,
-            });
+            if (defaultProvider && defaultProvider.models?.length > 0) {
+              const defaultModelId =
+                providersData.default?.[defaultProvider.id] ||
+                defaultProvider.models[0].id;
+              const defaultModel = defaultProvider.models.find(
+                (m) => m.id === defaultModelId,
+              );
+              modelToSelect = {
+                providerId: defaultProvider.id,
+                providerName: defaultProvider.name,
+                modelId: defaultModelId,
+                modelName: defaultModel?.name || defaultModelId,
+              };
+            }
+          }
+
+          if (modelToSelect) {
+            setSelectedModel(modelToSelect);
           }
         }
 
@@ -295,6 +320,25 @@ function App() {
                 : tab,
             ),
           );
+
+          // Update session title (often changes after first message)
+          if (activeTab.sessionId) {
+            try {
+              const updatedSession = await api.getSession(activeTab.sessionId);
+              if (updatedSession && updatedSession.title && updatedSession.title !== "Untitled") {
+                console.log("Updating session title to:", updatedSession.title);
+                setTabs((prev) =>
+                  prev.map((tab) =>
+                    tab.sessionId === activeTab.sessionId
+                      ? { ...tab, label: updatedSession.title || tab.label }
+                      : tab
+                  )
+                );
+              }
+            } catch (e) {
+              console.error("Failed to update session title:", e);
+            }
+          }
         } else {
           // No response received
           const errorMessage: Message = {
@@ -391,7 +435,18 @@ function App() {
         providers={providers}
         connectedProviders={connectedProviders}
         selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
+        onModelChange={async (model) => {
+          setSelectedModel(model);
+          if (model) {
+            try {
+              // Load existing settings first to merge
+              const currentSettings = await api.loadSettings();
+              await api.saveSettings({ ...currentSettings, selectedModel: model });
+            } catch (e) {
+              console.error("Failed to save settings:", e);
+            }
+          }
+        }}
       />
     </div>
   );

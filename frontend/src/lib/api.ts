@@ -117,6 +117,10 @@ interface MarsApiInterface {
     args?: Record<string, unknown>,
     session_id?: string,
   ): Promise<ApiResponse<unknown>>;
+  
+  // Settings
+  save_settings(settings: Record<string, unknown>): Promise<ApiResponse<boolean>>;
+  load_settings(): Promise<ApiResponse<Record<string, unknown>>>;
 }
 
 /**
@@ -342,4 +346,18 @@ export async function executeCommand(
   if (!isPyWebView()) return null;
   const result = await getApi().execute_command(command, args, sessionId);
   return result.success ? result.result : null;
+}
+
+// === Settings ===
+
+export async function saveSettings(settings: Record<string, unknown>): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().save_settings(settings);
+  return result.success;
+}
+
+export async function loadSettings(): Promise<Record<string, unknown>> {
+  if (!isPyWebView()) return {};
+  const result = await getApi().load_settings();
+  return result.success ? (result.settings as Record<string, unknown>) : {};
 }

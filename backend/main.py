@@ -234,6 +234,32 @@ class MarsAPI:
             return {"success": True, "result": result, "error": None}
         except Exception as e:
             return {"success": False, "result": None, "error": str(e)}
+    # === Settings ===
+
+    def save_settings(self, settings: dict) -> dict:
+        """Save settings to a local JSON file."""
+        try:
+            import json
+            settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
+            with open(settings_path, "w") as f:
+                json.dump(settings, f, indent=2)
+            return {"success": True, "error": None}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def load_settings(self) -> dict:
+        """Load settings from a local JSON file."""
+        try:
+            import json
+            settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
+            if not os.path.exists(settings_path):
+                return {"success": True, "settings": {}, "error": None}
+            
+            with open(settings_path, "r") as f:
+                settings = json.load(f)
+            return {"success": True, "settings": settings, "error": None}
+        except Exception as e:
+            return {"success": False, "settings": {}, "error": str(e)}
 
 
 def get_frontend_url() -> str:
