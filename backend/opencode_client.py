@@ -259,34 +259,30 @@ class OpenCodeClient:
 
         url = f"{self.base_url}/global/event"
         try:
-            # Use stream=True with no buffering for real-time events
-            with requests.get(url, stream=True) as response:
-                if response.status_code != 200:
-                    logger.error(
-                        f"Failed to connect to event stream: {response.status_code}"
-                    )
-                    return
-
-                # Use a buffer to accumulate partial lines
-                buffer = ""
-                # iter_content with small chunk_size for real-time streaming
-                for chunk in response.iter_content(chunk_size=1, decode_unicode=True):
-                    if chunk:
-                        buffer += chunk
-                        # Process complete lines
-                        while "\n" in buffer:
-                            line, buffer = buffer.split("\n", 1)
-                            line = line.strip()
-                            if line.startswith("data: "):
-                                data_str = line[6:]
-                                try:
-                                    data = json.loads(data_str)
-                                    # The useful part is usually in 'payload'
-                                    if "payload" in data:
-                                        yield data["payload"]
-                                    else:
-                                        yield data
-                                except json.JSONDecodeError:
-                                    logger.warning(f"Failed to decode event data: {data_str}")
+            # Use requests with stream=True and iter_content for truly unbuffered SSE
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            
+            # Read byte-by-byte and manually build lines for true real-time streaming
+            # This avoids all internal buffering that iter_lines() has
+            buffer = ""
+            for chunk in response.iter_content(chunk_size=1, decode_unicode=True):
+                if chunk:
+                    buffer += chunk
+                    # Check if we have a complete line
+                    while "\n" in buffer:
+                        line, buffer = buffer.split("\n", 1)
+                        line = line.strip()
+                        if line.startswith("data: "):
+                            data_str = line[6:]
+                            try:
+                                data = json.loads(data_str)
+                                # The useful part is usually in 'payload'
+                                if "payload" in data:
+                                    yield data["payload"]
+                                else:
+                                    yield data
+                            except json.JSONDecodeError:
+                                logger.warning(f"Failed to decode event data: {data_str}")
         except Exception as e:
             logger.error(f"Error in event listener: {e}")
