@@ -607,6 +607,24 @@ function App() {
     const currentTabId = activeTab.id;
     const currentSessionId = activeTab.sessionId;
 
+    // Check if this is a slash command
+    const isSlashCommand = content.trim().startsWith("/");
+
+    // For slash commands, parse command name and arguments
+    let commandName = "";
+    let commandArgs = "";
+    if (isSlashCommand) {
+      const trimmed = content.trim().slice(1); // Remove leading /
+      const spaceIndex = trimmed.indexOf(" ");
+      if (spaceIndex === -1) {
+        commandName = trimmed;
+        commandArgs = "";
+      } else {
+        commandName = trimmed.slice(0, spaceIndex);
+        commandArgs = trimmed.slice(spaceIndex + 1).trim();
+      }
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -636,25 +654,37 @@ function App() {
 
     try {
       if (api.isPyWebView()) {
-        const modelParam = selectedModel
-          ? {
-            providerID: selectedModel.providerId,
-            modelID: selectedModel.modelId,
-          }
-          : undefined;
+        if (isSlashCommand) {
+          // Execute slash command - this triggers streaming events just like regular messages
+          await api.executeCommand(
+            commandName,
+            commandArgs ? { text: commandArgs } : undefined,
+            currentSessionId,
+          );
+        } else {
+          // Regular message
+          const modelParam = selectedModel
+            ? {
+              providerID: selectedModel.providerId,
+              modelID: selectedModel.modelId,
+            }
+            : undefined;
 
-        const agentParam = selectedAgent ? selectedAgent.name : undefined;
+          const agentParam = selectedAgent ? selectedAgent.name : undefined;
 
-        await api.streamMessage(
-          currentSessionId,
-          content,
-          modelParam,
-          agentParam,
-        );
+          await api.streamMessage(
+            currentSessionId,
+            content,
+            modelParam,
+            agentParam,
+          );
+        }
       } else {
         // Browser Mock
         await new Promise((r) => setTimeout(r, 500));
-        const mockText = "This is a mock streaming response in the browser.";
+        const mockText = isSlashCommand
+          ? `Executed command: /${commandName}${commandArgs ? ` with args: ${commandArgs}` : ""}`
+          : "This is a mock streaming response in the browser.";
         for (const char of mockText) {
           setTabs((prev) =>
             prev.map((t) => {

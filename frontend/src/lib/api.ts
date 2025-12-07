@@ -74,6 +74,19 @@ export interface Agent {
   [key: string]: unknown;
 }
 
+// Command types for slash commands
+export interface CommandArg {
+  name: string;
+  required?: boolean;
+  description?: string;
+}
+
+export interface Command {
+  name: string; // Command identifier (e.g., "compact")
+  description?: string; // Human-readable description
+  args?: CommandArg[]; // Optional argument definitions
+}
+
 // PyWebView injects the `pywebview` object into the window
 declare global {
   interface Window {
@@ -424,10 +437,20 @@ export async function getCurrentProject(): Promise<Project | null> {
 
 // === Commands ===
 
-export async function listCommands(): Promise<unknown[]> {
-  if (!isPyWebView()) return [];
+export async function listCommands(): Promise<Command[]> {
+  if (!isPyWebView()) {
+    // Mock commands for browser development
+    return [
+      { name: "compact", description: "Summarize and compact the conversation" },
+      { name: "clear", description: "Clear the current session" },
+      { name: "bug", description: "Report a bug or issue" },
+      { name: "help", description: "Show available commands" },
+      { name: "url", description: "Fetch and process a URL" },
+      { name: "init", description: "Initialize AGENTS.md" },
+    ];
+  }
   const result = await getApi().list_commands();
-  return (result.commands as unknown[]) || [];
+  return (result.commands as Command[]) || [];
 }
 
 export async function executeCommand(

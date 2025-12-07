@@ -1,7 +1,7 @@
-import { useState, useRef, type KeyboardEvent } from "react";
-import { ArrowUp, File } from "lucide-react";
+import { useState, useRef, useEffect, type KeyboardEvent } from "react";
+import { ArrowUp, File, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { searchFiles } from "@/lib/api";
+import { searchFiles, listCommands, type Command } from "@/lib/api";
 
 interface InputBarProps {
   onSend: (message: string) => void;
@@ -9,13 +9,22 @@ interface InputBarProps {
 }
 
 export function InputBar({ onSend, isLoading = false }: InputBarProps) {
+  // File mention suggestions
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Slash command suggestions
+  const [commands, setCommands] = useState<Command[]>([]);
+  const [commandSuggestions, setCommandSuggestions] = useState<Command[]>([]);
+  const [showCommandSuggestions, setShowCommandSuggestions] = useState(false);
+  const [commandSelectedIndex, setCommandSelectedIndex] = useState(0);
   const editorRef = useRef<HTMLDivElement>(null);
-  // cursorPosition is no longer directly managed by state for contentEditable,
-  // but the concept of where the cursor is relative to text is handled by Selection API.
-  // Keeping it here for now, but it's not used in the new logic.
+
+  // Load available commands on mount
+  useEffect(() => {
+    listCommands().then(setCommands);
+  }, []);
 
   // We need to sync the innerHTML/innerText to detect mentions
   // But standard React onChange doesn't work well with contentEditable for this specific rich text case
@@ -49,6 +58,25 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
   const handleInput = () => {
     // Check for trigger
     if (!editorRef.current) return;
+
+    const fullText = getInputValue();
+
+    // Check for slash command at the start
+    if (fullText.startsWith("/")) {
+      const query = fullText.slice(1).split(" ")[0].toLowerCase();
+      // Only show suggestions if no space yet (still typing command name)
+      if (!fullText.slice(1).includes(" ")) {
+        const filtered = commands.filter(
+          (c) => c.name.toLowerCase().includes(query)
+        );
+        setCommandSuggestions(filtered.slice(0, 6));
+        setShowCommandSuggestions(filtered.length > 0);
+        setCommandSelectedIndex(0);
+        setShowSuggestions(false);
+        return;
+      }
+    }
+    setShowCommandSuggestions(false);
 
     const selection = window.getSelection();
     if (!selection || !selection.rangeCount) return;
@@ -88,7 +116,22 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
         editorRef.current.innerHTML = "";
       }
       setShowSuggestions(false);
+      setShowCommandSuggestions(false);
     }
+  };
+
+  const insertCommand = (commandName: string) => {
+    if (!editorRef.current) return;
+    // Replace full content with command
+    editorRef.current.innerHTML = `/${commandName} `;
+    // Move cursor to end
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(editorRef.current);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    setShowCommandSuggestions(false);
   };
 
   const insertMention = (filename: string) => {
@@ -162,6 +205,34 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Handle command suggestions
+    if (showCommandSuggestions && commandSuggestions.length > 0) {
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setCommandSelectedIndex((prev) =>
+          prev > 0 ? prev - 1 : commandSuggestions.length - 1,
+        );
+        return;
+      }
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setCommandSelectedIndex((prev) =>
+          prev < commandSuggestions.length - 1 ? prev + 1 : 0,
+        );
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertCommand(commandSuggestions[commandSelectedIndex].name);
+        return;
+      }
+      if (e.key === "Escape") {
+        setShowCommandSuggestions(false);
+        return;
+      }
+    }
+
+    // Handle file suggestions
     if (showSuggestions && suggestions.length > 0) {
       if (e.key === "ArrowUp") {
         e.preventDefault();
@@ -215,6 +286,32 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
       }}
     >
       <div className="max-w-2xl mx-auto relative">
+        {/* Command suggestions dropdown */}
+        {showCommandSuggestions && commandSuggestions.length > 0 && (
+          <div className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-popover border border-border rounded-md shadow-lg overflow-hidden z-50">
+            <div className="p-1">
+              {commandSuggestions.map((cmd, index) => (
+                <button
+                  key={cmd.name}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => insertCommand(cmd.name)}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${index === commandSelectedIndex
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50"
+                    }`}
+                >
+                  <Terminal className="h-4 w-4 opacity-70 shrink-0" />
+                  <span className="font-medium text-foreground">/{cmd.name}</span>
+                  {cmd.description && (
+                    <span className="text-xs opacity-60 truncate">{cmd.description}</span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* File mention suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute bottom-full left-0 mb-2 w-full max-w-sm bg-popover border border-border rounded-md shadow-lg overflow-hidden z-50">
             <div className="p-1">
