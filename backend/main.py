@@ -13,8 +13,21 @@ import webview
 from opencode_client import OpenCodeClient, OpenCodeServer, OpenCodeConfig
 
 # Preserve the launch working directory so subprocesses (opencode) can inherit it
-LAUNCH_CWD = os.getcwd()
+# When launched via `open` on macOS, os.getcwd() may return "/" or the bundle path,
+# but the shell's PWD environment variable still contains the terminal's actual cwd.
+LAUNCH_CWD = os.environ.get("PWD") or os.getcwd()
 os.environ.setdefault("MARS_LAUNCH_CWD", LAUNCH_CWD)
+
+
+def _resolve_path_from_launch_cwd(path: str) -> str:
+    """Resolve a path relative to the original launch directory.
+    
+    macOS `open` command changes cwd before starting the app, so relative paths
+    like "." need to be resolved against the shell's PWD, not the current cwd.
+    """
+    if os.path.isabs(path):
+        return path
+    return os.path.normpath(os.path.join(LAUNCH_CWD, path))
 
 
 def capture_cli_workdir() -> None:
@@ -22,6 +35,9 @@ def capture_cli_workdir() -> None:
 
     When launched via `open ... --args` or with argv emulation on macOS, users can
     pass a directory (positional or --workdir/-C) so opencode runs from there.
+    
+    Also handles macOS document-passing: `open mars.app /path/to/dir` passes the
+    path as a command-line argument via argv emulation in .app bundles.
     """
 
     parser = argparse.ArgumentParser(add_help=False)
@@ -38,7 +54,8 @@ def capture_cli_workdir() -> None:
         if not candidate:
             continue
 
-        resolved = os.path.abspath(candidate)
+        # Resolve relative paths against the shell's original directory
+        resolved = _resolve_path_from_launch_cwd(candidate)
         if os.path.isdir(resolved):
             os.environ["MARS_WORKDIR"] = resolved
             logger.info(f"Using CLI workdir override: {resolved}")
@@ -53,7 +70,7 @@ def capture_cli_workdir() -> None:
             continue
 
         try:
-            resolved = os.path.abspath(arg)
+            resolved = _resolve_path_from_launch_cwd(arg)
             if os.path.isdir(resolved):
                 os.environ["MARS_WORKDIR"] = resolved
                 logger.info(f"Found workdir via scan: {resolved}")
@@ -66,12 +83,23 @@ def capture_cli_workdir() -> None:
         logger.warning("CLI workdir argument provided but not a directory")
 
 
-# Configure logging
+# Configure logging EARLY so we can debug startup
 logging.basicConfig(
     level=logging.DEBUG,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s\n",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("/tmp/mars_debug.log"),
+    ],
 )
 logger = logging.getLogger("mars")
+
+# Debug: Log sys.argv immediately
+logger.info(f"=== Mars starting ===")
+logger.info(f"sys.argv: {sys.argv}")
+logger.info(f"os.getcwd(): {os.getcwd()}")
+logger.info(f"os.environ.get('PWD'): {os.environ.get('PWD')}")
+logger.info(f"os.environ.get('MARS_WORKDIR'): {os.environ.get('MARS_WORKDIR')}")
 
 
 def set_working_directory() -> None:

@@ -63,21 +63,73 @@ class OpenCodeServer:
 
         return None
 
+    def _check_workdir_matches(self, desired_workdir: Optional[str]) -> bool:
+        """Check if the running server is using the desired working directory."""
+        if not desired_workdir:
+            return True  # No preference, accept any running server
+
+        try:
+            response = requests.get(f"{self.config.base_url}/project/current", timeout=2)
+            if response.status_code == 200:
+                project = response.json()
+                current_dir = project.get("path", "")
+                # Normalize paths for comparison
+                desired_norm = os.path.normpath(desired_workdir)
+                current_norm = os.path.normpath(current_dir) if current_dir else ""
+                matches = desired_norm == current_norm
+                logger.info(f"Workdir check: desired={desired_norm}, current={current_norm}, matches={matches}")
+                return matches
+        except Exception as e:
+            logger.warning(f"Could not check server workdir: {e}")
+        return False
+
+    def _kill_external_server(self) -> None:
+        """Kill any externally running opencode server on our port."""
+        import signal
+
+        try:
+            # Find and kill process using our port
+            result = subprocess.run(
+                ["lsof", "-ti", f"tcp:{self.config.port}"],
+                capture_output=True,
+                text=True,
+            )
+            if result.stdout.strip():
+                pids = result.stdout.strip().split("\n")
+                for pid in pids:
+                    try:
+                        os.kill(int(pid), signal.SIGTERM)
+                        logger.info(f"Killed external server process {pid}")
+                    except (ValueError, OSError) as e:
+                        logger.warning(f"Could not kill process {pid}: {e}")
+                # Wait a moment for processes to die
+                time.sleep(0.5)
+        except Exception as e:
+            logger.warning(f"Could not kill external server: {e}")
+
     def start(self) -> bool:
         """Start the OpenCode server process."""
         logger.info("Starting OpenCode server...")
 
+        desired_workdir = self._resolve_workdir()
+        logger.info(f"Desired working directory: {desired_workdir}")
+
         # First check if server is already running externally
         if self._check_connectivity():
-            logger.info("OpenCode server already running externally")
-            self._running = True
-            return True
+            # Server is running - check if it's using the correct directory
+            if self._check_workdir_matches(desired_workdir):
+                logger.info("OpenCode server already running with correct workdir")
+                self._running = True
+                return True
+            else:
+                logger.info("OpenCode server running but with wrong workdir - restarting...")
+                self._kill_external_server()
 
         if self._running:
             return True
 
         try:
-            workdir = self._resolve_workdir()
+            workdir = desired_workdir
             if workdir:
                 logger.info(
                     f"Spawning opencode serve in cwd={workdir} on port {self.config.port}"

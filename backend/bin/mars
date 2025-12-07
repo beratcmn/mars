@@ -1,0 +1,62 @@
+#!/bin/bash
+# Mars CLI - Launch mars.app with working directory support
+# Usage: mars [path]
+#   path: Directory to open (defaults to current directory)
+
+set -e
+
+# Resolve the directory containing this script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Find mars.app - check relative to script first, then common locations
+find_mars_app() {
+    local candidates=(
+        "$SCRIPT_DIR/../build/mars.app"
+        "$SCRIPT_DIR/../../build/mars.app"
+        "/Applications/Mars.app"
+        "/Applications/mars.app"
+        "$HOME/Applications/Mars.app"
+        "$HOME/Applications/mars.app"
+    )
+    
+    for app in "${candidates[@]}"; do
+        if [ -d "$app" ]; then
+            echo "$app"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+MARS_APP="$(find_mars_app)" || {
+    echo "Error: mars.app not found" >&2
+    echo "Searched in:" >&2
+    echo "  - $SCRIPT_DIR/../build/mars.app" >&2
+    echo "  - /Applications/Mars.app" >&2
+    echo "  - $HOME/Applications/Mars.app" >&2
+    exit 1
+}
+
+# Resolve working directory to absolute path
+if [ -n "$1" ]; then
+    # User provided a path argument
+    if [ -d "$1" ]; then
+        WORKDIR="$(cd "$1" && pwd)"
+    elif [ -f "$1" ]; then
+        # If it's a file, use its parent directory
+        WORKDIR="$(cd "$(dirname "$1")" && pwd)"
+    else
+        echo "Error: '$1' is not a valid path" >&2
+        exit 1
+    fi
+else
+    # No argument - use current directory
+    WORKDIR="$(pwd)"
+fi
+
+echo "Opening Mars in: $WORKDIR"
+
+# Launch mars.app with the absolute path as an argument
+# The path is now absolute, so it doesn't matter what cwd the app starts with
+open -a "$MARS_APP" --args "$WORKDIR"
