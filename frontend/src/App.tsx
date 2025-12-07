@@ -7,6 +7,7 @@ import { InputBar } from "@/components/InputBar";
 import { Footer } from "@/components/Footer";
 import { FileExplorer } from "@/components/FileExplorer";
 import { CodeViewer } from "@/components/CodeViewer";
+import { TaskPanel } from "@/components/TaskPanel";
 import { type SelectedModel } from "@/components/ModelSelector";
 import * as api from "@/lib/api";
 import type { Provider, Agent, FileEntry } from "@/lib/api";
@@ -89,6 +90,7 @@ function App() {
 
   // New states for UI features
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(false);
   const [projectRoot, setProjectRoot] = useState("mars");
 
   // Provider/model state
@@ -799,7 +801,7 @@ function App() {
         onSessionDelete={handleSessionDeleteFromHistory}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* File Explorer Sidebar - Toggleable */}
         <div
           className={cn(
@@ -851,6 +853,38 @@ function App() {
             isLoading={isLoading}
           />
         </div>
+
+        {/* Task Panel - Right Side */}
+        <TaskPanel
+          sessionId={activeTab?.type === "session" ? (activeTab as SessionTab).sessionId : undefined}
+          isOpen={isTaskPanelOpen}
+          className={cn(
+            isTaskPanelOpen ? "w-72 opacity-100" : "w-0 opacity-0"
+          )}
+        />
+
+        {/* Task Panel Toggle Button (floating on right edge) */}
+        <button
+          onClick={() => setIsTaskPanelOpen(!isTaskPanelOpen)}
+          className={cn(
+            "absolute right-0 top-1/2 -translate-y-1/2 z-10",
+            "w-6 h-16 bg-muted/80 hover:bg-muted border border-border/50 rounded-l-md",
+            "flex items-center justify-center",
+            "text-muted-foreground hover:text-foreground",
+            "transition-all duration-150 hover:w-7",
+            isTaskPanelOpen && "right-72"
+          )}
+          title={isTaskPanelOpen ? "Close tasks" : "Open tasks"}
+        >
+          <svg
+            className={cn("w-3 h-3 transition-transform", isTaskPanelOpen && "rotate-180")}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
       </div>
 
       <Footer

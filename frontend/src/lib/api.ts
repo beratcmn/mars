@@ -87,6 +87,13 @@ export interface Command {
   args?: CommandArg[]; // Optional argument definitions
 }
 
+// Todo types for task panel
+export interface Todo {
+  id: string;
+  content: string;
+  state?: "pending" | "in_progress" | "completed";
+}
+
 // PyWebView injects the `pywebview` object into the window
 declare global {
   interface Window {
@@ -152,11 +159,13 @@ interface MarsApiInterface {
   list_files(path?: string): Promise<ApiResponse<FileEntry[]>>;
   read_file(path: string): Promise<ApiResponse<string>>;
 
-  // Settings
   save_settings(
     settings: Record<string, unknown>,
   ): Promise<ApiResponse<boolean>>;
   load_settings(): Promise<ApiResponse<Record<string, unknown>>>;
+
+  // Todos
+  list_todos(session_id?: string): Promise<ApiResponse<unknown[]>>;
 }
 
 /**
@@ -461,6 +470,21 @@ export async function executeCommand(
   if (!isPyWebView()) return null;
   const result = await getApi().execute_command(command, args, sessionId);
   return result.success ? result.result : null;
+}
+
+// === Todos ===
+
+export async function listTodos(sessionId: string): Promise<Todo[]> {
+  if (!isPyWebView()) {
+    // Mock todos for browser development
+    return [
+      { id: "1", content: "Review the implementation plan", state: "completed" },
+      { id: "2", content: "Add task panel component", state: "in_progress" },
+      { id: "3", content: "Test with OpenCode server", state: "pending" },
+    ];
+  }
+  const result = await getApi().list_todos(sessionId);
+  return (result.todos as Todo[]) || [];
 }
 
 // === Files ===

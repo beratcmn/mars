@@ -239,6 +239,10 @@ class OpenCodeClient:
         """List all available commands."""
         return self._request("GET", "/command")
 
+    def list_todos(self, session_id: str) -> list:
+        """List todos for a session."""
+        return self._request("GET", f"/session/{session_id}/todo")
+
     def execute_command(
         self,
         session_id: str,

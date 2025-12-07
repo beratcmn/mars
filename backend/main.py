@@ -307,6 +307,17 @@ class MarsAPI:
         except Exception as e:
             return {"success": False, "result": None, "error": str(e)}
 
+    def list_todos(self, session_id: Optional[str] = None) -> dict:
+        """List todos for a session."""
+        try:
+            sid = session_id or self._current_session_id
+            if not sid:
+                return {"success": True, "todos": [], "error": None}
+            todos = self.client.list_todos(sid)
+            return {"success": True, "todos": todos, "error": None}
+        except Exception as e:
+            return {"success": False, "todos": [], "error": str(e)}
+
     # === Streaming ===
 
     def stream_message(

@@ -74,74 +74,151 @@ interface ChatAreaProps {
   onNewChat?: () => void;
 }
 
-// Component for rendering a tool call - flat minimal design
+// Component for rendering a tool call - modern card design
 function ToolCallPart({ part }: { part: ToolPart }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
+  const isTask = part.tool === "task";
+  const isRunning = part.state.status === "running" || part.state.status === "pending";
+
   const statusIcon = {
-    pending: <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />,
-    running: <Loader2 className="w-3 h-3 animate-spin text-foreground" />,
-    completed: <CheckCircle2 className="w-3 h-3 text-green-600" />,
-    error: <XCircle className="w-3 h-3 text-red-600" />,
+    pending: <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />,
+    running: <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />,
+    completed: <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />,
+    error: <XCircle className="w-3.5 h-3.5 text-red-500" />,
   }[part.state.status];
 
-  // Format the input for display
-  const inputDisplay = part.state.input
-    ? Object.entries(part.state.input)
-      .map(
-        ([key, value]) =>
-          `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
-      )
-      .join(", ")
+  // Extract description for task tools
+  const taskDescription = isTask && part.state.input
+    ? (part.state.input as Record<string, unknown>).description as string || ""
     : "";
 
+  // Format tool name for display
+  const displayName = part.tool.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+
+  // For tasks, render a special card
+  if (isTask) {
+    return (
+      <div className="my-3 animate-fade-in-up">
+        <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
+          {/* Task Header */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors"
+          >
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
+              <Wrench className="w-4 h-4 text-primary" />
+            </div>
+            <div className="flex-1 text-left min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-sm text-foreground">Task</span>
+                {isRunning && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase tracking-wider font-medium">
+                    Running
+                  </span>
+                )}
+              </div>
+              {taskDescription && (
+                <p className="text-xs text-muted-foreground truncate mt-0.5">
+                  {taskDescription}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {statusIcon}
+              {isExpanded ? (
+                <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              ) : (
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
+              )}
+            </div>
+          </button>
+
+          {/* Task Content - Expanded */}
+          {isExpanded && (
+            <div className="border-t border-border px-4 py-3 space-y-3 bg-muted/30">
+              {/* Input section - collapsible */}
+              {part.state.input && (
+                <details className="group">
+                  <summary className="text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
+                    <ChevronRight className="w-3 h-3 group-open:rotate-90 transition-transform" />
+                    Input Parameters
+                  </summary>
+                  <pre className="mt-2 p-3 bg-muted rounded-md text-[11px] overflow-x-auto font-mono text-foreground/80">
+                    {JSON.stringify(part.state.input, null, 2)}
+                  </pre>
+                </details>
+              )}
+
+              {/* Output section */}
+              {part.state.output && (
+                <div>
+                  <span className="text-xs font-medium text-muted-foreground">Output</span>
+                  <div className="mt-2 p-3 bg-background rounded-md border border-border/50">
+                    <pre className="text-xs whitespace-pre-wrap text-foreground/90 font-sans leading-relaxed">
+                      {part.state.output}
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {/* Error section */}
+              {part.state.error && (
+                <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-md border border-red-200 dark:border-red-900/30">
+                  <span className="text-xs font-medium text-red-600 dark:text-red-400">Error</span>
+                  <pre className="mt-1 text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap">
+                    {part.state.error}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Default tool rendering (non-task)
   return (
-    <div className="my-1">
+    <div className="my-2 animate-fade-in">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-md bg-muted/50 hover:bg-muted transition-colors"
       >
         {isExpanded ? (
-          <ChevronDown className="w-3 h-3" />
+          <ChevronDown className="w-3 h-3 text-muted-foreground" />
         ) : (
-          <ChevronRight className="w-3 h-3" />
+          <ChevronRight className="w-3 h-3 text-muted-foreground" />
         )}
-        <Wrench className="w-3 h-3" />
-        <span className="font-mono font-medium text-foreground">
-          {part.tool}
+        <Wrench className="w-3 h-3 text-muted-foreground" />
+        <span className="font-medium text-xs text-foreground">
+          {displayName}
         </span>
-        {inputDisplay && (
-          <span className="text-muted-foreground truncate max-w-[300px] text-[11px]">
-            ({inputDisplay})
-          </span>
-        )}
         <span className="ml-auto">{statusIcon}</span>
       </button>
 
       {isExpanded && (
-        <div className="ml-5 pl-3 border-l border-border text-xs space-y-2 py-2">
+        <div className="mt-1 ml-4 pl-3 border-l-2 border-border text-xs space-y-2 py-2">
           {part.state.input && (
             <div>
-              <span className="text-muted-foreground">Input:</span>
-              <pre className="mt-1 p-2 bg-muted/50 text-[11px] overflow-x-auto font-mono">
+              <span className="text-muted-foreground text-[11px] uppercase tracking-wider">Input</span>
+              <pre className="mt-1 p-2 bg-muted/50 rounded text-[11px] overflow-x-auto font-mono">
                 {JSON.stringify(part.state.input, null, 2)}
               </pre>
             </div>
           )}
           {part.state.output && (
             <div>
-              <span className="text-muted-foreground">Output:</span>
-              <pre className="mt-1 p-2 bg-muted/50 text-[11px] overflow-x-auto max-h-40 font-mono">
+              <span className="text-muted-foreground text-[11px] uppercase tracking-wider">Output</span>
+              <pre className="mt-1 p-2 bg-muted/50 rounded text-[11px] overflow-x-auto max-h-40 font-mono">
                 {part.state.output}
               </pre>
             </div>
           )}
           {part.state.error && (
-            <div>
-              <span className="text-red-600">Error:</span>
-              <pre className="mt-1 p-2 bg-red-50 dark:bg-red-950/20 text-[11px] text-red-600">
-                {part.state.error}
-              </pre>
+            <div className="p-2 bg-red-50 dark:bg-red-950/20 rounded">
+              <span className="text-red-600 text-[11px] uppercase tracking-wider">Error</span>
+              <pre className="mt-1 text-[11px] text-red-600">{part.state.error}</pre>
             </div>
           )}
         </div>
