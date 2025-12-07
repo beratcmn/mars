@@ -9,18 +9,18 @@ interface Tab {
 
 interface ChatTabsProps {
   tabs: Tab[];
-  activeTab: string;
-  onTabChange: (tab: string) => void;
+  activeTabId: string | null;
+  onTabSelect: (tab: string) => void;
   onNewTab?: () => void;
-  onCloseTab?: (tabId: string) => void;
+  onTabClose?: (tabId: string) => void;
 }
 
 export function ChatTabs({
   tabs,
-  activeTab,
-  onTabChange,
+  activeTabId,
+  onTabSelect,
   onNewTab,
-  onCloseTab,
+  onTabClose,
 }: ChatTabsProps) {
   const getIcon = (icon: "file" | "sparkles") => {
     switch (icon) {
@@ -38,15 +38,14 @@ export function ChatTabs({
           key={tab.id}
           className={`
             group relative flex items-center gap-1 pr-1 transition-colors
-            ${
-              activeTab === tab.id
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+            ${activeTabId === tab.id
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
             }
           `}
         >
           <button
-            onClick={() => onTabChange(tab.id)}
+            onClick={() => onTabSelect(tab.id)}
             className="flex items-center gap-2 px-3 py-2 text-sm"
           >
             {getIcon(tab.icon)}
@@ -56,7 +55,7 @@ export function ChatTabs({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onCloseTab?.(tab.id);
+              onTabClose?.(tab.id);
             }}
             className="p-0.5 opacity-0 hover:bg-muted group-hover:opacity-100 transition-opacity"
             aria-label="Close tab"
@@ -64,7 +63,7 @@ export function ChatTabs({
             <X className="h-3 w-3" />
           </button>
           {/* Active indicator - simple underline */}
-          {activeTab === tab.id && (
+          {activeTabId === tab.id && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
         </div>
