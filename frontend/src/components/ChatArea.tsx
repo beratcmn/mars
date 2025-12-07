@@ -85,11 +85,11 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   // Format the input for display
   const inputDisplay = part.state.input
     ? Object.entries(part.state.input)
-        .map(
-          ([key, value]) =>
-            `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
-        )
-        .join(", ")
+      .map(
+        ([key, value]) =>
+          `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
+      )
+      .join(", ")
     : "";
 
   return (
@@ -251,7 +251,7 @@ export function ChatArea({
   };
 
   return (
-    <ScrollArea className="flex-1">
+    <ScrollArea className="h-full">
       <div className="max-w-3xl mx-auto py-8 px-6 space-y-8">
         {messages.map((message) => (
           <div key={message.id} className="group relative">

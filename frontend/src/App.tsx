@@ -513,7 +513,7 @@ function App() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background font-sans antialiased">
+    <div className="flex h-screen flex-col bg-background font-sans antialiased overflow-hidden">
       <Header projectPath={projectPath} />
       <ChatTabs
         tabs={tabs}
@@ -522,11 +522,13 @@ function App() {
         onNewTab={handleNewTab}
         onCloseTab={handleCloseTab}
       />
-      <ChatArea
-        messages={messages}
-        hasActiveSession={activeTab !== undefined}
-        onNewChat={handleNewTab}
-      />
+      <div className="flex-1 min-h-0 overflow-hidden">
+        <ChatArea
+          messages={messages}
+          hasActiveSession={activeTab !== undefined}
+          onNewChat={handleNewTab}
+        />
+      </div>
       <InputBar onSend={handleSend} isLoading={isLoading} />
       <Footer
         providers={providers}
