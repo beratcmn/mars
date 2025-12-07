@@ -213,6 +213,44 @@ function App() {
           }));
         }
       }
+
+      // Handle message.updated to capture metadata (tokens, cost, time)
+      if (payload.type === "message.updated" && payload.properties?.info) {
+        const info = payload.properties.info;
+        const sessionId = info.sessionID;
+
+        // Only update assistant messages with metadata
+        if (info.role === "assistant" && info.tokens) {
+          setTabs((prevTabs) => prevTabs.map(tab => {
+            if (tab.sessionId === sessionId) {
+              const messages = [...tab.messages];
+              const lastMsg = messages[messages.length - 1];
+
+              if (lastMsg && lastMsg.role === "assistant") {
+                return {
+                  ...tab,
+                  messages: [
+                    ...messages.slice(0, -1),
+                    {
+                      ...lastMsg,
+                      modelID: info.modelID || lastMsg.modelID,
+                      providerID: info.providerID || lastMsg.providerID,
+                      cost: info.cost,
+                      tokens: {
+                        input: info.tokens.input,
+                        output: info.tokens.output,
+                        cache: info.tokens.cache
+                      },
+                      time: info.time
+                    }
+                  ]
+                };
+              }
+            }
+            return tab;
+          }));
+        }
+      }
     });
 
     return () => cleanup();
