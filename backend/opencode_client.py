@@ -65,18 +65,18 @@ class OpenCodeServer:
 
     def _find_opencode_binary(self) -> str:
         """Find the opencode binary, searching common locations if not in PATH.
-        
+
         macOS .app bundles often have a minimal PATH, so we need to search
         common installation locations for the opencode binary.
         """
         import shutil
-        
+
         # First try the standard way (works if PATH is set correctly)
         opencode_path = shutil.which("opencode")
         if opencode_path:
             logger.info(f"Found opencode in PATH: {opencode_path}")
             return opencode_path
-        
+
         # Common locations to search
         home = os.path.expanduser("~")
         candidates = [
@@ -98,19 +98,19 @@ class OpenCodeServer:
             # Local bin
             f"{home}/.local/bin/opencode",
         ]
-        
+
         # Also search any paths in the inherited PATH env var
         path_env = os.environ.get("PATH", "")
         for path_dir in path_env.split(os.pathsep):
             candidate = os.path.join(path_dir, "opencode")
             if candidate not in candidates:
                 candidates.append(candidate)
-        
+
         for path in candidates:
             if path and os.path.isfile(path) and os.access(path, os.X_OK):
                 logger.info(f"Found opencode at: {path}")
                 return path
-        
+
         logger.warning(f"Could not find opencode binary. Searched: {candidates[:5]}...")
         return "opencode"  # Fall back to hoping it's in PATH
 
@@ -120,7 +120,9 @@ class OpenCodeServer:
             return True  # No preference, accept any running server
 
         try:
-            response = requests.get(f"{self.config.base_url}/project/current", timeout=2)
+            response = requests.get(
+                f"{self.config.base_url}/project/current", timeout=2
+            )
             if response.status_code == 200:
                 project = response.json()
                 current_dir = project.get("path", "")
@@ -128,7 +130,9 @@ class OpenCodeServer:
                 desired_norm = os.path.normpath(desired_workdir)
                 current_norm = os.path.normpath(current_dir) if current_dir else ""
                 matches = desired_norm == current_norm
-                logger.info(f"Workdir check: desired={desired_norm}, current={current_norm}, matches={matches}")
+                logger.info(
+                    f"Workdir check: desired={desired_norm}, current={current_norm}, matches={matches}"
+                )
                 return matches
         except Exception as e:
             logger.warning(f"Could not check server workdir: {e}")
@@ -173,7 +177,9 @@ class OpenCodeServer:
                 self._running = True
                 return True
             else:
-                logger.info("OpenCode server running but with wrong workdir - restarting...")
+                logger.info(
+                    "OpenCode server running but with wrong workdir - restarting..."
+                )
                 self._kill_external_server()
 
         if self._running:
@@ -240,7 +246,7 @@ class OpenCodeServer:
                 self._process.kill()
             self._process = None
             self._running = False
-        
+
         # Also kill any server running on our port (may have been started by CLI script)
         self._kill_server_by_port()
         return True
@@ -248,6 +254,7 @@ class OpenCodeServer:
     def _kill_server_by_port(self) -> None:
         """Kill any process listening on our port."""
         import signal
+
         try:
             result = subprocess.run(
                 ["lsof", "-ti", f"tcp:{self.config.port}"],
@@ -270,7 +277,7 @@ class OpenCodeServer:
         try:
             response = requests.get(f"{self.config.base_url}/config", timeout=1)
             return response.status_code == 200
-        except:
+        except (requests.RequestException, Exception):
             return False
 
     def is_running(self) -> bool:
@@ -487,5 +494,5 @@ class OpenCodeClient:
         finally:
             try:
                 sock.close()
-            except:
+            except Exception:
                 pass

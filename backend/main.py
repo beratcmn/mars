@@ -21,7 +21,7 @@ os.environ.setdefault("MARS_LAUNCH_CWD", LAUNCH_CWD)
 
 def _resolve_path_from_launch_cwd(path: str) -> str:
     """Resolve a path relative to the original launch directory.
-    
+
     macOS `open` command changes cwd before starting the app, so relative paths
     like "." need to be resolved against the shell's PWD, not the current cwd.
     """
@@ -35,7 +35,7 @@ def capture_cli_workdir() -> None:
 
     When launched via `open ... --args` or with argv emulation on macOS, users can
     pass a directory (positional or --workdir/-C) so opencode runs from there.
-    
+
     Also handles macOS document-passing: `open mars.app /path/to/dir` passes the
     path as a command-line argument via argv emulation in .app bundles.
     """
@@ -95,7 +95,7 @@ logging.basicConfig(
 logger = logging.getLogger("mars")
 
 # Debug: Log sys.argv immediately
-logger.info(f"=== Mars starting ===")
+logger.info("=== Mars starting ===")
 logger.info(f"sys.argv: {sys.argv}")
 logger.info(f"os.getcwd(): {os.getcwd()}")
 logger.info(f"os.environ.get('PWD'): {os.environ.get('PWD')}")
