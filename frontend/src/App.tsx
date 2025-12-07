@@ -175,8 +175,8 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId
           ? { ...tab, messages: [...tab.messages, userMessage] }
-          : tab
-      )
+          : tab,
+      ),
     );
     setIsLoading(true);
 
@@ -208,8 +208,8 @@ function App() {
             prev.map((tab) =>
               tab.id === currentTabId
                 ? { ...tab, messages: [...tab.messages, assistantMessage] }
-                : tab
-            )
+                : tab,
+            ),
           );
         } else {
           // No response received
@@ -222,8 +222,8 @@ function App() {
             prev.map((tab) =>
               tab.id === currentTabId
                 ? { ...tab, messages: [...tab.messages, errorMessage] }
-                : tab
-            )
+                : tab,
+            ),
           );
         }
       } else {
@@ -242,8 +242,8 @@ function App() {
           prev.map((tab) =>
             tab.id === currentTabId
               ? { ...tab, messages: [...tab.messages, assistantMessage] }
-              : tab
-          )
+              : tab,
+          ),
         );
       }
     } catch (error) {
@@ -258,8 +258,8 @@ function App() {
         prev.map((tab) =>
           tab.id === currentTabId
             ? { ...tab, messages: [...tab.messages, errorMessage] }
-            : tab
-        )
+            : tab,
+        ),
       );
     } finally {
       setIsLoading(false);

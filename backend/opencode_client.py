@@ -73,7 +73,9 @@ class OpenCodeServer:
             logger.error("Server failed to start within timeout")
             return False
         except FileNotFoundError:
-            logger.error("'opencode' command not found. Make sure it's installed and in PATH.")
+            logger.error(
+                "'opencode' command not found. Make sure it's installed and in PATH."
+            )
             return False
         except Exception as e:
             logger.error(f"Error starting OpenCode server: {e}", exc_info=True)

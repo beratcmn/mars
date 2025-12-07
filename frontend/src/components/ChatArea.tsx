@@ -14,7 +14,11 @@ interface ChatAreaProps {
   onNewChat?: () => void;
 }
 
-export function ChatArea({ messages, hasActiveSession, onNewChat }: ChatAreaProps) {
+export function ChatArea({
+  messages,
+  hasActiveSession,
+  onNewChat,
+}: ChatAreaProps) {
   // No active session - show start new chat prompt
   if (!hasActiveSession) {
     return (
@@ -27,11 +31,7 @@ export function ChatArea({ messages, hasActiveSession, onNewChat }: ChatAreaProp
           <p className="text-sm text-muted-foreground max-w-xs">
             Start a new conversation to begin exploring code with AI assistance.
           </p>
-          <Button
-            onClick={onNewChat}
-            variant="outline"
-            className="gap-2 mt-2"
-          >
+          <Button onClick={onNewChat} variant="outline" className="gap-2 mt-2">
             <MessageSquarePlus className="h-4 w-4" />
             Start a new chat
           </Button>
