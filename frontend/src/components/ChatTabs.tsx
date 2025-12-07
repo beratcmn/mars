@@ -1,4 +1,4 @@
-import { File, Sparkles, Plus } from "lucide-react";
+import { File, Sparkles, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Tab {
@@ -20,6 +20,7 @@ export function ChatTabs({
   activeTab,
   onTabChange,
   onNewTab,
+  onCloseTab,
 }: ChatTabsProps) {
   const getIcon = (icon: "file" | "sparkles") => {
     switch (icon) {
@@ -33,25 +34,39 @@ export function ChatTabs({
   return (
     <div className="flex items-center gap-1 border-b border-border/50 px-3 pt-1">
       {tabs.map((tab) => (
-        <button
+        <div
           key={tab.id}
-          onClick={() => onTabChange(tab.id)}
           className={`
-            group relative flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors
-            ${
-              activeTab === tab.id
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+            group relative flex items-center gap-1 pr-1 transition-colors
+            ${activeTab === tab.id
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
             }
           `}
         >
-          {getIcon(tab.icon)}
-          {tab.label}
+          <button
+            onClick={() => onTabChange(tab.id)}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium"
+          >
+            {getIcon(tab.icon)}
+            {tab.label}
+          </button>
+          {/* Close button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onCloseTab?.(tab.id);
+            }}
+            className="rounded p-0.5 opacity-0 hover:bg-muted group-hover:opacity-100 transition-opacity"
+            aria-label="Close tab"
+          >
+            <X className="h-3 w-3" />
+          </button>
           {/* Active indicator */}
           {activeTab === tab.id && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}
-        </button>
+        </div>
       ))}
       <Button
         variant="ghost"

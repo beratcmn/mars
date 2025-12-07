@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Header } from "@/components/Header";
 import { ChatTabs, type Tab } from "@/components/ChatTabs";
 import { ChatArea } from "@/components/ChatArea";
@@ -24,6 +24,7 @@ function App() {
   const [projectPath, setProjectPath] = useState("mars");
   const [model] = useState("Haiku 4.5");
   const [isInitialized, setIsInitialized] = useState(false);
+  const initStarted = useRef(false); // Prevent double init from StrictMode
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -71,7 +72,9 @@ function App() {
   // Initialize on first load
   useEffect(() => {
     const init = async () => {
-      if (isInitialized) return;
+      // Prevent double initialization from React StrictMode
+      if (isInitialized || initStarted.current) return;
+      initStarted.current = true;
 
       // Wait for PyWebView to be ready (handles race condition)
       const isPyWebViewReady = await api.waitForPyWebView();
@@ -119,6 +122,33 @@ function App() {
   // Handle new tab button
   const handleNewTab = async () => {
     await createNewTab();
+  };
+
+  // Handle close tab
+  const handleCloseTab = async (tabId: string) => {
+    const tab = tabs.find((t) => t.id === tabId);
+    if (!tab) return;
+
+    // Remove tab from state
+    setTabs((prev) => prev.filter((t) => t.id !== tabId));
+
+    // If closing active tab, switch to another tab or set to null
+    if (activeTabId === tabId) {
+      const remainingTabs = tabs.filter((t) => t.id !== tabId);
+      if (remainingTabs.length > 0) {
+        setActiveTabId(remainingTabs[0].id);
+        if (api.isPyWebView()) {
+          await api.setCurrentSession(remainingTabs[0].sessionId);
+        }
+      } else {
+        setActiveTabId(null);
+      }
+    }
+
+    // Optionally delete session from OpenCode
+    if (api.isPyWebView() && tab.sessionId.startsWith("ses")) {
+      await api.deleteSession(tab.sessionId);
+    }
   };
 
   // Handle sending a message
@@ -253,8 +283,13 @@ function App() {
         activeTab={activeTabId || ""}
         onTabChange={handleTabChange}
         onNewTab={handleNewTab}
+        onCloseTab={handleCloseTab}
       />
-      <ChatArea messages={messages} />
+      <ChatArea
+        messages={messages}
+        hasActiveSession={activeTab !== undefined}
+        onNewChat={handleNewTab}
+      />
       <InputBar onSend={handleSend} isLoading={isLoading} />
       <Footer model={model} />
     </div>
