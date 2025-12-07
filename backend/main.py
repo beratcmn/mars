@@ -18,6 +18,25 @@ logging.basicConfig(
 logger = logging.getLogger("mars")
 
 
+def set_working_directory() -> None:
+    """Ensure app runs from its own bundle/root directory.
+
+    PyInstaller on macOS may start with cwd inside the .app bundle; we normalize
+    to the directory that contains our bundled files so relative paths and
+    subprocesses (opencode) work as expected.
+    """
+
+    base_dir = getattr(sys, "_MEIPASS", None)
+    if not base_dir:
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+
+    try:
+        os.chdir(base_dir)
+        logger.info(f"Working directory set to: {base_dir}")
+    except Exception as exc:
+        logger.error(f"Failed to set working directory: {exc}")
+
+
 class MarsAPI:
     """
     API class exposed to JavaScript via PyWebView.
@@ -440,6 +459,9 @@ def get_frontend_url() -> str:
 
 def main():
     """Main entry point."""
+    # Normalize working directory so bundled assets and opencode run relative to app root
+    set_working_directory()
+
     api = MarsAPI()
 
     # Create the webview window
