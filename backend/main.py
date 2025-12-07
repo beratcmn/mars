@@ -229,12 +229,10 @@ class MarsAPI:
             # Resolve path if it's '.'
             search_path = path
             if path == ".":
-                 project = self.client.get_current_project()
-                 if isinstance(project, dict) and 'path' in project:
-                     search_path = project['path']
-                 else:
-                     logger.warning("Could not get current project path, using current cwd")
-                     search_path = os.getcwd()
+                 # Default to the project root (one level up from this file)
+                 # This ensures we see frontend/, backend/, etc.
+                 search_path = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+                 logger.info(f"Root path resolved to: {search_path}")
             
             if not os.path.exists(search_path):
                  return {"success": False, "files": [], "error": f"Path not found: {search_path}"}
