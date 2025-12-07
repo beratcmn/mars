@@ -125,6 +125,7 @@ function App() {
             );
             setSelectedModel({
               providerId: defaultProvider.id,
+              providerName: defaultProvider.name,
               modelId: defaultModelId,
               modelName: defaultModel?.name || defaultModelId,
             });
@@ -148,6 +149,7 @@ function App() {
           if (defaultProvider && defaultProvider.models.length > 0) {
             setSelectedModel({
               providerId: defaultProvider.id,
+              providerName: defaultProvider.name,
               modelId: defaultProvider.models[0].id,
               modelName: defaultProvider.models[0].name,
             });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Sparkles, Check } from "lucide-react";
+import { ChevronDown, ChevronRight, Sparkles, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Popover,
@@ -12,6 +12,7 @@ interface SelectedModel {
     providerId: string;
     modelId: string;
     modelName: string;
+    providerName: string;
 }
 
 interface ModelSelectorProps {
@@ -28,20 +29,32 @@ export function ModelSelector({
     onModelChange,
 }: ModelSelectorProps) {
     const [open, setOpen] = useState(false);
+    const [expandedProvider, setExpandedProvider] = useState<string | null>(null);
 
     // Filter to only connected providers
     const availableProviders = providers.filter((p) =>
         connectedProviders.includes(p.id),
     );
 
-    const handleSelect = (
+    const handleProviderClick = (providerId: string) => {
+        setExpandedProvider(expandedProvider === providerId ? null : providerId);
+    };
+
+    const handleModelSelect = (
         providerId: string,
+        providerName: string,
         modelId: string,
         modelName: string,
     ) => {
-        onModelChange({ providerId, modelId, modelName });
+        onModelChange({ providerId, providerName, modelId, modelName });
         setOpen(false);
+        setExpandedProvider(null);
     };
+
+    // Display label
+    const displayLabel = selectedModel
+        ? `${selectedModel.providerName} / ${selectedModel.modelName}`
+        : "Select model";
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -52,47 +65,91 @@ export function ModelSelector({
                     className="h-6 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
                 >
                     <Sparkles className="h-3 w-3" />
-                    <span>{selectedModel?.modelName || "Select model"}</span>
+                    <span className="max-w-40 truncate">{displayLabel}</span>
                     <ChevronDown className="h-3 w-3" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-64 p-1" align="start">
+            <PopoverContent className="w-72 p-1" align="start">
                 {availableProviders.length === 0 ? (
                     <div className="px-3 py-4 text-center text-sm text-muted-foreground">
                         No providers connected
                     </div>
                 ) : (
-                    <div className="max-h-64 overflow-y-auto">
+                    <div className="max-h-80 overflow-y-auto">
                         {availableProviders.map((provider) => {
-                            // Get models array (handle if it's not an array)
-                            const models = Array.isArray(provider.models) ? provider.models : [];
-                            console.log(`Provider ${provider.id} models:`, provider.models);
+                            // Get models (handle different data structures)
+                            const models = Array.isArray(provider.models)
+                                ? provider.models
+                                : Object.entries(provider.models || {}).map(([id, data]) => ({
+                                    id,
+                                    name: typeof data === "object" && data !== null ? (data as { name?: string }).name || id : id,
+                                }));
+
+                            const isExpanded = expandedProvider === provider.id;
+                            const hasSelectedModel = selectedModel?.providerId === provider.id;
 
                             return (
                                 <div key={provider.id}>
-                                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                                        {provider.name}
-                                    </div>
-                                    {models.map((model) => {
-                                        const isSelected =
-                                            selectedModel?.providerId === provider.id &&
-                                            selectedModel?.modelId === model.id;
-                                        return (
-                                            <button
-                                                key={model.id}
-                                                onClick={() =>
-                                                    handleSelect(provider.id, model.id, model.name)
-                                                }
-                                                className={`
-                        flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm
-                        ${isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted"}
-                      `}
-                                            >
-                                                <span>{model.name}</span>
-                                                {isSelected && <Check className="h-4 w-4" />}
-                                            </button>
-                                        );
-                                    })}
+                                    {/* Provider header - clickable to expand */}
+                                    <button
+                                        onClick={() => handleProviderClick(provider.id)}
+                                        className={`
+                      flex w-full items-center justify-between rounded-sm px-2 py-2 text-sm
+                      hover:bg-muted transition-colors
+                      ${hasSelectedModel ? "font-medium" : ""}
+                    `}
+                                    >
+                                        <span className="flex items-center gap-2">
+                                            {isExpanded ? (
+                                                <ChevronDown className="h-3 w-3" />
+                                            ) : (
+                                                <ChevronRight className="h-3 w-3" />
+                                            )}
+                                            {provider.name}
+                                        </span>
+                                        {hasSelectedModel && (
+                                            <span className="text-xs text-muted-foreground">
+                                                {selectedModel?.modelName}
+                                            </span>
+                                        )}
+                                    </button>
+
+                                    {/* Models list - shown when expanded */}
+                                    {isExpanded && models.length > 0 && (
+                                        <div className="ml-4 border-l border-border/50 pl-2">
+                                            {models.map((model) => {
+                                                const isSelected =
+                                                    selectedModel?.providerId === provider.id &&
+                                                    selectedModel?.modelId === model.id;
+                                                return (
+                                                    <button
+                                                        key={model.id}
+                                                        onClick={() =>
+                                                            handleModelSelect(
+                                                                provider.id,
+                                                                provider.name,
+                                                                model.id,
+                                                                model.name,
+                                                            )
+                                                        }
+                                                        className={`
+                              flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-sm
+                              ${isSelected ? "bg-accent text-accent-foreground" : "hover:bg-muted"}
+                            `}
+                                                    >
+                                                        <span>{model.name}</span>
+                                                        {isSelected && <Check className="h-3 w-3" />}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+
+                                    {isExpanded && models.length === 0 && (
+                                        <div className="ml-4 px-2 py-1.5 text-xs text-muted-foreground">
+                                            No models available
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}
