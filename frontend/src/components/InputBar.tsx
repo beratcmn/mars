@@ -33,14 +33,14 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask to make changes, @mention files, run /commands"
-            className="w-full h-11 pl-4 pr-12 text-sm bg-muted/50 border border-border/50 rounded-lg placeholder:text-muted-foreground/60 focus:outline-none focus:ring-1 focus:ring-ring/50 focus:border-ring/50 transition-colors"
+            className="w-full h-10 pl-4 pr-12 text-sm bg-transparent border border-border/50 placeholder:text-muted-foreground/60 focus:outline-none focus:border-border transition-colors"
             disabled={isLoading}
           />
           <Button
             size="icon"
             onClick={handleSend}
             disabled={!value.trim() || isLoading}
-            className="absolute right-1.5 h-8 w-8 rounded-md"
+            className="absolute right-1.5 h-7 w-7"
           >
             <ArrowUp className="h-4 w-4" />
           </Button>

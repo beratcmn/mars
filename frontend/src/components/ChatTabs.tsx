@@ -38,19 +38,18 @@ export function ChatTabs({
           key={tab.id}
           className={`
             group relative flex items-center gap-1 pr-1 transition-colors
-            ${
-              activeTab === tab.id
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
+            ${activeTab === tab.id
+              ? "text-foreground"
+              : "text-muted-foreground hover:text-foreground"
             }
           `}
         >
           <button
             onClick={() => onTabChange(tab.id)}
-            className="flex items-center gap-2 px-3 py-2 text-sm font-medium"
+            className="flex items-center gap-2 px-3 py-2 text-sm"
           >
             {getIcon(tab.icon)}
-            {tab.label}
+            <span className="truncate max-w-[200px]">{tab.label}</span>
           </button>
           {/* Close button */}
           <button
@@ -58,12 +57,12 @@ export function ChatTabs({
               e.stopPropagation();
               onCloseTab?.(tab.id);
             }}
-            className="rounded p-0.5 opacity-0 hover:bg-muted group-hover:opacity-100 transition-opacity"
+            className="p-0.5 opacity-0 hover:bg-muted group-hover:opacity-100 transition-opacity"
             aria-label="Close tab"
           >
             <X className="h-3 w-3" />
           </button>
-          {/* Active indicator */}
+          {/* Active indicator - simple underline */}
           {activeTab === tab.id && (
             <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-foreground" />
           )}

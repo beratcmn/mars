@@ -73,44 +73,37 @@ interface ChatAreaProps {
   onNewChat?: () => void;
 }
 
-// Component for rendering a tool call
+// Component for rendering a tool call - flat minimal design
 function ToolCallPart({ part }: { part: ToolPart }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const statusIcon = {
     pending: <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />,
-    running: <Loader2 className="w-3 h-3 animate-spin text-blue-500" />,
-    completed: <CheckCircle2 className="w-3 h-3 text-green-500" />,
-    error: <XCircle className="w-3 h-3 text-red-500" />,
+    running: <Loader2 className="w-3 h-3 animate-spin text-foreground" />,
+    completed: <CheckCircle2 className="w-3 h-3 text-green-600" />,
+    error: <XCircle className="w-3 h-3 text-red-600" />,
   }[part.state.status];
 
   // Format the input for display
   const inputDisplay = part.state.input
     ? Object.entries(part.state.input)
-      .map(
-        ([key, value]) =>
-          `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
+      .map(([key, value]) =>
+        `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`
       )
       .join(", ")
     : "";
 
   return (
-    <div className="my-2 border border-border/50 rounded-lg overflow-hidden bg-muted/30">
+    <div className="my-1">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center gap-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        {isExpanded ? (
-          <ChevronDown className="w-3 h-3" />
-        ) : (
-          <ChevronRight className="w-3 h-3" />
-        )}
-        <Wrench className="w-3 h-3 text-muted-foreground" />
-        <span className="font-mono font-medium text-foreground">
-          {part.tool}
-        </span>
+        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <Wrench className="w-3 h-3" />
+        <span className="font-mono font-medium text-foreground">{part.tool}</span>
         {inputDisplay && (
-          <span className="text-muted-foreground truncate max-w-[300px]">
+          <span className="text-muted-foreground truncate max-w-[300px] text-[11px]">
             ({inputDisplay})
           </span>
         )}
@@ -118,27 +111,27 @@ function ToolCallPart({ part }: { part: ToolPart }) {
       </button>
 
       {isExpanded && (
-        <div className="px-3 py-2 border-t border-border/50 text-xs space-y-2">
+        <div className="ml-5 pl-3 border-l border-border text-xs space-y-2 py-2">
           {part.state.input && (
             <div>
-              <span className="font-medium text-muted-foreground">Input:</span>
-              <pre className="mt-1 p-2 bg-background rounded text-[10px] overflow-x-auto">
+              <span className="text-muted-foreground">Input:</span>
+              <pre className="mt-1 p-2 bg-muted/50 text-[11px] overflow-x-auto font-mono">
                 {JSON.stringify(part.state.input, null, 2)}
               </pre>
             </div>
           )}
           {part.state.output && (
             <div>
-              <span className="font-medium text-muted-foreground">Output:</span>
-              <pre className="mt-1 p-2 bg-background rounded text-[10px] overflow-x-auto max-h-40">
+              <span className="text-muted-foreground">Output:</span>
+              <pre className="mt-1 p-2 bg-muted/50 text-[11px] overflow-x-auto max-h-40 font-mono">
                 {part.state.output}
               </pre>
             </div>
           )}
           {part.state.error && (
             <div>
-              <span className="font-medium text-red-500">Error:</span>
-              <pre className="mt-1 p-2 bg-red-500/10 rounded text-[10px] text-red-500">
+              <span className="text-red-600">Error:</span>
+              <pre className="mt-1 p-2 bg-red-50 dark:bg-red-950/20 text-[11px] text-red-600">
                 {part.state.error}
               </pre>
             </div>
@@ -149,31 +142,25 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   );
 }
 
-// Component for rendering reasoning
+// Component for rendering reasoning - flat minimal design
 function ReasoningParts({ part }: { part: ReasoningPart }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!part.text || part.text.trim() === "") return null;
 
   return (
-    <div className="my-2 border border-border/50 rounded-lg overflow-hidden bg-amber-500/5">
+    <div className="my-1">
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-amber-500/10 transition-colors"
+        className="w-full flex items-center gap-2 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
       >
-        {isExpanded ? (
-          <ChevronDown className="w-3 h-3" />
-        ) : (
-          <ChevronRight className="w-3 h-3" />
-        )}
-        <Brain className="w-3 h-3 text-amber-500" />
-        <span className="font-medium text-amber-600 dark:text-amber-400">
-          Thinking...
-        </span>
+        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        <Brain className="w-3 h-3" />
+        <span className="italic">Thinking...</span>
       </button>
 
       {isExpanded && (
-        <div className="px-3 py-2 border-t border-border/50 text-xs">
+        <div className="ml-5 pl-3 border-l border-border text-xs py-2">
           <pre className="whitespace-pre-wrap text-muted-foreground italic">
             {part.text}
           </pre>
@@ -191,16 +178,16 @@ export function ChatArea({
   // No active session - show start new chat prompt
   if (!hasActiveSession) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center space-y-4">
           <h1 className="text-3xl font-serif italic text-foreground">
             Welcome to Mars
           </h1>
           <div className="w-12 h-px bg-border mx-auto" />
-          <p className="text-sm text-muted-foreground max-w-xs">
+          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
             Start a new conversation to begin exploring code with AI assistance.
           </p>
-          <Button onClick={onNewChat} variant="outline" className="gap-2 mt-2">
+          <Button onClick={onNewChat} variant="ghost" size="sm" className="gap-2">
             <MessageSquarePlus className="h-4 w-4" />
             Start a new chat
           </Button>
@@ -212,7 +199,7 @@ export function ChatArea({
   // Active session but no messages yet
   if (messages.length === 0) {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center space-y-3">
           <h1 className="text-3xl font-serif italic text-foreground">
             Welcome to Mars
@@ -267,23 +254,21 @@ export function ChatArea({
 
   return (
     <ScrollArea className="h-full">
-      <div className="max-w-3xl mx-auto py-8 px-6 space-y-8">
+      <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
         {messages.map((message) => (
-          <div key={message.id} className="group relative">
+          <div key={message.id} className="group">
             {message.role === "user" ? (
               <div className="flex justify-end">
-                <div className="bg-primary text-primary-foreground rounded-2xl rounded-br-sm px-5 py-3 max-w-[85%] shadow-sm">
+                <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%]">
                   <p className="text-sm leading-relaxed">{message.content}</p>
                 </div>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {/* Model Badge */}
                 {message.modelID && (
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 bg-muted/50 px-1.5 py-0.5 rounded border border-border/50 select-none">
-                      {message.modelID}
-                    </div>
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70 mb-2">
+                    {message.modelID}
                   </div>
                 )}
 
@@ -301,46 +286,28 @@ export function ChatArea({
 
                 {/* Metadata Footer */}
                 {message.tokens && (
-                  <div className="flex items-center gap-4 pt-1 mt-1 border-t border-transparent group-hover:border-border/30 transition-colors text-[10px] text-muted-foreground/50">
-                    <div
-                      className="flex items-center gap-1"
-                      title="Tokens used"
-                    >
+                  <div className="flex items-center gap-4 pt-2 text-[10px] text-muted-foreground/50">
+                    <div className="flex items-center gap-1" title="Tokens used">
                       <Zap className="w-3 h-3" />
                       <span>
-                        {formatTokens(
-                          message.tokens.input + message.tokens.output,
-                        )}{" "}
-                        tokens
-                        {message.tokens.cache &&
-                          message.tokens.cache.read > 0 && (
-                            <span className="opacity-70">
-                              {" "}
-                              ({formatTokens(message.tokens.cache.read)} cached)
-                            </span>
-                          )}
+                        {formatTokens(message.tokens.input + message.tokens.output)} tokens
+                        {message.tokens.cache && message.tokens.cache.read > 0 && (
+                          <span className="opacity-70">
+                            {" "}({formatTokens(message.tokens.cache.read)} cached)
+                          </span>
+                        )}
                       </span>
                     </div>
 
-                    {message.time && (
-                      <div
-                        className="flex items-center gap-1"
-                        title="Time taken"
-                      >
+                    {message.time && message.time.completed && (
+                      <div className="flex items-center gap-1" title="Time taken">
                         <Clock className="w-3 h-3" />
-                        <span>
-                          {formatTime(
-                            message.time.completed - message.time.created,
-                          )}
-                        </span>
+                        <span>{formatTime(message.time.completed - message.time.created)}</span>
                       </div>
                     )}
 
                     {message.cost !== undefined && message.cost > 0 && (
-                      <div
-                        className="flex items-center gap-1"
-                        title="Estimated cost"
-                      >
+                      <div className="flex items-center gap-1" title="Estimated cost">
                         <Coins className="w-3 h-3" />
                         <span>${message.cost.toFixed(5)}</span>
                       </div>
