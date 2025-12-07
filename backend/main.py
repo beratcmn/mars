@@ -455,7 +455,7 @@ def main():
     api.window = window
 
     # Start the application
-    debug = False
+    debug = True
     webview.start(debug=debug)
 
     # Cleanup on exit
