@@ -1,4 +1,4 @@
-import { Clipboard, Settings, Paperclip } from "lucide-react";
+import { Settings, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModelSelector, type SelectedModel } from "@/components/ModelSelector";
 import type { Provider } from "@/lib/api";
@@ -25,13 +25,7 @@ export function Footer({
           selectedModel={selectedModel}
           onModelChange={onModelChange}
         />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
-        >
-          <Clipboard className="h-3 w-3" />
-        </Button>
+
       </div>
       <div className="flex items-center gap-1">
         <Button

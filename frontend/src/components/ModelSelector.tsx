@@ -95,7 +95,7 @@ export function ModelSelector({
                     <div className="flex items-center justify-center w-5 h-5 rounded-md bg-primary/10 text-primary">
                         <Sparkles className="h-3 w-3" />
                     </div>
-                    <span className="max-w-[150px] truncate text-muted-foreground group-hover:text-foreground transition-colors">
+                    <span className="text-muted-foreground group-hover:text-foreground transition-colors">
                         <span className="text-foreground font-medium">{selectedModel?.providerName}</span>
                         <span className="mx-1.5 opacity-30">/</span>
                         {selectedModel?.modelName}
