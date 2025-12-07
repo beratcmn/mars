@@ -4,7 +4,9 @@ import { ChatTabs, type Tab } from "@/components/ChatTabs";
 import { ChatArea } from "@/components/ChatArea";
 import { InputBar } from "@/components/InputBar";
 import { Footer } from "@/components/Footer";
+import { type SelectedModel } from "@/components/ModelSelector";
 import * as api from "@/lib/api";
+import type { Provider } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -22,9 +24,15 @@ function App() {
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [projectPath, setProjectPath] = useState("mars");
-  const [model] = useState("Haiku 4.5");
   const [isInitialized, setIsInitialized] = useState(false);
   const initStarted = useRef(false); // Prevent double init from StrictMode
+
+  // Provider/model state
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [connectedProviders, setConnectedProviders] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(
+    null,
+  );
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -95,12 +103,56 @@ function App() {
           setProjectPath(project.name);
         }
 
+        // Load providers
+        const providersData = await api.getProviders();
+        console.log("Providers data:", providersData);
+
+        if (providersData && providersData.all) {
+          setProviders(providersData.all);
+          setConnectedProviders(providersData.connected || []);
+
+          // Set default model from first connected provider
+          const connectedList = providersData.connected || [];
+          const defaultProvider = providersData.all.find((p) =>
+            connectedList.includes(p.id),
+          );
+          if (defaultProvider && defaultProvider.models?.length > 0) {
+            const defaultModelId =
+              providersData.default?.[defaultProvider.id] ||
+              defaultProvider.models[0].id;
+            const defaultModel = defaultProvider.models.find(
+              (m) => m.id === defaultModelId,
+            );
+            setSelectedModel({
+              providerId: defaultProvider.id,
+              modelId: defaultModelId,
+              modelName: defaultModel?.name || defaultModelId,
+            });
+          }
+        }
+
         // Always start with a fresh session for simplicity
         console.log("Creating fresh session on startup...");
         await createNewTab();
       } else {
-        // Browser mode - create a mock tab
+        // Browser mode - create a mock tab and load mock providers
         console.log("Browser mode - creating mock tab");
+        const providersData = await api.getProviders();
+        if (providersData) {
+          setProviders(providersData.all);
+          setConnectedProviders(providersData.connected);
+          // Set first model as default
+          const defaultProvider = providersData.all.find((p) =>
+            providersData.connected.includes(p.id),
+          );
+          if (defaultProvider && defaultProvider.models.length > 0) {
+            setSelectedModel({
+              providerId: defaultProvider.id,
+              modelId: defaultProvider.models[0].id,
+              modelName: defaultProvider.models[0].name,
+            });
+          }
+        }
         await createNewTab();
       }
 
@@ -186,6 +238,7 @@ function App() {
         // Real API call via PyWebView
         const { response } = await api.sendMessage(content, {
           sessionId: activeTab.sessionId,
+          model: selectedModel?.modelId,
         });
 
         console.log("Response received:", response);
@@ -291,7 +344,12 @@ function App() {
         onNewChat={handleNewTab}
       />
       <InputBar onSend={handleSend} isLoading={isLoading} />
-      <Footer model={model} />
+      <Footer
+        providers={providers}
+        connectedProviders={connectedProviders}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+      />
     </div>
   );
 }

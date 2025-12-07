@@ -136,8 +136,8 @@ class OpenCodeClient:
         return self._request("GET", "/config")
 
     def get_providers(self) -> dict:
-        """Get available providers and default models."""
-        return self._request("GET", "/config/providers")
+        """Get available providers (all, connected, default)."""
+        return self._request("GET", "/provider")
 
     # === Project ===
     def get_current_project(self) -> dict:

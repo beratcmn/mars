@@ -33,6 +33,24 @@ interface Project {
   path: string;
 }
 
+// Provider and Model types
+export interface Model {
+  id: string;
+  name: string;
+}
+
+export interface Provider {
+  id: string;
+  name: string;
+  models: Model[];
+}
+
+export interface ProvidersResponse {
+  all: Provider[];
+  connected: string[];
+  default: { [key: string]: string };
+}
+
 // PyWebView injects the `pywebview` object into the window
 declare global {
   interface Window {
@@ -246,10 +264,34 @@ export async function getConfig(): Promise<unknown | null> {
   return result.success ? result.config : null;
 }
 
-export async function getProviders(): Promise<unknown | null> {
-  if (!isPyWebView()) return null;
+export async function getProviders(): Promise<ProvidersResponse | null> {
+  if (!isPyWebView()) {
+    // Mock providers for browser development
+    return {
+      all: [
+        {
+          id: "anthropic",
+          name: "Anthropic",
+          models: [
+            { id: "claude-sonnet-4-20250514", name: "Claude Sonnet 4" },
+            { id: "claude-3-5-haiku-20241022", name: "Claude 3.5 Haiku" },
+          ],
+        },
+        {
+          id: "openai",
+          name: "OpenAI",
+          models: [
+            { id: "gpt-4o", name: "GPT-4o" },
+            { id: "gpt-4o-mini", name: "GPT-4o Mini" },
+          ],
+        },
+      ],
+      connected: ["anthropic"],
+      default: { anthropic: "claude-sonnet-4-20250514" },
+    };
+  }
   const result = await getApi().get_providers();
-  return result.success ? result.providers : null;
+  return result.success ? (result.providers as ProvidersResponse) : null;
 }
 
 export async function listAgents(): Promise<unknown[]> {

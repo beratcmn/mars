@@ -186,8 +186,10 @@ class MarsAPI:
         """Get available providers and models."""
         try:
             providers = self.client.get_providers()
+            logger.info(f"get_providers response: {providers}")
             return {"success": True, "providers": providers, "error": None}
         except Exception as e:
+            logger.error(f"get_providers error: {e}", exc_info=True)
             return {"success": False, "providers": None, "error": str(e)}
 
     def list_agents(self) -> dict:

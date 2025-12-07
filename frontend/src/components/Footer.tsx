@@ -1,22 +1,30 @@
-import { Sparkles, Clipboard, Settings, Paperclip } from "lucide-react";
+import { Clipboard, Settings, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ModelSelector, type SelectedModel } from "@/components/ModelSelector";
+import type { Provider } from "@/lib/api";
 
 interface FooterProps {
-  model: string;
+  providers: Provider[];
+  connectedProviders: string[];
+  selectedModel: SelectedModel | null;
+  onModelChange: (model: SelectedModel) => void;
 }
 
-export function Footer({ model }: FooterProps) {
+export function Footer({
+  providers,
+  connectedProviders,
+  selectedModel,
+  onModelChange,
+}: FooterProps) {
   return (
     <footer className="flex h-9 items-center justify-between border-t border-border/50 px-4 text-xs">
       <div className="flex items-center gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-6 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <Sparkles className="h-3 w-3" />
-          {model}
-        </Button>
+        <ModelSelector
+          providers={providers}
+          connectedProviders={connectedProviders}
+          selectedModel={selectedModel}
+          onModelChange={onModelChange}
+        />
         <Button
           variant="ghost"
           size="icon"
