@@ -231,6 +231,7 @@ class OpenCodeServer:
 
     def stop(self) -> bool:
         """Stop the OpenCode server process."""
+        # First, try to stop our own process if we spawned it
         if self._process:
             self._process.terminate()
             try:
@@ -239,7 +240,30 @@ class OpenCodeServer:
                 self._process.kill()
             self._process = None
             self._running = False
+        
+        # Also kill any server running on our port (may have been started by CLI script)
+        self._kill_server_by_port()
         return True
+
+    def _kill_server_by_port(self) -> None:
+        """Kill any process listening on our port."""
+        import signal
+        try:
+            result = subprocess.run(
+                ["lsof", "-ti", f"tcp:{self.config.port}"],
+                capture_output=True,
+                text=True,
+            )
+            if result.stdout.strip():
+                pids = result.stdout.strip().split("\n")
+                for pid in pids:
+                    try:
+                        os.kill(int(pid), signal.SIGTERM)
+                        logger.info(f"Killed opencode server process {pid}")
+                    except (ValueError, OSError) as e:
+                        logger.warning(f"Could not kill process {pid}: {e}")
+        except Exception as e:
+            logger.warning(f"Could not kill server by port: {e}")
 
     def _check_connectivity(self) -> bool:
         """Check if we can connect to the server."""
