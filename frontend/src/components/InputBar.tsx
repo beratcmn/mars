@@ -267,7 +267,7 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
 
   return (
     <div
-      className="border-t border-border/40 py-4 px-6 relative bg-gradient-to-t from-background to-transparent shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
+      className="py-4 px-6 relative bg-gradient-to-t from-background to-transparent"
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = "copy";

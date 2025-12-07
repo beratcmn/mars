@@ -24,7 +24,7 @@ export function Footer({
   onAgentChange,
 }: FooterProps) {
   return (
-    <footer className="flex h-9 items-center justify-between border-t border-border/50 px-4 text-xs">
+    <footer className="flex h-9 items-center justify-between px-4 text-xs">
       <div className="flex items-center gap-3">
         <ModelSelector
           providers={providers}
