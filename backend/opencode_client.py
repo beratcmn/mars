@@ -7,7 +7,7 @@ import requests
 import subprocess
 import time
 import logging
-from typing import Optional, Any, Union, Dict
+from typing import Optional, Any, Union
 from dataclasses import dataclass
 
 logger = logging.getLogger("mars.opencode")
@@ -193,14 +193,15 @@ class OpenCodeClient:
     ) -> dict:
         """Send a message and wait for response."""
         import logging
+
         logger = logging.getLogger("mars.opencode")
-        
+
         body = {"parts": [{"type": "text", "text": content}]}
         if model:
             body["model"] = model
         if agent:
             body["agent"] = agent
-        
+
         logger.info(f"send_message body: {body}")
         return self._request("POST", f"/session/{session_id}/message", json=body)
 
@@ -255,26 +256,31 @@ class OpenCodeClient:
     def listen_events(self):
         """Yield events from the server's global event stream."""
         import json
+
         url = f"{self.base_url}/global/event"
         try:
             with requests.get(url, stream=True) as response:
                 if response.status_code != 200:
-                    logger.error(f"Failed to connect to event stream: {response.status_code}")
+                    logger.error(
+                        f"Failed to connect to event stream: {response.status_code}"
+                    )
                     return
 
                 for line in response.iter_lines():
                     if line:
-                        decoded_line = line.decode('utf-8')
+                        decoded_line = line.decode("utf-8")
                         if decoded_line.startswith("data: "):
                             data_str = decoded_line[6:]
                             try:
                                 data = json.loads(data_str)
                                 # The useful part is usually in 'payload' based on our debug
-                                if 'payload' in data:
-                                    yield data['payload']
+                                if "payload" in data:
+                                    yield data["payload"]
                                 else:
                                     yield data
                             except json.JSONDecodeError:
-                                logger.warning(f"Failed to decode event data: {data_str}")
+                                logger.warning(
+                                    f"Failed to decode event data: {data_str}"
+                                )
         except Exception as e:
             logger.error(f"Error in event listener: {e}")

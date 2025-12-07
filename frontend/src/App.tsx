@@ -164,7 +164,9 @@ function App() {
             const settings = await api.loadSettings();
             if (settings.selectedModel) {
               const saved = settings.selectedModel as SelectedModel;
-              const provider = providersData.all.find(p => p.id === saved.providerId);
+              const provider = providersData.all.find(
+                (p) => p.id === saved.providerId,
+              );
               if (provider) modelToSelect = saved;
             }
           } catch (e) {
@@ -172,10 +174,16 @@ function App() {
           }
 
           if (!modelToSelect) {
-            const defaultProvider = providersData.all.find((p) => connectedList.includes(p.id));
+            const defaultProvider = providersData.all.find((p) =>
+              connectedList.includes(p.id),
+            );
             if (defaultProvider && defaultProvider.models?.length > 0) {
-              const defaultModelId = providersData.default?.[defaultProvider.id] || defaultProvider.models[0].id;
-              const defaultModel = defaultProvider.models.find((m) => m.id === defaultModelId);
+              const defaultModelId =
+                providersData.default?.[defaultProvider.id] ||
+                defaultProvider.models[0].id;
+              const defaultModel = defaultProvider.models.find(
+                (m) => m.id === defaultModelId,
+              );
               modelToSelect = {
                 providerId: defaultProvider.id,
                 providerName: defaultProvider.name,
@@ -216,96 +224,108 @@ function App() {
         const { part, delta } = payload.properties;
         const sessionId = part.sessionID;
 
-        setTabs((prevTabs) => prevTabs.map(tab => {
-          if (tab.sessionId !== sessionId) return tab;
+        setTabs((prevTabs) =>
+          prevTabs.map((tab) => {
+            if (tab.sessionId !== sessionId) return tab;
 
-          const messages = [...tab.messages];
-          const lastMsg = messages[messages.length - 1];
+            const messages = [...tab.messages];
+            const lastMsg = messages[messages.length - 1];
 
-          if (!lastMsg || lastMsg.role !== "assistant") return tab;
+            if (!lastMsg || lastMsg.role !== "assistant") return tab;
 
-          const existingParts = lastMsg.parts || [];
-          let updatedParts = [...existingParts];
+            const existingParts = lastMsg.parts || [];
+            let updatedParts = [...existingParts];
 
-          // Handle text parts with delta streaming
-          if (part.type === "text") {
-            if (delta && typeof delta === "string") {
-              // Update content for backwards compatibility
-              const newContent = lastMsg.content + delta;
+            // Handle text parts with delta streaming
+            if (part.type === "text") {
+              if (delta && typeof delta === "string") {
+                // Update content for backwards compatibility
+                const newContent = lastMsg.content + delta;
 
-              // Also track in parts
-              const existingTextPart = updatedParts.find(
-                (p): p is TextPart => p.type === "text" && p.id === part.id
-              );
-              if (existingTextPart) {
-                existingTextPart.text = part.text || existingTextPart.text + delta;
-              } else {
-                updatedParts.push({ id: part.id, type: "text", text: part.text || delta });
+                // Also track in parts
+                const existingTextPart = updatedParts.find(
+                  (p): p is TextPart => p.type === "text" && p.id === part.id,
+                );
+                if (existingTextPart) {
+                  existingTextPart.text =
+                    part.text || existingTextPart.text + delta;
+                } else {
+                  updatedParts.push({
+                    id: part.id,
+                    type: "text",
+                    text: part.text || delta,
+                  });
+                }
+
+                return {
+                  ...tab,
+                  messages: [
+                    ...messages.slice(0, -1),
+                    { ...lastMsg, content: newContent, parts: updatedParts },
+                  ],
+                };
               }
+            }
 
+            // Handle reasoning parts
+            if (part.type === "reasoning") {
+              const existingReasoningPart = updatedParts.find(
+                (p): p is ReasoningPart =>
+                  p.type === "reasoning" && p.id === part.id,
+              );
+              if (existingReasoningPart) {
+                existingReasoningPart.text = part.text || "";
+              } else if (part.text) {
+                updatedParts.push({
+                  id: part.id,
+                  type: "reasoning",
+                  text: part.text,
+                });
+              }
               return {
                 ...tab,
                 messages: [
                   ...messages.slice(0, -1),
-                  { ...lastMsg, content: newContent, parts: updatedParts }
-                ]
+                  { ...lastMsg, parts: updatedParts },
+                ],
               };
             }
-          }
 
-          // Handle reasoning parts
-          if (part.type === "reasoning") {
-            const existingReasoningPart = updatedParts.find(
-              (p): p is ReasoningPart => p.type === "reasoning" && p.id === part.id
-            );
-            if (existingReasoningPart) {
-              existingReasoningPart.text = part.text || "";
-            } else if (part.text) {
-              updatedParts.push({ id: part.id, type: "reasoning", text: part.text });
+            // Handle tool parts
+            if (part.type === "tool") {
+              const existingToolPart = updatedParts.find(
+                (p): p is ToolPart => p.type === "tool" && p.id === part.id,
+              );
+              const toolState = {
+                status: part.state?.status || "pending",
+                input: part.state?.input,
+                output: part.state?.output,
+                error: part.state?.error,
+                time: part.state?.time,
+              } as ToolPart["state"];
+
+              if (existingToolPart) {
+                existingToolPart.state = toolState;
+              } else {
+                updatedParts.push({
+                  id: part.id,
+                  type: "tool",
+                  tool: part.tool || "unknown",
+                  state: toolState,
+                });
+              }
+              return {
+                ...tab,
+                messages: [
+                  ...messages.slice(0, -1),
+                  { ...lastMsg, parts: updatedParts },
+                ],
+              };
             }
-            return {
-              ...tab,
-              messages: [
-                ...messages.slice(0, -1),
-                { ...lastMsg, parts: updatedParts }
-              ]
-            };
-          }
 
-          // Handle tool parts
-          if (part.type === "tool") {
-            const existingToolPart = updatedParts.find(
-              (p): p is ToolPart => p.type === "tool" && p.id === part.id
-            );
-            const toolState = {
-              status: part.state?.status || "pending",
-              input: part.state?.input,
-              output: part.state?.output,
-              error: part.state?.error,
-              time: part.state?.time
-            } as ToolPart["state"];
-
-            if (existingToolPart) {
-              existingToolPart.state = toolState;
-            } else {
-              updatedParts.push({
-                id: part.id,
-                type: "tool",
-                tool: part.tool || "unknown",
-                state: toolState
-              });
-            }
-            return {
-              ...tab,
-              messages: [
-                ...messages.slice(0, -1),
-                { ...lastMsg, parts: updatedParts }
-              ]
-            };
-          }
-
-          return tab;
-        }));
+            return tab;
+          }),
+        );
       }
 
       // Handle message.updated to capture metadata (tokens, cost, time)
@@ -315,41 +335,42 @@ function App() {
 
         // Only update assistant messages with metadata
         if (info.role === "assistant" && info.tokens) {
-          setTabs((prevTabs) => prevTabs.map(tab => {
-            if (tab.sessionId === sessionId) {
-              const messages = [...tab.messages];
-              const lastMsg = messages[messages.length - 1];
+          setTabs((prevTabs) =>
+            prevTabs.map((tab) => {
+              if (tab.sessionId === sessionId) {
+                const messages = [...tab.messages];
+                const lastMsg = messages[messages.length - 1];
 
-              if (lastMsg && lastMsg.role === "assistant") {
-                return {
-                  ...tab,
-                  messages: [
-                    ...messages.slice(0, -1),
-                    {
-                      ...lastMsg,
-                      modelID: info.modelID || lastMsg.modelID,
-                      providerID: info.providerID || lastMsg.providerID,
-                      cost: info.cost,
-                      tokens: {
-                        input: info.tokens.input,
-                        output: info.tokens.output,
-                        cache: info.tokens.cache
+                if (lastMsg && lastMsg.role === "assistant") {
+                  return {
+                    ...tab,
+                    messages: [
+                      ...messages.slice(0, -1),
+                      {
+                        ...lastMsg,
+                        modelID: info.modelID || lastMsg.modelID,
+                        providerID: info.providerID || lastMsg.providerID,
+                        cost: info.cost,
+                        tokens: {
+                          input: info.tokens.input,
+                          output: info.tokens.output,
+                          cache: info.tokens.cache,
+                        },
+                        time: info.time,
                       },
-                      time: info.time
-                    }
-                  ]
-                };
+                    ],
+                  };
+                }
               }
-            }
-            return tab;
-          }));
+              return tab;
+            }),
+          );
         }
       }
     });
 
     return () => cleanup();
   }, [isInitialized]);
-
 
   // Handle tab change
   const handleTabChange = async (tabId: string) => {
@@ -374,7 +395,8 @@ function App() {
       const remainingTabs = tabs.filter((t) => t.id !== tabId);
       if (remainingTabs.length > 0) {
         setActiveTabId(remainingTabs[0].id);
-        if (api.isPyWebView()) await api.setCurrentSession(remainingTabs[0].sessionId);
+        if (api.isPyWebView())
+          await api.setCurrentSession(remainingTabs[0].sessionId);
       } else {
         setActiveTabId(null);
       }
@@ -410,7 +432,10 @@ function App() {
     setTabs((prev) =>
       prev.map((tab) =>
         tab.id === currentTabId
-          ? { ...tab, messages: [...tab.messages, userMessage, assistantMessage] }
+          ? {
+              ...tab,
+              messages: [...tab.messages, userMessage, assistantMessage],
+            }
           : tab,
       ),
     );
@@ -420,25 +445,36 @@ function App() {
     try {
       if (api.isPyWebView()) {
         const modelParam = selectedModel
-          ? { providerID: selectedModel.providerId, modelID: selectedModel.modelId }
+          ? {
+              providerID: selectedModel.providerId,
+              modelID: selectedModel.modelId,
+            }
           : undefined;
 
         await api.streamMessage(currentSessionId, content, modelParam);
       } else {
         // Browser Mock
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise((r) => setTimeout(r, 500));
         // Mock streaming
         const mockText = "This is a mock streaming response in the browser.";
         for (const char of mockText) {
-          setTabs(prev => prev.map(t => {
-            if (t.id === currentTabId) {
-              const msgs = [...t.messages];
-              const last = msgs[msgs.length - 1];
-              return { ...t, messages: [...msgs.slice(0, -1), { ...last, content: last.content + char }] };
-            }
-            return t;
-          }));
-          await new Promise(r => setTimeout(r, 50));
+          setTabs((prev) =>
+            prev.map((t) => {
+              if (t.id === currentTabId) {
+                const msgs = [...t.messages];
+                const last = msgs[msgs.length - 1];
+                return {
+                  ...t,
+                  messages: [
+                    ...msgs.slice(0, -1),
+                    { ...last, content: last.content + char },
+                  ],
+                };
+              }
+              return t;
+            }),
+          );
+          await new Promise((r) => setTimeout(r, 50));
         }
       }
     } catch (error) {
@@ -484,7 +520,10 @@ function App() {
             try {
               // Load existing settings first to merge
               const currentSettings = await api.loadSettings();
-              await api.saveSettings({ ...currentSettings, selectedModel: model });
+              await api.saveSettings({
+                ...currentSettings,
+                selectedModel: model,
+              });
             } catch (e) {
               console.error("Failed to save settings:", e);
             }

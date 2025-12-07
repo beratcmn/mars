@@ -6,7 +6,7 @@ Main entry point for the desktop application.
 import webview
 import os
 import logging
-from typing import Optional, Union, Dict
+from typing import Optional, Union
 from opencode_client import OpenCodeClient, OpenCodeServer, OpenCodeConfig
 
 # Configure logging
@@ -59,9 +59,13 @@ class MarsAPI:
 
     # === Session Management ===
 
-    def create_session(self, title: Optional[str] = None, parent_id: Optional[str] = None) -> dict:
+    def create_session(
+        self, title: Optional[str] = None, parent_id: Optional[str] = None
+    ) -> dict:
         """Create a new session."""
-        logger.info(f"create_session called with title: {title}, parent_id: {parent_id}")
+        logger.info(
+            f"create_session called with title: {title}, parent_id: {parent_id}"
+        )
         try:
             session = self.client.create_session(title=title, parent_id=parent_id)
             logger.info(f"Session created: {session}")
@@ -235,11 +239,13 @@ class MarsAPI:
             return {"success": True, "result": result, "error": None}
         except Exception as e:
             return {"success": False, "result": None, "error": str(e)}
+
     # === Streaming ===
 
     def start_event_listener(self):
         """Start the background thread to listen for server events."""
         import threading
+
         if not hasattr(self, "_event_thread") or not self._event_thread.is_alive():
             self._event_thread = threading.Thread(target=self._event_loop, daemon=True)
             self._event_thread.start()
@@ -247,12 +253,13 @@ class MarsAPI:
     def _event_loop(self):
         """Listen for events and dispatch them to the frontend."""
         import json
+
         for event in self.client.listen_events():
             # Create JS code to dispatch a custom event
             # We use 'mars:event' as the event name
             json_event = json.dumps(event)
             js_code = f"window.dispatchEvent(new CustomEvent('mars:event', {{ detail: {json_event} }}))"
-            
+
             if self.window:
                 # Dispatch to main window
                 try:
@@ -260,16 +267,16 @@ class MarsAPI:
                 except Exception as e:
                     print(f"Failed to dispatch event to frontend: {e}")
 
-    def stream_message(self, session_id: str, content: str, model: Optional[dict] = None) -> dict:
+    def stream_message(
+        self, session_id: str, content: str, model: Optional[dict] = None
+    ) -> dict:
         """Send a message asynchronously to trigger streaming events."""
         try:
             # Ensure event listener is running
             self.start_event_listener()
-            
+
             self.client.send_message_async(
-                session_id=session_id,
-                content=content,
-                model=model
+                session_id=session_id, content=content, model=model
             )
             return {"success": True, "error": None}
         except Exception as e:
@@ -281,6 +288,7 @@ class MarsAPI:
         """Save settings to a local JSON file."""
         try:
             import json
+
             settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
             with open(settings_path, "w") as f:
                 json.dump(settings, f, indent=2)
@@ -292,10 +300,11 @@ class MarsAPI:
         """Load settings from a local JSON file."""
         try:
             import json
+
             settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
             if not os.path.exists(settings_path):
                 return {"success": True, "settings": {}, "error": None}
-            
+
             with open(settings_path, "r") as f:
                 settings = json.load(f)
             return {"success": True, "settings": settings, "error": None}

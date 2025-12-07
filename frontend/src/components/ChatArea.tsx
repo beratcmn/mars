@@ -1,7 +1,19 @@
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
-import { MessageSquarePlus, Zap, Clock, Coins, ChevronDown, ChevronRight, Wrench, Brain, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import {
+  MessageSquarePlus,
+  Zap,
+  Clock,
+  Coins,
+  ChevronDown,
+  ChevronRight,
+  Wrench,
+  Brain,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 
 // Part types for rendering
 interface TextPart {
@@ -73,8 +85,11 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   // Format the input for display
   const inputDisplay = part.state.input
     ? Object.entries(part.state.input)
-      .map(([key, value]) => `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`)
-      .join(", ")
+        .map(
+          ([key, value]) =>
+            `${key}: ${typeof value === "string" ? value : JSON.stringify(value)}`,
+        )
+        .join(", ")
     : "";
 
   return (
@@ -83,9 +98,15 @@ function ToolCallPart({ part }: { part: ToolPart }) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-muted/50 transition-colors"
       >
-        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        {isExpanded ? (
+          <ChevronDown className="w-3 h-3" />
+        ) : (
+          <ChevronRight className="w-3 h-3" />
+        )}
         <Wrench className="w-3 h-3 text-muted-foreground" />
-        <span className="font-mono font-medium text-foreground">{part.tool}</span>
+        <span className="font-mono font-medium text-foreground">
+          {part.tool}
+        </span>
         {inputDisplay && (
           <span className="text-muted-foreground truncate max-w-[300px]">
             ({inputDisplay})
@@ -138,9 +159,15 @@ function ReasoningParts({ part }: { part: ReasoningPart }) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-amber-500/10 transition-colors"
       >
-        {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+        {isExpanded ? (
+          <ChevronDown className="w-3 h-3" />
+        ) : (
+          <ChevronRight className="w-3 h-3" />
+        )}
         <Brain className="w-3 h-3 text-amber-500" />
-        <span className="font-medium text-amber-600 dark:text-amber-400">Thinking...</span>
+        <span className="font-medium text-amber-600 dark:text-amber-400">
+          Thinking...
+        </span>
       </button>
 
       {isExpanded && (
@@ -205,7 +232,7 @@ export function ChatArea({
   const formatTime = (ms: number) => {
     const s = ms / 1000;
     return `${s.toFixed(1)}s`;
-  }
+  };
 
   // Render parts for an assistant message
   const renderParts = (parts: MessagePart[] | undefined) => {
@@ -260,25 +287,45 @@ export function ChatArea({
                 {/* Metadata Footer */}
                 {message.tokens && (
                   <div className="flex items-center gap-4 pt-1 mt-1 border-t border-transparent group-hover:border-border/30 transition-colors text-[10px] text-muted-foreground/50">
-                    <div className="flex items-center gap-1" title="Tokens used">
+                    <div
+                      className="flex items-center gap-1"
+                      title="Tokens used"
+                    >
                       <Zap className="w-3 h-3" />
                       <span>
-                        {formatTokens(message.tokens.input + message.tokens.output)} tokens
-                        {message.tokens.cache && message.tokens.cache.read > 0 &&
-                          <span className="opacity-70"> ({formatTokens(message.tokens.cache.read)} cached)</span>
-                        }
+                        {formatTokens(
+                          message.tokens.input + message.tokens.output,
+                        )}{" "}
+                        tokens
+                        {message.tokens.cache &&
+                          message.tokens.cache.read > 0 && (
+                            <span className="opacity-70">
+                              {" "}
+                              ({formatTokens(message.tokens.cache.read)} cached)
+                            </span>
+                          )}
                       </span>
                     </div>
 
                     {message.time && (
-                      <div className="flex items-center gap-1" title="Time taken">
+                      <div
+                        className="flex items-center gap-1"
+                        title="Time taken"
+                      >
                         <Clock className="w-3 h-3" />
-                        <span>{formatTime(message.time.completed - message.time.created)}</span>
+                        <span>
+                          {formatTime(
+                            message.time.completed - message.time.created,
+                          )}
+                        </span>
                       </div>
                     )}
 
                     {message.cost !== undefined && message.cost > 0 && (
-                      <div className="flex items-center gap-1" title="Estimated cost">
+                      <div
+                        className="flex items-center gap-1"
+                        title="Estimated cost"
+                      >
                         <Coins className="w-3 h-3" />
                         <span>${message.cost.toFixed(5)}</span>
                       </div>

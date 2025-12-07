@@ -25,7 +25,6 @@ export function Footer({
           selectedModel={selectedModel}
           onModelChange={onModelChange}
         />
-
       </div>
       <div className="flex items-center gap-1">
         <Button

@@ -85,7 +85,10 @@ interface MarsApiInterface {
   check_status(): Promise<ApiResponse<boolean>>;
 
   // Session Management
-  create_session(title?: string, parent_id?: string): Promise<ApiResponse<Session>>;
+  create_session(
+    title?: string,
+    parent_id?: string,
+  ): Promise<ApiResponse<Session>>;
   list_sessions(): Promise<ApiResponse<Session[]>>;
   get_session(session_id: string): Promise<ApiResponse<Session>>;
   delete_session(session_id: string): Promise<ApiResponse<boolean>>;
@@ -123,9 +126,11 @@ interface MarsApiInterface {
     args?: Record<string, unknown>,
     session_id?: string,
   ): Promise<ApiResponse<unknown>>;
-  
+
   // Settings
-  save_settings(settings: Record<string, unknown>): Promise<ApiResponse<boolean>>;
+  save_settings(
+    settings: Record<string, unknown>,
+  ): Promise<ApiResponse<boolean>>;
   load_settings(): Promise<ApiResponse<Record<string, unknown>>>;
 }
 
@@ -177,7 +182,10 @@ function getApi(): MarsApiInterface {
 }
 
 // --- Helper for handling Python -> JS events ---
-export function onEvent(eventName: string, callback: (event: CustomEvent) => void) {
+export function onEvent(
+  eventName: string,
+  callback: (event: CustomEvent) => void,
+) {
   const handler = (e: Event) => callback(e as CustomEvent);
   window.addEventListener(eventName, handler);
   return () => window.removeEventListener(eventName, handler);
@@ -215,14 +223,19 @@ export async function createSession(
   parentId?: string,
 ): Promise<Session | null> {
   if (!isPyWebView()) return null;
-  const result = await getApi().create_session(title || undefined, parentId || undefined);
+  const result = await getApi().create_session(
+    title || undefined,
+    parentId || undefined,
+  );
   return result.success ? (result.session as Session) : null;
 }
 
 export async function listSessions(): Promise<Session[]> {
   if (!isPyWebView()) return [];
   const result = await getApi().list_sessions();
-  return result.success && Array.isArray(result.sessions) ? result.sessions : [];
+  return result.success && Array.isArray(result.sessions)
+    ? result.sessions
+    : [];
 }
 
 export async function getSession(sessionId: string): Promise<Session | null> {
@@ -360,7 +373,9 @@ export async function executeCommand(
 
 // === Settings ===
 
-export async function saveSettings(settings: Record<string, unknown>): Promise<boolean> {
+export async function saveSettings(
+  settings: Record<string, unknown>,
+): Promise<boolean> {
   if (!isPyWebView()) return false;
   const result = await getApi().save_settings(settings);
   return result.success;
