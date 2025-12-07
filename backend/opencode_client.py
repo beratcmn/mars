@@ -259,20 +259,13 @@ class OpenCodeClient:
 
         url = f"{self.base_url}/global/event"
         try:
-            # Use requests with stream=True and iter_content for truly unbuffered SSE
-            response = requests.get(url, stream=True)
-            response.raise_for_status()
-            
-            # Read byte-by-byte and manually build lines for true real-time streaming
-            # This avoids all internal buffering that iter_lines() has
-            buffer = ""
-            for chunk in response.iter_content(chunk_size=1, decode_unicode=True):
-                if chunk:
-                    buffer += chunk
-                    # Check if we have a complete line
-                    while "\n" in buffer:
-                        line, buffer = buffer.split("\n", 1)
-                        line = line.strip()
+            # Use requests with stream=True for unbuffered streaming
+            with requests.get(url, stream=True) as response:
+                response.raise_for_status()
+                
+                for line in response.iter_lines():
+                    if line:
+                        line = line.decode('utf-8')
                         if line.startswith("data: "):
                             data_str = line[6:]
                             try:

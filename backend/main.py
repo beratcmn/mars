@@ -254,9 +254,11 @@ class MarsAPI:
         """Listen for events and dispatch them to the frontend."""
         import json
 
+        logger.info("Starting event loop listener...")
         for event in self.client.listen_events():
             # Create JS code to dispatch a custom event
             # We use 'mars:event' as the event name
+            # logger.info(f"Dispatching event: {event.get('type', 'unknown')}")
             json_event = json.dumps(event)
             js_code = f"window.dispatchEvent(new CustomEvent('mars:event', {{ detail: {json_event} }}))"
 
