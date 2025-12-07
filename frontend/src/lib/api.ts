@@ -453,7 +453,10 @@ export async function listCommands(): Promise<Command[]> {
   if (!isPyWebView()) {
     // Mock commands for browser development
     return [
-      { name: "compact", description: "Summarize and compact the conversation" },
+      {
+        name: "compact",
+        description: "Summarize and compact the conversation",
+      },
       { name: "clear", description: "Clear the current session" },
       { name: "bug", description: "Report a bug or issue" },
       { name: "help", description: "Show available commands" },
@@ -481,7 +484,11 @@ export async function listTodos(sessionId: string): Promise<Todo[]> {
   if (!isPyWebView()) {
     // Mock todos for browser development
     return [
-      { id: "1", content: "Review the implementation plan", state: "completed" },
+      {
+        id: "1",
+        content: "Review the implementation plan",
+        state: "completed",
+      },
       { id: "2", content: "Add task panel component", state: "in_progress" },
       { id: "3", content: "Test with OpenCode server", state: "pending" },
     ];
@@ -504,7 +511,9 @@ export async function searchFiles(query: string): Promise<string[]> {
   return (result.files as string[]) || [];
 }
 
-export async function listFiles(path: string = "."): Promise<{ files: FileEntry[]; root: string }> {
+export async function listFiles(
+  path: string = ".",
+): Promise<{ files: FileEntry[]; root: string }> {
   if (!isPyWebView()) {
     // Mock for browser
     if (path === ".") {
@@ -518,15 +527,15 @@ export async function listFiles(path: string = "."): Promise<{ files: FileEntry[
             isDirectory: false,
           },
         ],
-        root: "/mock/mars"
+        root: "/mock/mars",
       };
     }
     return { files: [], root: "/mock/mars" };
   }
   const result = await getApi().list_files(path);
-  return { 
-    files: (result.files as FileEntry[]) || [], 
-    root: (result.root as string) || "" 
+  return {
+    files: (result.files as FileEntry[]) || [],
+    root: (result.root as string) || "",
   };
 }
 

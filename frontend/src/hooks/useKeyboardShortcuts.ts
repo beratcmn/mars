@@ -36,7 +36,7 @@ export function useKeyboardShortcuts({
         return;
       }
     },
-    [onNewTab, onCloseTab, onToggleSidebar]
+    [onNewTab, onCloseTab, onToggleSidebar],
   );
 
   useEffect(() => {

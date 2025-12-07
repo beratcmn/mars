@@ -38,9 +38,10 @@ export function ChatTabs({
           key={tab.id}
           className={`
             group relative flex items-center gap-1 pr-1 transition-all duration-200
-            ${activeTabId === tab.id
-              ? "text-foreground"
-              : "text-muted-foreground hover:text-foreground"
+            ${
+              activeTabId === tab.id
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
             }
           `}
         >
@@ -49,7 +50,11 @@ export function ChatTabs({
             className="flex items-center gap-2 px-3 py-2 text-sm"
           >
             {getIcon(tab.icon)}
-            <span className={`truncate max-w-[200px] ${activeTabId === tab.id ? 'serif-title-sm' : ''}`}>{tab.label}</span>
+            <span
+              className={`truncate max-w-[200px] ${activeTabId === tab.id ? "serif-title-sm" : ""}`}
+            >
+              {tab.label}
+            </span>
           </button>
           {/* Close button */}
           <button

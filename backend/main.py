@@ -260,7 +260,7 @@ class MarsAPI:
 
             # Sort: directories first, then files, alphabetical
             items.sort(key=lambda x: (not x["isDirectory"], x["name"].lower()))
-            
+
             return {"success": True, "files": items, "root": search_path, "error": None}
         except Exception as e:
             logger.error(f"Error listing files: {e}")
@@ -401,7 +401,10 @@ class MarsAPI:
                         capture_output=True,
                     )
                     return {"success": True, "error": None}
-                return {"success": False, "error": result.stderr or "Failed to open VS Code"}
+                return {
+                    "success": False,
+                    "error": result.stderr or "Failed to open VS Code",
+                }
         except FileNotFoundError:
             return {
                 "success": False,

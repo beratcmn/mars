@@ -238,7 +238,8 @@ html {
 }
 
 @keyframes gentle-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -281,15 +282,27 @@ html {
 }
 
 /* Staggered animation delays for lists */
-.stagger-1 { animation-delay: 0.05s; }
-.stagger-2 { animation-delay: 0.1s; }
-.stagger-3 { animation-delay: 0.15s; }
-.stagger-4 { animation-delay: 0.2s; }
-.stagger-5 { animation-delay: 0.25s; }
+.stagger-1 {
+  animation-delay: 0.05s;
+}
+.stagger-2 {
+  animation-delay: 0.1s;
+}
+.stagger-3 {
+  animation-delay: 0.15s;
+}
+.stagger-4 {
+  animation-delay: 0.2s;
+}
+.stagger-5 {
+  animation-delay: 0.25s;
+}
 
 /* Smooth hover transitions for interactive elements */
 .hover-lift {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .hover-lift:hover {
@@ -299,7 +312,9 @@ html {
 
 /* Focus ring animation */
 .focus-ring-animated {
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .focus-ring-animated:focus-within {
@@ -320,7 +335,9 @@ html {
 
 /* Message bubble hover effect */
 .message-bubble {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .message-bubble:hover {
@@ -329,7 +346,10 @@ html {
 
 /* Icon button micro-interaction */
 .icon-btn {
-  transition: transform 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .icon-btn:hover {
@@ -342,22 +362,28 @@ html {
 
 /* Sidebar transition */
 .sidebar-transition {
-  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), 
-              opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Tab underline animation */
 .tab-indicator {
-  transition: width 0.2s ease, left 0.2s ease, opacity 0.2s ease;
+  transition:
+    width 0.2s ease,
+    left 0.2s ease,
+    opacity 0.2s ease;
 }
 
 /* Typing cursor blink */
 @keyframes cursor-blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }
@@ -378,7 +404,10 @@ html {
 
 /* Premium input focus state */
 .input-premium {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
 }
 
 .input-premium:focus-within {
@@ -419,7 +448,7 @@ html {
   --prose-pre-bg: var(--muted);
   --prose-th-borders: var(--border);
   --prose-td-borders: var(--border);
-  
+
   font-family: var(--font-sans);
   font-size: 0.9375rem;
   line-height: 1.7;
@@ -697,7 +726,10 @@ html {
    ======================================== */
 
 .input-premium {
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
   background-color: oklch(0.995 0 0);
 }
 
@@ -802,4 +834,3 @@ a[href^="#file:"] {
 .tab-item.active {
   font-weight: 500;
 }
-

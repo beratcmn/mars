@@ -81,22 +81,29 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isTask = part.tool === "task";
-  const isRunning = part.state.status === "running" || part.state.status === "pending";
+  const isRunning =
+    part.state.status === "running" || part.state.status === "pending";
 
   const statusIcon = {
-    pending: <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />,
+    pending: (
+      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
+    ),
     running: <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />,
     completed: <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />,
     error: <XCircle className="w-3.5 h-3.5 text-red-500" />,
   }[part.state.status];
 
   // Extract description for task tools
-  const taskDescription = isTask && part.state.input
-    ? (part.state.input as Record<string, unknown>).description as string || ""
-    : "";
+  const taskDescription =
+    isTask && part.state.input
+      ? ((part.state.input as Record<string, unknown>).description as string) ||
+        ""
+      : "";
 
   // Format tool name for display
-  const displayName = part.tool.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  const displayName = part.tool
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (l) => l.toUpperCase());
 
   // For tasks, render a special card
   if (isTask) {
@@ -155,7 +162,9 @@ function ToolCallPart({ part }: { part: ToolPart }) {
               {/* Output section */}
               {part.state.output && (
                 <div>
-                  <span className="text-xs font-medium text-muted-foreground">Output</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    Output
+                  </span>
                   <div className="mt-2 p-3 bg-background rounded-md border border-border/50 prose prose-sm max-w-none dark:prose-invert">
                     <Streamdown>{part.state.output}</Streamdown>
                   </div>
@@ -165,7 +174,9 @@ function ToolCallPart({ part }: { part: ToolPart }) {
               {/* Error section */}
               {part.state.error && (
                 <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-md border border-red-200 dark:border-red-900/30">
-                  <span className="text-xs font-medium text-red-600 dark:text-red-400">Error</span>
+                  <span className="text-xs font-medium text-red-600 dark:text-red-400">
+                    Error
+                  </span>
                   <pre className="mt-1 text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap">
                     {part.state.error}
                   </pre>
@@ -201,7 +212,9 @@ function ToolCallPart({ part }: { part: ToolPart }) {
         <div className="mt-1 ml-4 pl-3 border-l-2 border-border text-xs space-y-2 py-2">
           {part.state.input && (
             <div>
-              <span className="text-muted-foreground text-[11px] uppercase tracking-wider">Input</span>
+              <span className="text-muted-foreground text-[11px] uppercase tracking-wider">
+                Input
+              </span>
               <pre className="mt-1 p-2 bg-muted/50 rounded text-[11px] overflow-x-auto font-mono">
                 {JSON.stringify(part.state.input, null, 2)}
               </pre>
@@ -209,7 +222,9 @@ function ToolCallPart({ part }: { part: ToolPart }) {
           )}
           {part.state.output && (
             <div>
-              <span className="text-muted-foreground text-[11px] uppercase tracking-wider">Output</span>
+              <span className="text-muted-foreground text-[11px] uppercase tracking-wider">
+                Output
+              </span>
               <pre className="mt-1 p-2 bg-muted/50 rounded text-[11px] overflow-x-auto max-h-40 font-mono">
                 {part.state.output}
               </pre>
@@ -217,8 +232,12 @@ function ToolCallPart({ part }: { part: ToolPart }) {
           )}
           {part.state.error && (
             <div className="p-2 bg-red-50 dark:bg-red-950/20 rounded">
-              <span className="text-red-600 text-[11px] uppercase tracking-wider">Error</span>
-              <pre className="mt-1 text-[11px] text-red-600">{part.state.error}</pre>
+              <span className="text-red-600 text-[11px] uppercase tracking-wider">
+                Error
+              </span>
+              <pre className="mt-1 text-[11px] text-red-600">
+                {part.state.error}
+              </pre>
             </div>
           )}
         </div>
@@ -281,16 +300,24 @@ export function ChatArea({
         <div className="text-center space-y-6 animate-fade-in-up max-w-md px-6">
           {/* Logo */}
           <div className="relative mx-auto w-20 h-20">
-            <img src="/logo.png" alt="Mars" className="w-full h-full object-contain" />
+            <img
+              src="/logo.png"
+              alt="Mars"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <div className="space-y-3">
             <h1 className="text-4xl font-serif italic text-foreground">
-              Welcome to <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">Mars</span>
+              Welcome to{" "}
+              <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
+                Mars
+              </span>
             </h1>
             <div className="w-16 h-px bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
             <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-              Your intelligent coding companion. Start a new conversation to explore code with AI assistance.
+              Your intelligent coding companion. Start a new conversation to
+              explore code with AI assistance.
             </p>
           </div>
 
@@ -315,7 +342,11 @@ export function ChatArea({
         <div className="text-center space-y-8 animate-fade-in-up max-w-lg px-6">
           {/* Logo */}
           <div className="relative mx-auto w-16 h-16">
-            <img src="/logo.png" alt="Mars" className="w-full h-full object-contain" />
+            <img
+              src="/logo.png"
+              alt="Mars"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <div className="space-y-3">
@@ -331,7 +362,7 @@ export function ChatArea({
               "Explain this codebase",
               "Fix a bug",
               "Write tests",
-              "Refactor code"
+              "Refactor code",
             ].map((suggestion, i) => (
               <button
                 key={suggestion}
@@ -354,14 +385,17 @@ export function ChatArea({
   // Check if scrolled away from bottom
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
-    const isNearBottom = target.scrollHeight - target.scrollTop - target.clientHeight < 100;
+    const isNearBottom =
+      target.scrollHeight - target.scrollTop - target.clientHeight < 100;
     setShowScrollButton(!isNearBottom);
   };
 
   // Scroll to bottom function
   const scrollToBottom = () => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
@@ -411,10 +445,13 @@ export function ChatArea({
       }
       if (part.type === "text") {
         return (
-          <div key={part.id} className="prose prose-sm max-w-none dark:prose-invert">
+          <div
+            key={part.id}
+            className="prose prose-sm max-w-none dark:prose-invert"
+          >
             <Streamdown>{formatMentions(part.text)}</Streamdown>
           </div>
-        )
+        );
       }
       return null;
     });
@@ -425,9 +462,14 @@ export function ChatArea({
       <ScrollArea className="h-full" onScrollCapture={handleScroll}>
         <div className="max-w-3xl mx-auto py-8 px-6 space-y-6">
           {messages.map((message) => {
-            const messageHasTextParts = message.parts?.some(p => p.type === "text");
+            const messageHasTextParts = message.parts?.some(
+              (p) => p.type === "text",
+            );
             return (
-              <div key={message.id} className={`group ${message.role === 'user' ? 'animate-slide-in-right' : 'animate-fade-in-up'}`}>
+              <div
+                key={message.id}
+                className={`group ${message.role === "user" ? "animate-slide-in-right" : "animate-fade-in-up"}`}
+              >
                 {message.role === "user" ? (
                   <div className="flex justify-end gap-2 items-start">
                     {/* User message hover actions */}
@@ -467,9 +509,7 @@ export function ChatArea({
                   <div className="space-y-1">
                     {/* Model Badge */}
                     {message.modelID && (
-                      <div className="model-badge mb-2">
-                        {message.modelID}
-                      </div>
+                      <div className="model-badge mb-2">{message.modelID}</div>
                     )}
 
                     {/* Render reasoning and tool parts AND text parts if available */}
@@ -478,7 +518,9 @@ export function ChatArea({
                     {/* Text content fallback - only if no text parts exist */}
                     {!messageHasTextParts && message.content && (
                       <div className="prose prose-sm max-w-none dark:prose-invert">
-                        <Streamdown>{formatMentions(message.content)}</Streamdown>
+                        <Streamdown>
+                          {formatMentions(message.content)}
+                        </Streamdown>
                       </div>
                     )}
 
@@ -500,7 +542,10 @@ export function ChatArea({
                                 message.tokens.cache.read > 0 && (
                                   <span className="opacity-60">
                                     {" "}
-                                    ({formatTokens(message.tokens.cache.read)} cached)
+                                    ({formatTokens(
+                                      message.tokens.cache.read,
+                                    )}{" "}
+                                    cached)
                                   </span>
                                 )}
                             </span>
@@ -548,7 +593,6 @@ export function ChatArea({
               </div>
             );
           })}
-
         </div>
       </ScrollArea>
 
@@ -565,4 +609,3 @@ export function ChatArea({
     </div>
   );
 }
-

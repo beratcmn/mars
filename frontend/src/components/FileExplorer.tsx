@@ -10,7 +10,11 @@ interface FileExplorerProps {
   onRootLoaded?: (rootPath: string) => void;
 }
 
-export function FileExplorer({ onFileSelect, className, onRootLoaded }: FileExplorerProps) {
+export function FileExplorer({
+  onFileSelect,
+  className,
+  onRootLoaded,
+}: FileExplorerProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
 
   useEffect(() => {

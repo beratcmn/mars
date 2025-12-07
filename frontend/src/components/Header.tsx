@@ -29,7 +29,6 @@ export function Header({
 }: HeaderProps) {
   return (
     <header className="flex h-11 items-center justify-between border-b border-border/50 px-4 relative">
-
       {/* Left: Sidebar Toggle + Session History */}
       <div className="flex items-center gap-1">
         <Button
@@ -38,7 +37,9 @@ export function Header({
           className="h-8 w-8 text-muted-foreground transition-all duration-150 hover:scale-105 active:scale-95"
           onClick={onToggleSidebar}
         >
-          <PanelLeft className={`h-4 w-4 transition-colors duration-200 ${isSidebarOpen ? "text-foreground" : ""}`} />
+          <PanelLeft
+            className={`h-4 w-4 transition-colors duration-200 ${isSidebarOpen ? "text-foreground" : ""}`}
+          />
         </Button>
         <SessionHistory
           activeSessionId={activeSessionId}
@@ -64,7 +65,11 @@ export function Header({
             await api.openInEditor();
           }}
         >
-          <img src={vscodeIcon} alt="VS Code" className="h-3.5 w-3.5 shrink-0" />
+          <img
+            src={vscodeIcon}
+            alt="VS Code"
+            className="h-3.5 w-3.5 shrink-0"
+          />
           <span>Open in Editor</span>
         </Button>
       </div>

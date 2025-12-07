@@ -11,7 +11,8 @@ const customLightTheme: { [key: string]: React.CSSProperties } = {
   'code[class*="language-"]': {
     color: "#24292e",
     background: "none",
-    fontFamily: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+    fontFamily:
+      "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
     fontSize: "0.875rem",
     textAlign: "left",
     whiteSpace: "pre",
@@ -24,7 +25,8 @@ const customLightTheme: { [key: string]: React.CSSProperties } = {
   'pre[class*="language-"]': {
     color: "#24292e",
     background: "transparent",
-    fontFamily: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+    fontFamily:
+      "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
     fontSize: "0.875rem",
     textAlign: "left",
     whiteSpace: "pre",
@@ -199,8 +201,9 @@ export function CodeViewer({ filePath }: CodeViewerProps) {
         }}
         codeTagProps={{
           style: {
-            fontFamily: "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
-          }
+            fontFamily:
+              "ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace",
+          },
         }}
       >
         {content}

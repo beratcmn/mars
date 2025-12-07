@@ -66,8 +66,8 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
       const query = fullText.slice(1).split(" ")[0].toLowerCase();
       // Only show suggestions if no space yet (still typing command name)
       if (!fullText.slice(1).includes(" ")) {
-        const filtered = commands.filter(
-          (c) => c.name.toLowerCase().includes(query)
+        const filtered = commands.filter((c) =>
+          c.name.toLowerCase().includes(query),
         );
         setCommandSuggestions(filtered.slice(0, 6));
         setShowCommandSuggestions(filtered.length > 0);
@@ -295,15 +295,20 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   key={cmd.name}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertCommand(cmd.name)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${index === commandSelectedIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50"
-                    }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${
+                    index === commandSelectedIndex
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50"
+                  }`}
                 >
                   <Terminal className="h-4 w-4 opacity-70 shrink-0" />
-                  <span className="font-medium text-foreground">/{cmd.name}</span>
+                  <span className="font-medium text-foreground">
+                    /{cmd.name}
+                  </span>
                   {cmd.description && (
-                    <span className="text-xs opacity-60 truncate">{cmd.description}</span>
+                    <span className="text-xs opacity-60 truncate">
+                      {cmd.description}
+                    </span>
                   )}
                 </button>
               ))}
@@ -321,10 +326,11 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   // We need to prevent default mousedown to not lose focus from editor
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50"
-                    }`}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${
+                    index === selectedIndex
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50"
+                  }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />
                   <span className="truncate">{file}</span>
