@@ -72,23 +72,25 @@ echo "Opening Mars in: $WORKDIR"
 
 export MARS_WORKDIR="$WORKDIR"
 
-# Start opencode server if not running
-if ! lsof -ti:4096 > /dev/null 2>&1; then
-    echo "Starting opencode server..."
-    cd "$WORKDIR"
-    nohup opencode serve -p 4096 > /tmp/opencode_server.log 2>&1 &
-    
-    echo "Waiting for server..."
-    for i in {1..20}; do
-        if curl -s http://127.0.0.1:4096/config > /dev/null 2>&1; then
-            echo "OpenCode server ready!"
-            break
-        fi
-        sleep 0.5
-    done
-else
-    echo "OpenCode server already running"
+# Kill any existing opencode server on port 4096 first
+if lsof -ti:4096 > /dev/null 2>&1; then
+    echo "Killing existing opencode server..."
+    lsof -ti:4096 | xargs kill -9 2>/dev/null || true
+    sleep 0.5
 fi
+
+echo "Starting opencode server in $WORKDIR..."
+cd "$WORKDIR"
+nohup opencode serve -p 4096 > /tmp/opencode_server.log 2>&1 &
+
+echo "Waiting for server..."
+for i in {1..20}; do
+    if curl -s http://127.0.0.1:4096/config > /dev/null 2>&1; then
+        echo "OpenCode server ready!"
+        break
+    fi
+    sleep 0.5
+done
 
 # Launch Mars.app
 MARS_EXECUTABLE="$MARS_APP/Contents/MacOS/mars"
