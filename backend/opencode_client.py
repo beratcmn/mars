@@ -79,19 +79,27 @@ class OpenCodeServer:
         try:
             workdir = self._resolve_workdir()
             if workdir:
-                logger.info(f"Spawning opencode serve in cwd={workdir} on port {self.config.port}")
+                logger.info(
+                    f"Spawning opencode serve in cwd={workdir} on port {self.config.port}"
+                )
             else:
-                logger.warning("Spawning opencode serve without explicit cwd (fallback)")
+                logger.warning(
+                    "Spawning opencode serve without explicit cwd (fallback)"
+                )
+
+            cmd = [
+                "opencode",
+                "serve",
+                "--port",
+                str(self.config.port),
+                "--hostname",
+                self.config.host,
+            ]
+            if workdir:
+                cmd.append(workdir)
 
             self._process = subprocess.Popen(
-                [
-                    "opencode",
-                    "serve",
-                    "--port",
-                    str(self.config.port),
-                    "--hostname",
-                    self.config.host,
-                ],
+                cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 cwd=workdir or None,

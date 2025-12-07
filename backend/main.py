@@ -40,13 +40,31 @@ def capture_cli_workdir() -> None:
 
         resolved = os.path.abspath(candidate)
         if os.path.isdir(resolved):
-            os.environ.setdefault("MARS_WORKDIR", resolved)
+            os.environ["MARS_WORKDIR"] = resolved
             logger.info(f"Using CLI workdir override: {resolved}")
             return
+
+    # Fallback: scan sys.argv for any valid directory
+    # This handles cases where argparse might consume a non-directory argument as 'path'
+    # or if argv emulation appends arguments in a way argparse doesn't expect.
+    logger.info("Argparse failed to find workdir, scanning sys.argv...")
+    for arg in sys.argv[1:]:
+        if arg.startswith("-"):
+            continue
+
+        try:
+            resolved = os.path.abspath(arg)
+            if os.path.isdir(resolved):
+                os.environ["MARS_WORKDIR"] = resolved
+                logger.info(f"Found workdir via scan: {resolved}")
+                return
+        except Exception:
+            continue
 
     # If args were provided but unusable, log once for visibility
     if args.workdir or args.path:
         logger.warning("CLI workdir argument provided but not a directory")
+
 
 # Configure logging
 logging.basicConfig(
