@@ -99,7 +99,7 @@ export function SessionHistory({
             >
                 <div className="p-3 border-b border-border/50">
                     <h3 className="serif-title text-base flex items-center gap-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <img src="/logo.png" alt="Mars" className="h-4 w-4" />
                         Session History
                     </h3>
                 </div>

@@ -806,7 +806,10 @@ function App() {
   if (!isInitialized) {
     return (
       <div className="flex h-screen items-center justify-center bg-background font-sans antialiased">
-        <p className="text-muted-foreground">Loading...</p>
+        <div className="text-center space-y-4">
+          <img src="/logo.png" alt="Mars" className="w-12 h-12 mx-auto" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     );
   }

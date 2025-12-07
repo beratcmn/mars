@@ -279,12 +279,9 @@ export function ChatArea({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center space-y-6 animate-fade-in-up max-w-md px-6">
-          {/* Animated Mars Icon */}
+          {/* Logo */}
           <div className="relative mx-auto w-20 h-20">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400/20 to-red-500/20 animate-pulse" />
-            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-orange-500/30 to-red-600/30" />
-            <div className="absolute inset-4 rounded-full bg-gradient-to-br from-orange-600 to-red-700 shadow-lg shadow-orange-500/25" />
-            <div className="absolute top-6 left-8 w-2 h-2 rounded-full bg-orange-300/60" />
+            <img src="/logo.png" alt="Mars" className="w-full h-full object-contain" />
           </div>
 
           <div className="space-y-3">
@@ -316,11 +313,9 @@ export function ChatArea({
     return (
       <div className="flex h-full items-center justify-center">
         <div className="text-center space-y-8 animate-fade-in-up max-w-lg px-6">
-          {/* Pulsing Mars Icon */}
+          {/* Logo */}
           <div className="relative mx-auto w-16 h-16">
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400/10 to-red-500/10 animate-gentle-pulse" />
-            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-orange-500/20 to-red-600/20" />
-            <div className="absolute inset-3 rounded-full bg-gradient-to-br from-orange-600 to-red-700 shadow-md shadow-orange-500/20" />
+            <img src="/logo.png" alt="Mars" className="w-full h-full object-contain" />
           </div>
 
           <div className="space-y-3">
