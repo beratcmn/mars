@@ -484,25 +484,10 @@ export function ChatArea({
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm">
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {message.content.split(/(@\[.*?\])/g).map((part, i) => {
-                          const match = part.match(/@\[(.*?)\]/);
-                          if (match) {
-                            const path = match[1];
-                            const basename = path.split("/").pop() || path;
-                            return (
-                              <span
-                                key={i}
-                                className="mention-badge mx-1 text-primary-foreground/90 bg-primary-foreground/20 border-transparent"
-                              >
-                                {basename}
-                              </span>
-                            );
-                          }
-                          return part;
-                        })}
-                      </p>
+                    <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm prose prose-sm dark:prose-invert">
+                      <Streamdown>
+                        {formatMentions(message.content)}
+                      </Streamdown>
                     </div>
                   </div>
                 ) : (

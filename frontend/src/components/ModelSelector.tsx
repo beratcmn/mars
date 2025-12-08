@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { ChevronDown, Sparkles, Check, Search, Box } from "lucide-react";
+import { ChevronDown, Star, Check, Search, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -94,7 +94,7 @@ export function ModelSelector({
           className="h-9 gap-2 px-2 text-sm font-normal text-muted-foreground hover:text-foreground transition-colors duration-200"
         >
           <div className="flex items-center justify-center w-5 h-5">
-            <Sparkles className="h-4 w-4" />
+            <Star className="h-4 w-4" />
           </div>
           <span className="font-medium transition-opacity duration-200">
             <span className="opacity-50 group-hover:opacity-100 transition-opacity">

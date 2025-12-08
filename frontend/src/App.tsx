@@ -80,6 +80,20 @@ interface FileTab extends Tab {
 
 type AppTab = SessionTab | FileTab;
 
+export interface PlanetAssignment {
+  icon: string;
+  color: string;
+}
+
+// Planet icon assignment for agents
+const planetPalette: PlanetAssignment[] = [
+  { icon: "Planet", color: "text-red-400" },
+  { icon: "Globe2", color: "text-emerald-400" },
+  { icon: "Orbit", color: "text-blue-400" },
+  { icon: "Moon", color: "text-slate-300" },
+  { icon: "Sun", color: "text-amber-400" },
+];
+
 /**
  * Pure function to apply a single SSE event to the tabs state.
  * This enables batching multiple events into a single state update.
@@ -286,6 +300,7 @@ function App() {
   );
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
+  const [planetsByAgent, setPlanetsByAgent] = useState<Record<string, PlanetAssignment>>({});
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -329,6 +344,15 @@ function App() {
 
     return newTab;
   }, []);
+
+  const getPlanetForAgent = useCallback(
+    (name: string, existing: Record<string, PlanetAssignment>) => {
+      if (existing[name]) return existing[name];
+      const randomIndex = Math.floor(Math.random() * planetPalette.length);
+      return planetPalette[randomIndex];
+    },
+    [],
+  );
 
   // Handle file selection from Explorer
   const handleFileSelect = (file: FileEntry) => {
@@ -553,7 +577,7 @@ function App() {
           const agentsList = await api.listAgents();
           setAgents(agentsList);
 
-          // Load agent settings
+          // Load agent settings and planet mappings
           try {
             const settings = await api.loadSettings();
             if (settings.selectedAgent) {
@@ -561,6 +585,24 @@ function App() {
               // Verify it exists in the fetched list
               const found = agentsList.find((a) => a.name === savedAgent.name);
               if (found) setSelectedAgent(savedAgent);
+            }
+
+            const savedPlanets = (settings.planetsByAgent as Record<string, PlanetAssignment>) || {};
+            const updatedPlanets: Record<string, PlanetAssignment> = { ...savedPlanets };
+            let changed = false;
+            for (const agent of agentsList) {
+              if (!updatedPlanets[agent.name]) {
+                updatedPlanets[agent.name] = getPlanetForAgent(agent.name, updatedPlanets);
+                changed = true;
+              }
+            }
+            setPlanetsByAgent(updatedPlanets);
+
+            if (changed) {
+              await api.saveSettings({
+                ...settings,
+                planetsByAgent: updatedPlanets,
+              });
             }
           } catch (e) {
             console.error("Failed to load agent settings:", e);
@@ -966,6 +1008,7 @@ function App() {
         }}
         agents={agents}
         selectedAgent={selectedAgent}
+        planetsByAgent={planetsByAgent}
         onAgentChange={async (agent) => {
           setSelectedAgent(agent);
           try {
@@ -973,9 +1016,10 @@ function App() {
             await api.saveSettings({
               ...currentSettings,
               selectedAgent: agent,
+              planetsByAgent,
             });
           } catch (e) {
-            console.error("Failed to save settings:", e);
+            console.error("Failed to save agent settings:", e);
           }
         }}
       />

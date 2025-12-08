@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { ChevronDown, Bot, Check, Search } from "lucide-react";
+import { ChevronDown, Earth, Check, Search, Globe2, Orbit, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -10,15 +10,26 @@ import {
 } from "@/components/ui/popover";
 import type { Agent } from "@/lib/api";
 
+import type { PlanetAssignment } from "@/App";
+
 interface AgentSelectorProps {
   agents: Agent[];
   selectedAgent: Agent | null;
+  planetsByAgent?: Record<string, PlanetAssignment>;
   onAgentChange: (agent: Agent) => void;
 }
+
+const planetIconMap = {
+  Globe2,
+  Orbit,
+  Moon,
+  Sun,
+} as const;
 
 export function AgentSelector({
   agents,
   selectedAgent,
+  planetsByAgent = {},
   onAgentChange,
 }: AgentSelectorProps) {
   const [open, setOpen] = useState(false);
@@ -47,8 +58,8 @@ export function AgentSelector({
           size="sm"
           className="h-9 gap-2 px-2 text-sm font-normal text-muted-foreground hover:text-foreground transition-colors duration-200"
         >
-          <div className="flex items-center justify-center w-5 h-5">
-            <Bot className="h-4 w-4" />
+          <div className="flex items-center justify-center w-5 h-5 text-red-400">
+            <Earth className="h-4 w-4" />
           </div>
           <span className="font-medium transition-opacity duration-200">
             {selectedAgent?.name || "Select Agent"}
@@ -76,28 +87,39 @@ export function AgentSelector({
             <div className="space-y-1">
               {filteredAgents.map((agent) => {
                 const isSelected = selectedAgent?.name === agent.name;
-                return (
-                  <button
-                    key={agent.name}
-                    onClick={() => {
-                      onAgentChange(agent);
-                      setOpen(false);
-                    }}
-                    className={`
-                      w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-sm text-left
-                      transition-all duration-150 ease-out
-                      ${
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5 text-foreground"
-                      }
-                    `}
-                  >
-                    <span className="truncate mr-2">{agent.name}</span>
-                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
-                  </button>
-                );
-              })}
+                const assignment = planetsByAgent[agent.name];
+                const PlanetIcon = assignment
+                   ? planetIconMap[assignment.icon as keyof typeof planetIconMap] || Globe2
+                   : Globe2;
+                  const colorClass = assignment?.color || "text-red-400";
+
+
+                 return (
+                   <button
+                     key={agent.name}
+                     onClick={() => {
+                       onAgentChange(agent);
+                       setOpen(false);
+                     }}
+                     className={`
+                       w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-sm text-left
+                       transition-all duration-150 ease-out
+                       ${
+                         isSelected
+                           ? "bg-primary text-primary-foreground"
+                           : "hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5 text-foreground"
+                       }
+                     `}
+                   >
+                     <span className="truncate mr-2 flex items-center gap-2">
+                       <PlanetIcon className={`h-4 w-4 ${colorClass}`} />
+                       {agent.name}
+                     </span>
+                     {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                   </button>
+                 );
+               })}
+
             </div>
           )}
         </ScrollArea>

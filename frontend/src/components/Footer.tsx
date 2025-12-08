@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ModelSelector, type SelectedModel } from "@/components/ModelSelector";
 import { AgentSelector } from "@/components/AgentSelector";
 import type { Provider, Agent } from "@/lib/api";
+import type { PlanetAssignment } from "@/App";
 
 interface FooterProps {
   providers: Provider[];
@@ -11,6 +12,7 @@ interface FooterProps {
   onModelChange: (model: SelectedModel) => void;
   agents: Agent[];
   selectedAgent: Agent | null;
+  planetsByAgent?: Record<string, PlanetAssignment>;
   onAgentChange: (agent: Agent) => void;
 }
 
@@ -21,6 +23,7 @@ export function Footer({
   onModelChange,
   agents,
   selectedAgent,
+  planetsByAgent,
   onAgentChange,
 }: FooterProps) {
   return (
@@ -36,6 +39,7 @@ export function Footer({
         <AgentSelector
           agents={agents}
           selectedAgent={selectedAgent}
+          planetsByAgent={planetsByAgent}
           onAgentChange={onAgentChange}
         />
       </div>
