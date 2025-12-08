@@ -4,12 +4,14 @@ interface KeyboardShortcuts {
   onNewTab?: () => void;
   onCloseTab?: () => void;
   onToggleSidebar?: () => void;
+  onRotateAgent?: () => void;
 }
 
 export function useKeyboardShortcuts({
   onNewTab,
   onCloseTab,
   onToggleSidebar,
+  onRotateAgent,
 }: KeyboardShortcuts) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -35,8 +37,25 @@ export function useKeyboardShortcuts({
         onToggleSidebar?.();
         return;
       }
+
+      // Tab - Rotate Agent (only when no modifiers and not in input)
+      if (e.key === "Tab" && !isMeta && !e.shiftKey && !e.altKey) {
+        // Don't interfere with tab navigation in form inputs
+        const activeElement = document.activeElement as HTMLElement;
+        const isInputElement = activeElement && (
+          activeElement.tagName === 'INPUT' ||
+          activeElement.tagName === 'TEXTAREA' ||
+          activeElement.contentEditable === 'true'
+        );
+        
+        if (!isInputElement) {
+          e.preventDefault();
+          onRotateAgent?.();
+          return;
+        }
+      }
     },
-    [onNewTab, onCloseTab, onToggleSidebar],
+    [onNewTab, onCloseTab, onToggleSidebar, onRotateAgent],
   );
 
   useEffect(() => {

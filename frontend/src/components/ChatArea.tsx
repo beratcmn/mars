@@ -486,7 +486,7 @@ export function ChatArea({
                     </div>
                     <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm prose prose-sm prose-user-message">
                       <Streamdown>
-                        {formatMentions(message.content)}
+                        {formatMentions(message.content).replace(/\n/g, "  \n")}
                       </Streamdown>
                     </div>
                   </div>

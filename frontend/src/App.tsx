@@ -415,11 +415,36 @@ function App() {
     }
   }, [activeTabId]);
 
+  // Handle agent rotation with Tab key
+  const handleRotateAgent = useCallback(() => {
+    if (!agents.length) {
+      console.log("No agents available for rotation");
+      return;
+    }
+
+    const currentIndex = selectedAgent 
+      ? agents.findIndex(agent => agent.name === selectedAgent.name)
+      : -1;
+    
+    const nextIndex = (currentIndex + 1) % agents.length;
+    const nextAgent = agents[nextIndex];
+    
+    console.log(`Rotating agent from ${selectedAgent?.name || 'None'} to ${nextAgent.name}`);
+    setSelectedAgent(nextAgent);
+    
+    // Save to settings
+    api.saveSettings({
+      selectedAgent: nextAgent,
+      planetsByAgent,
+    }).catch(e => console.error("Failed to save agent settings:", e));
+  }, [agents, selectedAgent, planetsByAgent]);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onNewTab: handleNewTab,
     onCloseTab: handleCloseActiveTab,
     onToggleSidebar: () => setIsSidebarOpen((prev) => !prev),
+    onRotateAgent: handleRotateAgent,
   });
 
   // Handle selecting a session from history
@@ -747,10 +772,13 @@ function App() {
 
           if (commandArgs) {
             const cmdArgsDef =
-              commandDef?.args || (commandDef as any)?.arguments;
+              commandDef?.args || (commandDef as { arguments?: unknown[] })?.arguments;
             if (cmdArgsDef && cmdArgsDef.length > 0) {
               // Use the name of the first argument
-              const argName = cmdArgsDef[0].name;
+              const firstArg = cmdArgsDef[0];
+              const argName = firstArg && typeof firstArg === 'object' && 'name' in firstArg 
+                ? firstArg.name as string 
+                : 'text';
               args = { [argName]: commandArgs };
             } else {
               // Fallback: send as "text" if no definition found, or maybe the command expects raw text
@@ -925,22 +953,6 @@ function App() {
             onTabSelect={setActiveTabId}
             onTabClose={handleTabClose}
             onNewTab={handleNewTab}
-            agents={agents}
-            selectedAgent={selectedAgent}
-            planetsByAgent={planetsByAgent}
-            onAgentChange={async (agent) => {
-              setSelectedAgent(agent);
-              try {
-                const currentSettings = await api.loadSettings();
-                await api.saveSettings({
-                  ...currentSettings,
-                  selectedAgent: agent,
-                  planetsByAgent,
-                });
-              } catch (e) {
-                console.error("Failed to save agent settings:", e);
-              }
-            }}
           />
 
           <div className="flex-1 overflow-hidden relative">

@@ -862,6 +862,19 @@ a[href^="#file:"] {
   font-size: 0.9375rem;
   line-height: 1.7;
   letter-spacing: -0.01em;
+  color: var(--primary-foreground);
+}
+
+.prose-user-message p,
+.prose-user-message h1,
+.prose-user-message h2,
+.prose-user-message h3,
+.prose-user-message h4,
+.prose-user-message h5,
+.prose-user-message h6,
+.prose-user-message li,
+.prose-user-message span {
+  color: var(--primary-foreground);
 }
 
 .prose-user-message strong {

@@ -1,7 +1,5 @@
-import { File, Plus, X, Earth } from "lucide-react";
+import { File, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Agent } from "@/lib/api";
-import type { PlanetAssignment } from "@/App";
 
 interface Tab {
   id: string;
@@ -15,10 +13,6 @@ interface ChatTabsProps {
   onTabSelect: (tab: string) => void;
   onNewTab?: () => void;
   onTabClose?: (tabId: string) => void;
-  agents?: Agent[];
-  selectedAgent?: Agent | null;
-  planetsByAgent?: Record<string, PlanetAssignment>;
-  onAgentChange?: (agent: Agent) => void;
 }
 
 export function ChatTabs({
@@ -27,10 +21,6 @@ export function ChatTabs({
   onTabSelect,
   onNewTab,
   onTabClose,
-  agents = [],
-  selectedAgent,
-  planetsByAgent = {},
-  onAgentChange,
 }: ChatTabsProps) {
   const getIcon = (icon: "file" | "sparkles") => {
     switch (icon) {
@@ -41,18 +31,7 @@ export function ChatTabs({
     }
   };
 
-  const handleAgentRotation = () => {
-    if (!agents.length || !onAgentChange) return;
 
-    const currentIndex = selectedAgent 
-      ? agents.findIndex(agent => agent.name === selectedAgent.name)
-      : -1;
-    
-    const nextIndex = (currentIndex + 1) % agents.length;
-    const nextAgent = agents[nextIndex];
-    
-    onAgentChange(nextAgent);
-  };
 
   return (
     <div className="flex items-center gap-1 border-b border-border/50 px-3 pt-1">
@@ -96,25 +75,7 @@ export function ChatTabs({
           )}
         </div>
       ))}
-      {agents.length > 0 && onAgentChange && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-110 active:scale-95"
-          onClick={handleAgentRotation}
-          title={`Current: ${selectedAgent?.name || 'None'} - Click to rotate`}
-        >
-          {selectedAgent && planetsByAgent[selectedAgent.name] ? (
-            <img 
-              src={`./planets/${planetsByAgent[selectedAgent.name].image}`} 
-              alt={selectedAgent.name}
-              className="w-4 h-4 object-cover rounded-full"
-            />
-          ) : (
-            <Earth className="h-4 w-4 text-red-400" />
-          )}
-        </Button>
-      )}
+
       <Button
         variant="ghost"
         size="icon"
