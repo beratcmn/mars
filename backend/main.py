@@ -478,13 +478,36 @@ class MarsAPI:
         try:
             import subprocess
 
-            # Use the provided path or default to project root
+            # Resolve preferred target path
             target_path = path
+
+            # If frontend provided only a folder name (e.g., "mars"), resolve against launch cwd
+            if target_path and not os.path.isabs(target_path):
+                target_path = _resolve_path_from_launch_cwd(target_path)
+
             if not target_path:
-                # Default to the project root (one level up from backend/)
+                # Prefer explicit working directory from launcher
+                target_path = os.environ.get("MARS_WORKDIR")
+
+            if not target_path:
+                # Fallback to OpenCode current project path if available
+                try:
+                    project = self.client.get_current_project()
+                    if project and isinstance(project, dict):
+                        candidate = project.get("path") or project.get("name")
+                        if candidate:
+                            target_path = candidate
+                except Exception as e:  # pragma: no cover - defensive
+                    logger.warning(f"Failed to fetch current project for editor: {e}")
+
+            if not target_path:
+                # Final fallback: repo root (one level up from backend/)
                 target_path = os.path.abspath(
                     os.path.join(os.path.dirname(__file__), "..")
                 )
+
+            # Normalize path
+            target_path = os.path.abspath(target_path)
 
             # Try to open with VS Code using the 'code' command
             result = subprocess.run(

@@ -276,7 +276,7 @@ function App() {
   // New states for UI features
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isTaskPanelOpen, setIsTaskPanelOpen] = useState(false);
-  const [projectRoot, setProjectRoot] = useState("mars");
+  const [projectRoot, setProjectRoot] = useState("");
 
   // Provider/model state
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -497,7 +497,9 @@ function App() {
 
         // Get current project info
         const project = await api.getCurrentProject();
-        if (project?.name) {
+        if (project?.path) {
+          setProjectRoot(project.path);
+        } else if (project?.name) {
           setProjectRoot(project.name);
         }
 
@@ -862,11 +864,11 @@ function App() {
           <FileExplorer
             onFileSelect={handleFileSelect}
             className="h-full w-64" // Fix width to prevent content squishing
-            onRootLoaded={(path) => {
-              // Extract just the folder name for display if path is long
-              const folderName = path.split(/[\/\\]/).pop() || path;
-              setProjectRoot(folderName);
-            }}
+             onRootLoaded={(path) => {
+               // Store full path for accuracy; UI still shows folder name
+               setProjectRoot(path);
+             }}
+
           />
         </div>
 

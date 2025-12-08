@@ -61,8 +61,8 @@ export function Header({
           size="sm"
           className="h-7 gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-all duration-150"
           onClick={async () => {
-            // Use the backend API to open VS Code
-            await api.openInEditor();
+            // Use the backend API to open VS Code at the project root
+            await api.openInEditor(projectPath);
           }}
         >
           <img
