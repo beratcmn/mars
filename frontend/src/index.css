@@ -834,3 +834,87 @@ a[href^="#file:"] {
 .tab-item.active {
   font-weight: 500;
 }
+
+/* ========================================
+   User Message Prose Styling
+   Ensures text is visible against primary background
+   ======================================== */
+
+.prose-user-message {
+  --prose-body: var(--primary-foreground);
+  --prose-headings: var(--primary-foreground);
+  --prose-lead: var(--primary-foreground);
+  --prose-links: var(--primary-foreground);
+  --prose-bold: var(--primary-foreground);
+  --prose-counters: var(--primary-foreground);
+  --prose-bullets: var(--primary-foreground);
+  --prose-hr: var(--primary-foreground);
+  --prose-quotes: var(--primary-foreground);
+  --prose-quote-borders: var(--primary-foreground);
+  --prose-captions: var(--primary-foreground);
+  --prose-code: var(--primary-foreground);
+  --prose-pre-code: var(--primary-foreground);
+  --prose-pre-bg: var(--primary-foreground);
+  --prose-th-borders: var(--primary-foreground);
+  --prose-td-borders: var(--primary-foreground);
+
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  letter-spacing: -0.01em;
+}
+
+.prose-user-message strong {
+  font-weight: 600;
+  color: var(--primary-foreground);
+}
+
+.prose-user-message a {
+  color: var(--primary-foreground);
+  text-decoration: underline;
+  text-decoration-color: var(--primary-foreground);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.2s ease;
+}
+
+.prose-user-message a:hover {
+  text-decoration-color: var(--primary-foreground);
+}
+
+.prose-user-message code {
+  background-color: var(--primary-foreground);
+  color: var(--primary);
+  border-radius: 0.25rem;
+  padding: 0.15em 0.4em;
+  font-weight: 400;
+}
+
+.prose-user-message pre {
+  background-color: var(--primary-foreground);
+  color: var(--primary);
+  border: 1px solid var(--primary-foreground);
+  border-radius: 0.5rem;
+  padding: 1rem 1.25rem;
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  overflow-x: auto;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.prose-user-message pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--primary);
+}
+
+.prose-user-message blockquote {
+  border-left: 2px solid var(--primary-foreground);
+  color: var(--primary-foreground);
+}
+
+.prose-user-message ul > li::marker,
+.prose-user-message ol > li::marker {
+  color: var(--primary-foreground);
+}

@@ -484,7 +484,7 @@ export function ChatArea({
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm prose prose-sm dark:prose-invert">
+                    <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm prose prose-sm prose-user-message">
                       <Streamdown>
                         {formatMentions(message.content)}
                       </Streamdown>

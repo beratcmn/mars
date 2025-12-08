@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { ChevronDown, Earth, Check, Search, Globe2, Orbit, Moon, Sun } from "lucide-react";
+import { ChevronDown, Earth, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -18,13 +18,6 @@ interface AgentSelectorProps {
   planetsByAgent?: Record<string, PlanetAssignment>;
   onAgentChange: (agent: Agent) => void;
 }
-
-const planetIconMap = {
-  Globe2,
-  Orbit,
-  Moon,
-  Sun,
-} as const;
 
 export function AgentSelector({
   agents,
@@ -58,8 +51,16 @@ export function AgentSelector({
           size="sm"
           className="h-9 gap-2 px-2 text-sm font-normal text-muted-foreground hover:text-foreground transition-colors duration-200"
         >
-          <div className="flex items-center justify-center w-5 h-5 text-red-400">
-            <Earth className="h-4 w-4" />
+          <div className="flex items-center justify-center w-5 h-5">
+            {selectedAgent && planetsByAgent[selectedAgent.name] ? (
+              <img 
+                src={`./planets/${planetsByAgent[selectedAgent.name].image}`} 
+                alt={selectedAgent.name}
+                className="w-4 h-4 object-cover rounded-full"
+              />
+            ) : (
+              <Earth className="h-4 w-4 text-red-400" />
+            )}
           </div>
           <span className="font-medium transition-opacity duration-200">
             {selectedAgent?.name || "Select Agent"}
@@ -88,11 +89,6 @@ export function AgentSelector({
               {filteredAgents.map((agent) => {
                 const isSelected = selectedAgent?.name === agent.name;
                 const assignment = planetsByAgent[agent.name];
-                const PlanetIcon = assignment
-                   ? planetIconMap[assignment.icon as keyof typeof planetIconMap] || Globe2
-                   : Globe2;
-                  const colorClass = assignment?.color || "text-red-400";
-
 
                  return (
                    <button
@@ -112,7 +108,17 @@ export function AgentSelector({
                      `}
                    >
                      <span className="truncate mr-2 flex items-center gap-2">
-                       <PlanetIcon className={`h-4 w-4 ${colorClass}`} />
+                       <div className="w-4 h-4 flex items-center justify-center">
+                         {assignment ? (
+                           <img 
+                             src={`./planets/${assignment.image}`} 
+                             alt={agent.name}
+                             className="w-4 h-4 object-cover rounded-full"
+                           />
+                         ) : (
+                           <Earth className="h-4 w-4 text-red-400" />
+                         )}
+                       </div>
                        {agent.name}
                      </span>
                      {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}

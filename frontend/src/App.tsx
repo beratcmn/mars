@@ -81,17 +81,20 @@ interface FileTab extends Tab {
 type AppTab = SessionTab | FileTab;
 
 export interface PlanetAssignment {
-  icon: string;
-  color: string;
+  image: string;
 }
 
-// Planet icon assignment for agents
+// Planet image assignment for agents
 const planetPalette: PlanetAssignment[] = [
-  { icon: "Planet", color: "text-red-400" },
-  { icon: "Globe2", color: "text-emerald-400" },
-  { icon: "Orbit", color: "text-blue-400" },
-  { icon: "Moon", color: "text-slate-300" },
-  { icon: "Sun", color: "text-amber-400" },
+  { image: "mars.png" },
+  { image: "jupiter.png" },
+  { image: "mercury.png" },
+  { image: "venus_1.png" },
+  { image: "venus_2.png" },
+  { image: "venus_3.png" },
+  { image: "planet.png" },
+  { image: "planet_1.png" },
+  { image: "planet_2.png" },
 ];
 
 /**
@@ -922,6 +925,22 @@ function App() {
             onTabSelect={setActiveTabId}
             onTabClose={handleTabClose}
             onNewTab={handleNewTab}
+            agents={agents}
+            selectedAgent={selectedAgent}
+            planetsByAgent={planetsByAgent}
+            onAgentChange={async (agent) => {
+              setSelectedAgent(agent);
+              try {
+                const currentSettings = await api.loadSettings();
+                await api.saveSettings({
+                  ...currentSettings,
+                  selectedAgent: agent,
+                  planetsByAgent,
+                });
+              } catch (e) {
+                console.error("Failed to save agent settings:", e);
+              }
+            }}
           />
 
           <div className="flex-1 overflow-hidden relative">
