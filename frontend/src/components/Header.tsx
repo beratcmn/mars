@@ -1,4 +1,4 @@
-import { PanelLeft } from "lucide-react";
+import { PanelLeft, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SessionHistory } from "@/components/SessionHistory";
 import * as api from "@/lib/api";
@@ -48,10 +48,12 @@ export function Header({
         />
       </div>
 
-      {/* Center: Logo + Project Path */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 text-sm z-0">
-        <img src="./logo.png" alt="Mars" className="h-5 w-5" />
-        <span className="font-medium">{projectPath}</span>
+      {/* Center: Project Path */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-2 text-sm z-0 text-muted-foreground">
+        <FolderOpen className="h-4 w-4" />
+        <span className="font-medium truncate max-w-xl" title={projectPath}>
+          {projectPath || "No project selected"}
+        </span>
       </div>
 
       {/* Right: Open in Editor button */}
