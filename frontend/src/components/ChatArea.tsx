@@ -97,6 +97,47 @@ function ToolCallPart({ part }: { part: ToolPart }) {
     .replace(/_/g, " ")
     .replace(/\b\w/g, (l) => l.toUpperCase());
 
+  // Check for TodoWrite tool - special minimal rendering
+  const isTodoWrite = part.tool.toLowerCase() === "todowrite";
+
+  if (isTodoWrite) {
+    // Extract todo count from input
+    const todoInput = part.state.input as Record<string, unknown> | undefined;
+    const todos = (todoInput?.todos as unknown[]) || [];
+    const todoCount = todos.length;
+
+    return (
+      <div className="my-2 animate-fade-in">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-muted/30 border border-border/40">
+          {/* Status icon */}
+          <div className="text-muted-foreground">
+            {isRunning ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : isCompleted ? (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            ) : isError ? (
+              <XCircle className="w-3.5 h-3.5 text-red-500/70" />
+            ) : (
+              <CheckCircle2 className="w-3.5 h-3.5" />
+            )}
+          </div>
+
+          {/* Label */}
+          <span className="text-xs text-muted-foreground">
+            {isRunning ? "Updating tasks..." : "Updated tasks"}
+          </span>
+
+          {/* Count badge */}
+          {todoCount > 0 && (
+            <span className="text-[10px] text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">
+              {todoCount} {todoCount === 1 ? "task" : "tasks"}
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // For tasks, render a minimal elegant card
   if (isTask) {
     return (
@@ -488,10 +529,8 @@ export function ChatArea({
                         <Copy className="w-3.5 h-3.5" />
                       </button>
                     </div>
-                    <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm prose prose-sm prose-user-message">
-                      <Streamdown>
-                        {formatMentions(message.content).replace(/\n/g, "  \n")}
-                      </Streamdown>
+                    <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm text-sm whitespace-pre-wrap">
+                      {message.content}
                     </div>
                   </div>
                 ) : (

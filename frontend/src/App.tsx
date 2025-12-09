@@ -202,6 +202,43 @@ function applyEventToTabs(
             state: toolState,
           });
         }
+
+        // Check if this is a TodoWrite tool completing - extract todos to update panel
+        const toolName = ((part.tool as string) || "").toLowerCase();
+        const isCompleted = toolState.status === "completed";
+
+        if (toolName === "todowrite" && isCompleted && toolState.input) {
+          // Extract todos from input (the model sends todos in input.todos)
+          const input = toolState.input as Record<string, unknown>;
+          const todosFromInput = input.todos as Array<{
+            id: string;
+            content: string;
+            status?: string;
+            priority?: string;
+          }>;
+
+          if (todosFromInput && Array.isArray(todosFromInput)) {
+            // Map to the Todo type format
+            const todos = todosFromInput.map((t) => ({
+              id: t.id,
+              content: t.content,
+              state: (t.status === "in_progress" ? "in_progress" :
+                t.status === "completed" ? "completed" : "pending") as "pending" | "in_progress" | "completed",
+              priority: (t.priority === "high" ? "high" :
+                t.priority === "medium" ? "medium" : "low") as "high" | "medium" | "low",
+            }));
+
+            return {
+              ...tab,
+              todos,
+              messages: [
+                ...messages.slice(0, -1),
+                { ...lastMsg, parts: updatedParts },
+              ],
+            };
+          }
+        }
+
         return {
           ...tab,
           messages: [
@@ -439,16 +476,16 @@ function App() {
       return;
     }
 
-    const currentIndex = selectedAgent 
+    const currentIndex = selectedAgent
       ? agents.findIndex(agent => agent.name === selectedAgent.name)
       : -1;
-    
+
     const nextIndex = (currentIndex + 1) % agents.length;
     const nextAgent = agents[nextIndex];
-    
+
     console.log(`Rotating agent from ${selectedAgent?.name || 'None'} to ${nextAgent.name}`);
     setSelectedAgent(nextAgent);
-    
+
     // Save to settings
     api.saveSettings({
       selectedAgent: nextAgent,
@@ -766,9 +803,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-              ...tab,
-              messages: [...tab.messages, userMessage, assistantMessage],
-            }
+            ...tab,
+            messages: [...tab.messages, userMessage, assistantMessage],
+          }
           : tab,
       ),
     );
@@ -793,8 +830,8 @@ function App() {
             if (cmdArgsDef && cmdArgsDef.length > 0) {
               // Use the name of the first argument
               const firstArg = cmdArgsDef[0];
-              const argName = firstArg && typeof firstArg === 'object' && 'name' in firstArg 
-                ? firstArg.name as string 
+              const argName = firstArg && typeof firstArg === 'object' && 'name' in firstArg
+                ? firstArg.name as string
                 : 'text';
               args = { [argName]: commandArgs };
             } else {
@@ -869,9 +906,9 @@ function App() {
           // Regular message
           const modelParam = selectedModel
             ? {
-                providerID: selectedModel.providerId,
-                modelID: selectedModel.modelId,
-              }
+              providerID: selectedModel.providerId,
+              modelID: selectedModel.modelId,
+            }
             : undefined;
 
           const agentParam = selectedAgent ? selectedAgent.name : undefined;
@@ -956,10 +993,10 @@ function App() {
           <FileExplorer
             onFileSelect={handleFileSelect}
             className="h-full w-64" // Fix width to prevent content squishing
-             onRootLoaded={(path) => {
-               // Store full path for accuracy; UI still shows folder name
-               setProjectRoot(path);
-             }}
+            onRootLoaded={(path) => {
+              // Store full path for accuracy; UI still shows folder name
+              setProjectRoot(path);
+            }}
 
           />
         </div>
