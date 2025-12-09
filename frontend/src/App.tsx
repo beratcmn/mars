@@ -8,6 +8,7 @@ import { CodeViewer } from "@/components/CodeViewer";
 import { TaskPanel } from "@/components/TaskPanel";
 import { TitleBar } from "@/components/TitleBar";
 import { Settings } from "@/components/Settings";
+import { AgentModal } from "@/components/AgentModal";
 import { type SelectedModel } from "@/components/ModelSelector";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import * as api from "@/lib/api";
@@ -371,6 +372,7 @@ function App() {
   const [planetsByAgent, setPlanetsByAgent] = useState<
     Record<string, PlanetAssignment>
   >({});
+  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -502,40 +504,35 @@ function App() {
     }
   }, [activeTabId]);
 
-  // Handle agent rotation with Tab key
-  const handleRotateAgent = useCallback(() => {
+  // Handle opening agent modal with Tab key
+  const handleOpenAgentModal = useCallback(() => {
     if (!agents.length) {
-      console.log("No agents available for rotation");
+      console.log("No agents available for selection");
       return;
     }
+    setIsAgentModalOpen(true);
+  }, [agents]);
 
-    const currentIndex = selectedAgent
-      ? agents.findIndex((agent) => agent.name === selectedAgent.name)
-      : -1;
-
-    const nextIndex = (currentIndex + 1) % agents.length;
-    const nextAgent = agents[nextIndex];
-
-    console.log(
-      `Rotating agent from ${selectedAgent?.name || "None"} to ${nextAgent.name}`,
-    );
-    setSelectedAgent(nextAgent);
+  // Handle agent selection from modal
+  const handleAgentSelect = useCallback((agent: Agent) => {
+    console.log(`Selected agent: ${agent.name}`);
+    setSelectedAgent(agent);
 
     // Save to settings
     api
       .saveSettings({
-        selectedAgent: nextAgent,
+        selectedAgent: agent,
         planetsByAgent,
       })
       .catch((e) => console.error("Failed to save agent settings:", e));
-  }, [agents, selectedAgent, planetsByAgent]);
+  }, [planetsByAgent]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onNewTab: handleNewTab,
     onCloseTab: handleCloseActiveTab,
     onToggleSidebar: () => setIsSidebarOpen((prev) => !prev),
-    onRotateAgent: handleRotateAgent,
+    onOpenAgentModal: handleOpenAgentModal,
   });
 
   // Handle selecting a session from history
@@ -1176,6 +1173,16 @@ function App() {
           </svg>
         </button>
       </div>
+
+      {/* Agent Selection Modal */}
+      <AgentModal
+        agents={agents}
+        selectedAgent={selectedAgent}
+        planetsByAgent={planetsByAgent}
+        isOpen={isAgentModalOpen}
+        onClose={() => setIsAgentModalOpen(false)}
+        onAgentSelect={handleAgentSelect}
+      />
 
       <Footer
         providers={providers}

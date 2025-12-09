@@ -4,14 +4,14 @@ interface KeyboardShortcuts {
   onNewTab?: () => void;
   onCloseTab?: () => void;
   onToggleSidebar?: () => void;
-  onRotateAgent?: () => void;
+  onOpenAgentModal?: () => void;
 }
 
 export function useKeyboardShortcuts({
   onNewTab,
   onCloseTab,
   onToggleSidebar,
-  onRotateAgent,
+  onOpenAgentModal,
 }: KeyboardShortcuts) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -38,7 +38,7 @@ export function useKeyboardShortcuts({
         return;
       }
 
-      // Tab - Rotate Agent (only when no modifiers and not in input)
+      // Tab - Open Agent Modal (only when no modifiers and not in input)
       if (e.key === "Tab" && !isMeta && !e.shiftKey && !e.altKey) {
         // Don't interfere with tab navigation in form inputs
         const activeElement = document.activeElement as HTMLElement;
@@ -50,12 +50,12 @@ export function useKeyboardShortcuts({
 
         if (!isInputElement) {
           e.preventDefault();
-          onRotateAgent?.();
+          onOpenAgentModal?.();
           return;
         }
       }
     },
-    [onNewTab, onCloseTab, onToggleSidebar, onRotateAgent],
+    [onNewTab, onCloseTab, onToggleSidebar, onOpenAgentModal],
   );
 
   useEffect(() => {
