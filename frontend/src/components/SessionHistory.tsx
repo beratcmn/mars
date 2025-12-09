@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { History, MessageSquare, Trash2 } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { History, MessageSquare, Trash2, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Popover,
   PopoverContent,
@@ -8,6 +9,23 @@ import {
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import * as api from "@/lib/api";
+
+// Custom hook for debounced value
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
 
 interface Session {
   id: string;
@@ -29,6 +47,35 @@ export function SessionHistory({
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Debounce search query to avoid excessive re-renders
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Filter sessions based on debounced search query
+  const filteredSessions = useMemo(() => {
+    if (!debouncedSearchQuery.trim()) {
+      return sessions;
+    }
+    
+    const query = debouncedSearchQuery.toLowerCase().trim();
+    return sessions.filter(session => 
+      session.title?.toLowerCase().includes(query) ||
+      session.id.toLowerCase().includes(query)
+    );
+  }, [sessions, debouncedSearchQuery]);
+
+  // Clear search query
+  const clearSearch = useCallback(() => {
+    setSearchQuery("");
+  }, []);
+
+  // Reset search when popover closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSearchQuery("");
+    }
+  }, [isOpen]);
 
   // Fetch sessions when popover opens
   useEffect(() => {
@@ -98,10 +145,41 @@ export function SessionHistory({
         sideOffset={8}
       >
         <div className="p-3 border-b border-border/50">
-          <h3 className="serif-title text-base flex items-center gap-2">
+          <h3 className="serif-title text-base flex items-center gap-2 mb-3">
             <img src="./logo.png" alt="Mars" className="h-4 w-4" />
             Session History
           </h3>
+          
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search sessions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 pr-9 h-8 text-sm"
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 text-muted-foreground hover:text-foreground"
+                onClick={clearSearch}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+          
+          {/* Search result count */}
+          {debouncedSearchQuery && (
+            <div className="mt-2 text-xs text-muted-foreground">
+              {filteredSessions.length === 0 
+                ? "No results found" 
+                : `${filteredSessions.length} of ${sessions.length} sessions`
+              }
+            </div>
+          )}
         </div>
 
         <div className="max-h-[400px] overflow-y-auto">
@@ -109,13 +187,17 @@ export function SessionHistory({
             <div className="p-4 text-center text-sm text-muted-foreground">
               Loading sessions...
             </div>
-          ) : sessions.length === 0 ? (
+          ) : filteredSessions.length === 0 && debouncedSearchQuery ? (
+            <div className="p-4 text-center serif-title-sm text-muted-foreground">
+              No sessions match "{debouncedSearchQuery}"
+            </div>
+          ) : filteredSessions.length === 0 ? (
             <div className="p-4 text-center serif-title-sm text-muted-foreground">
               No sessions yet
             </div>
           ) : (
             <div className="py-1">
-              {sessions.map((session, index) => (
+              {filteredSessions.map((session, index) => (
                 <div
                   key={session.id}
                   className={cn(
