@@ -16,6 +16,8 @@ import {
   XCircle,
   Copy,
   ArrowDown,
+  FileText,
+  FilePen,
 } from "lucide-react";
 
 // Part types for rendering
@@ -132,6 +134,114 @@ function ToolCallPart({ part }: { part: ToolPart }) {
             <span className="text-[10px] text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">
               {todoCount} {todoCount === 1 ? "task" : "tasks"}
             </span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Check for Read tool - minimal file preview
+  const isRead = part.tool.toLowerCase() === "read";
+
+  if (isRead) {
+    const readInput = part.state.input as Record<string, unknown> | undefined;
+    const filePath = (readInput?.filePath as string) || "";
+    const fileName = filePath.split("/").pop() || filePath;
+
+    return (
+      <div className="my-2 animate-fade-in">
+        <div className="rounded-md border border-border/50 overflow-hidden">
+          {/* Header */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
+          >
+            <div className="text-muted-foreground">
+              {isRunning ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <FileText className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">Read</span>
+            <span className="text-xs text-foreground font-medium truncate">{fileName}</span>
+            <ChevronRight className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+          </button>
+
+          {/* Expanded code preview */}
+          {isExpanded && part.state.output && (
+            <div className="border-t border-border/30">
+              <pre className="p-3 text-[11px] font-mono text-foreground/80 overflow-x-auto max-h-60 bg-muted/20">
+                {part.state.output.slice(0, 2000)}{part.state.output.length > 2000 ? "\n..." : ""}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Check for Edit tool - minimal inline diff
+  const isEdit = part.tool.toLowerCase() === "edit";
+
+  if (isEdit) {
+    const editInput = part.state.input as Record<string, unknown> | undefined;
+    const filePath = (editInput?.filePath as string) || "";
+    const fileName = filePath.split("/").pop() || filePath;
+    const oldString = (editInput?.oldString as string) || "";
+    const newString = (editInput?.newString as string) || "";
+
+    return (
+      <div className="my-2 animate-fade-in">
+        <div className="rounded-md border border-border/50 overflow-hidden">
+          {/* Header */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
+          >
+            <div className="text-muted-foreground">
+              {isRunning ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isError ? (
+                <XCircle className="w-3.5 h-3.5 text-red-500/70" />
+              ) : (
+                <FilePen className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">Edit</span>
+            <span className="text-xs text-foreground font-medium truncate">{fileName}</span>
+            <ChevronRight className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+          </button>
+
+          {/* Expanded diff view */}
+          {isExpanded && (oldString || newString) && (
+            <div className="border-t border-border/30 p-3 space-y-1 bg-muted/10">
+              {/* Old string - deletions */}
+              {oldString && (
+                <div className="rounded bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/30 px-2 py-1.5">
+                  <pre className="text-[11px] font-mono text-red-700 dark:text-red-400 whitespace-pre-wrap">
+                    {oldString.split('\n').map((line) => `- ${line}`).join('\n')}
+                  </pre>
+                </div>
+              )}
+              {/* New string - additions */}
+              {newString && (
+                <div className="rounded bg-green-50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-900/30 px-2 py-1.5">
+                  <pre className="text-[11px] font-mono text-green-700 dark:text-green-400 whitespace-pre-wrap">
+                    {newString.split('\n').map((line) => `+ ${line}`).join('\n')}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Error display */}
+          {isExpanded && part.state.error && (
+            <div className="border-t border-border/30 p-2 bg-red-50 dark:bg-red-950/20">
+              <pre className="text-[11px] text-red-600 dark:text-red-400 whitespace-pre-wrap">
+                {part.state.error}
+              </pre>
+            </div>
           )}
         </div>
       </div>
