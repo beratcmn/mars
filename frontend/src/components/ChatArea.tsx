@@ -76,108 +76,104 @@ interface ChatAreaProps {
   onNewChat?: () => void;
 }
 
-// Component for rendering a tool call - modern card design
+// Component for rendering a tool call - minimalist design
 function ToolCallPart({ part }: { part: ToolPart }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const isTask = part.tool === "task";
   const isRunning =
     part.state.status === "running" || part.state.status === "pending";
+  const isCompleted = part.state.status === "completed";
+  const isError = part.state.status === "error";
 
-  const statusIcon = {
-    pending: (
-      <Loader2 className="w-3.5 h-3.5 animate-spin text-muted-foreground" />
-    ),
-    running: <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />,
-    completed: <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />,
-    error: <XCircle className="w-3.5 h-3.5 text-red-500" />,
-  }[part.state.status];
-
-  // Extract description for task tools
-  const taskDescription =
-    isTask && part.state.input
-      ? ((part.state.input as Record<string, unknown>).description as string) ||
-        ""
-      : "";
+  // Extract data for task tools
+  const taskInput = isTask ? (part.state.input as Record<string, unknown>) : null;
+  const taskDescription = taskInput?.description as string || "";
+  const taskPrompt = taskInput?.prompt as string || "";
+  const subagentType = (taskInput?.subagent_type as string) || "agent";
 
   // Format tool name for display
   const displayName = part.tool
     .replace(/_/g, " ")
     .replace(/\b\w/g, (l) => l.toUpperCase());
 
-  // For tasks, render a special card
+  // For tasks, render a minimal elegant card
   if (isTask) {
     return (
-      <div className="my-3 animate-fade-in-up">
-        <div className="rounded-lg border border-border bg-card overflow-hidden shadow-sm">
-          {/* Task Header */}
+      <div className="my-3 animate-fade-in">
+        <div className="rounded-lg border border-border/60 bg-card/50 overflow-hidden">
+          {/* Minimal Task Header */}
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/50 transition-colors"
+            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent/20 transition-colors"
           >
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10">
-              <Wrench className="w-4 h-4 text-primary" />
+            {/* Simple icon */}
+            <div className="text-muted-foreground">
+              {isRunning ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isCompleted ? (
+                <CheckCircle2 className="w-4 h-4 text-muted-foreground" />
+              ) : isError ? (
+                <XCircle className="w-4 h-4 text-red-500/70" />
+              ) : (
+                <Brain className="w-4 h-4" />
+              )}
             </div>
+
+            {/* Task Info */}
             <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-2">
-                <span className="serif-title-sm text-foreground">Task</span>
+                <span className="serif-title-sm text-foreground">
+                  {taskDescription || `${subagentType.charAt(0).toUpperCase() + subagentType.slice(1)} task`}
+                </span>
                 {isRunning && (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 uppercase tracking-wider font-medium">
-                    Running
+                  <span className="text-[10px] text-muted-foreground/70 italic">
+                    running...
                   </span>
                 )}
               </div>
-              {taskDescription && (
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {taskDescription}
-                </p>
-              )}
             </div>
-            <div className="flex items-center gap-2">
-              {statusIcon}
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-muted-foreground" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-muted-foreground" />
-              )}
-            </div>
+
+            {/* Expand indicator */}
+            <ChevronRight className={`w-4 h-4 text-muted-foreground/50 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
           </button>
 
-          {/* Task Content - Expanded */}
+          {/* Expanded Content */}
           {isExpanded && (
-            <div className="border-t border-border px-4 py-3 space-y-3 bg-muted/30">
-              {/* Input section - collapsible */}
+            <div className="border-t border-border/40 px-4 py-3 space-y-3">
+              {/* Instructions - shown as quiet prose */}
+              {taskPrompt && (
+                <div className="text-sm text-muted-foreground leading-relaxed">
+                  {taskPrompt}
+                </div>
+              )}
+
+              {/* Raw params - very subtle */}
               {part.state.input && (
                 <details className="group">
-                  <summary className="text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground flex items-center gap-1">
+                  <summary className="text-[11px] text-muted-foreground/50 cursor-pointer hover:text-muted-foreground/70 flex items-center gap-1">
                     <ChevronRight className="w-3 h-3 group-open:rotate-90 transition-transform" />
-                    Input Parameters
+                    parameters
                   </summary>
-                  <pre className="mt-2 p-3 bg-muted rounded-md text-[11px] overflow-x-auto font-mono text-foreground/80">
+                  <pre className="mt-2 p-2 bg-muted/30 rounded text-[10px] overflow-x-auto font-mono text-muted-foreground/60">
                     {JSON.stringify(part.state.input, null, 2)}
                   </pre>
                 </details>
               )}
 
-              {/* Output section */}
+              {/* Output */}
               {part.state.output && (
-                <div>
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Output
-                  </span>
-                  <div className="mt-2 p-3 bg-background rounded-md border border-border/50 prose prose-sm max-w-none dark:prose-invert">
+                <div className="pt-2 border-t border-border/30">
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
                     <Streamdown>{part.state.output}</Streamdown>
                   </div>
                 </div>
               )}
 
-              {/* Error section */}
+              {/* Error */}
               {part.state.error && (
-                <div className="p-3 bg-red-50 dark:bg-red-950/20 rounded-md border border-red-200 dark:border-red-900/30">
-                  <span className="text-xs font-medium text-red-600 dark:text-red-400">
-                    Error
-                  </span>
-                  <pre className="mt-1 text-xs text-red-600 dark:text-red-400 whitespace-pre-wrap">
+                <div className="pt-2 border-t border-border/30">
+                  <pre className="text-xs text-red-600/80 dark:text-red-400/80 whitespace-pre-wrap">
                     {part.state.error}
                   </pre>
                 </div>
@@ -205,7 +201,15 @@ function ToolCallPart({ part }: { part: ToolPart }) {
         <span className="font-medium text-xs text-foreground">
           {displayName}
         </span>
-        <span className="ml-auto">{statusIcon}</span>
+        <span className="ml-auto">
+          {isRunning ? (
+            <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />
+          ) : isCompleted ? (
+            <CheckCircle2 className="w-3 h-3 text-muted-foreground" />
+          ) : isError ? (
+            <XCircle className="w-3 h-3 text-red-500/70" />
+          ) : null}
+        </span>
       </button>
 
       {isExpanded && (
