@@ -34,8 +34,8 @@ export function TitleBar({
     <div
       className={cn(
         "flex h-9 items-center gap-3 px-3 border-b border-border/70 bg-white", // base
-        "text-muted-foreground select-none", // text/behavior
-        "-webkit-app-region:drag", // drag area
+        "text-muted-foreground select-none cursor-move active:cursor-grabbing", // text/behavior
+        "pywebview-drag-region", // drag area
         className,
       )}
       onDoubleClick={() => api.maximizeWindow()}
@@ -47,7 +47,6 @@ export function TitleBar({
             className={cn(
               "h-3.5 w-3.5 rounded-full border border-black/10 shadow-sm transition",
               "hover:scale-105 hover:border-black/20 hover:brightness-95",
-              "-webkit-app-region:no-drag",
             )}
             style={{ backgroundColor: item.color }}
             onClick={(e) => {
@@ -59,7 +58,7 @@ export function TitleBar({
         ))}
       </div>
 
-      <div className="flex items-center gap-1 -webkit-app-region:no-drag">
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
@@ -82,14 +81,15 @@ export function TitleBar({
         />
       </div>
 
-      <div className="flex flex-1 items-center justify-center gap-2 text-xs text-muted-foreground -webkit-app-region:no-drag">
+      <div className="flex flex-1 items-center justify-center gap-2 text-xs text-muted-foreground">
+
         <FolderOpen className="h-4 w-4" />
         <span className="font-medium" title={projectPath}>
           {projectPath || "No project selected"}
         </span>
       </div>
 
-      <div className="ml-auto flex items-center gap-2 -webkit-app-region:no-drag">
+      <div className="ml-auto flex items-center gap-2">
         <Button
           variant="ghost"
           size="sm"
