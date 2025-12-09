@@ -64,7 +64,7 @@ The application consists of two main components:
 
 ```bash
 # Clone and set up the project
-git clone https://github.com/your-username/mars.git
+git clone https://github.com/beratcmn/mars.git
 cd mars
 
 # Install backend dependencies
@@ -284,7 +284,7 @@ This project is open source and available under the [MIT License](LICENSE).
 
 For issues and questions:
 
-- **🐛 Mars Application**: [Create an issue](https://github.com/your-username/mars/issues) in this repository
+- **🐛 Mars Application**: [Create an issue](https://github.com/beratcmn/mars/issues) in this repository
 - **🤖 OpenCode Functionality**: Check the [OpenCode documentation](https://opencode.ai)
 - **🔑 AI Provider Issues**: Refer to the respective provider's documentation
 - **💬 Discussions**: Use GitHub Discussions for general questions and ideas
@@ -296,7 +296,7 @@ For issues and questions:
     Made with ❤️ by the Mars team
   </p>
   <p>
-    <a href="https://github.com/your-username/mars">View on GitHub</a> •
+    <a href="https://github.com/beratcmn/mars">View on GitHub</a> •
     <a href="https://opencode.ai">Powered by OpenCode</a>
   </p>
 </div>
