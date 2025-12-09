@@ -71,6 +71,7 @@ interface SessionTab extends Tab {
   type: "session";
   sessionId: string;
   messages: Message[];
+  todos?: api.Todo[];
 }
 
 interface FileTab extends Tab {
@@ -273,6 +274,22 @@ function applyEventToTabs(
           tab.label !== newTitle
         ) {
           return { ...tab, label: newTitle };
+        }
+        return tab;
+      });
+    }
+  }
+
+  // Handle todo.updated events
+  if (event.type === "todo.updated" && event.properties) {
+    const props = event.properties as Record<string, unknown>;
+    const sessionId = props.sessionID as string;
+    const todos = props.todos as api.Todo[];
+
+    if (sessionId && todos) {
+      return tabs.map((tab) => {
+        if (tab.type === "session" && tab.sessionId === sessionId) {
+          return { ...tab, todos };
         }
         return tab;
       });
@@ -978,13 +995,16 @@ function App() {
 
         {/* Task Panel - Right Side */}
         <TaskPanel
-          sessionId={
+          todos={
             activeTab?.type === "session"
-              ? (activeTab as SessionTab).sessionId
+              ? (activeTab as SessionTab).todos
               : undefined
           }
           isOpen={isTaskPanelOpen}
-          className={cn(isTaskPanelOpen ? "w-72 opacity-100" : "w-0 opacity-0")}
+          className={cn(
+            "w-72 border-l border-border/50 bg-background flex flex-col h-full transition-transform duration-200 ease-in-out",
+            isTaskPanelOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
+          )}
         />
 
         {/* Task Panel Toggle Button (floating on right edge) */}

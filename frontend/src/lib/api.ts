@@ -92,6 +92,7 @@ export interface Todo {
   id: string;
   content: string;
   state?: "pending" | "in_progress" | "completed";
+  priority?: "high" | "medium" | "low";
 }
 
 // PyWebView injects the `pywebview` object into the window

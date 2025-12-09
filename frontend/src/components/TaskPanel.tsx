@@ -1,71 +1,229 @@
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import {
   CheckCircle2,
   Circle,
   Loader2,
   ListTodo,
-  RefreshCw,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
-import * as api from "@/lib/api";
 import type { Todo } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 interface TaskPanelProps {
-  sessionId?: string;
+  todos?: Todo[];
   isOpen: boolean;
   className?: string;
+}
+
+interface TodoNode {
+  todo: Todo;
+  children: TodoNode[];
+  level: number;
 }
 
 function TodoStateIcon({ state }: { state: Todo["state"] }) {
   switch (state) {
     case "completed":
-      return <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0" />;
+      return <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />;
     case "in_progress":
       return (
-        <Loader2 className="w-4 h-4 text-blue-500 animate-spin flex-shrink-0" />
+        <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin flex-shrink-0" />
       );
     default:
-      return <Circle className="w-4 h-4 text-muted-foreground flex-shrink-0" />;
+      return <Circle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />;
   }
 }
 
-export function TaskPanel({ sessionId, isOpen, className }: TaskPanelProps) {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+function PriorityIndicator({ priority }: { priority?: Todo["priority"] }) {
+  if (!priority || priority === "low") return null;
+  
+  return (
+    <div
+      className={cn(
+        "w-1 h-1 rounded-full flex-shrink-0 mt-2",
+        priority === "high" && "bg-red-500",
+        priority === "medium" && "bg-yellow-500"
+      )}
+    />
+  );
+}
 
-  const fetchTodos = async () => {
-    if (!sessionId) {
-      setTodos([]);
-      return;
-    }
+function TodoItem({ node, isExpanded, onToggle }: { 
+  node: TodoNode; 
+  isExpanded: boolean; 
+  onToggle: () => void;
+}) {
+  const hasChildren = node.children.length > 0;
+  const indent = node.level * 16;
 
-    setIsLoading(true);
-    try {
-      const todoList = await api.listTodos(sessionId);
-      setTodos(todoList);
-    } catch (error) {
-      console.error("Failed to fetch todos:", error);
-      setTodos([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  return (
+    <div className="animate-fade-in-up">
+      <div
+        className={cn(
+          "flex items-start gap-2 p-2 rounded-lg border border-border/30 bg-card/50",
+          "hover:bg-accent/30 transition-colors duration-150",
+          "cursor-default",
+        )}
+        style={{ marginLeft: `${indent}px` }}
+      >
+        {hasChildren && (
+          <button
+            onClick={onToggle}
+            className="p-0.5 hover:bg-muted rounded transition-colors"
+          >
+            {isExpanded ? (
+              <ChevronDown className="w-3 h-3 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+            )}
+          </button>
+        )}
+        {!hasChildren && <div className="w-4" />}
+        
+        <TodoStateIcon state={node.todo.state} />
+        <PriorityIndicator priority={node.todo.priority} />
+        
+        <div className="flex-1 min-w-0">
+          <p
+            className={cn(
+              "text-sm leading-relaxed",
+              node.todo.state === "completed" &&
+                "text-muted-foreground line-through",
+            )}
+          >
+            {node.todo.content}
+          </p>
+          <div className="flex items-center gap-2 mt-1">
+            {node.todo.state && node.todo.state !== "pending" && (
+              <span
+                className={cn(
+                  "inline-block text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded",
+                  node.todo.state === "completed" &&
+                    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+                  node.todo.state === "in_progress" &&
+                    "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                )}
+              >
+                {node.todo.state.replace("_", " ")}
+              </span>
+            )}
+            {node.todo.priority && (
+              <span
+                className={cn(
+                  "inline-block text-[9px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded",
+                  node.todo.priority === "high" &&
+                    "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+                  node.todo.priority === "medium" &&
+                    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
+                  node.todo.priority === "low" &&
+                    "bg-gray-100 text-gray-600 dark:bg-gray-900/30 dark:text-gray-400",
+                )}
+              >
+                {node.todo.priority}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      
+      {hasChildren && isExpanded && (
+        <div className="mt-1">
+          {node.children.map((child) => (
+            <TodoItem
+              key={child.todo.id}
+              node={child}
+              isExpanded={true}
+              onToggle={() => {}}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-  // Fetch todos when session changes or panel opens
-  useEffect(() => {
-    if (isOpen && sessionId) {
-      fetchTodos();
-    }
-  }, [sessionId, isOpen]);
+export function TaskPanel({ todos = [], isOpen, className }: TaskPanelProps) {
+  const { todoTree, expandedNodes } = useMemo(() => {
+    // Build hierarchical tree structure
+    const nodeMap = new Map<string, TodoNode>();
+    const rootNodes: TodoNode[] = [];
+
+    // Create nodes for all todos
+    todos.forEach((todo) => {
+      nodeMap.set(todo.id, {
+        todo,
+        children: [],
+        level: 0,
+      });
+    });
+
+    // Build hierarchy
+    todos.forEach((todo) => {
+      const node = nodeMap.get(todo.id)!;
+      
+      // Check if this is a subtask (e.g., "1.1", "1.2", "2.1.1")
+      const parts = todo.id.split('.');
+      if (parts.length > 1) {
+        const parentId = parts.slice(0, -1).join('.');
+        const parent = nodeMap.get(parentId);
+        if (parent) {
+          parent.children.push(node);
+          node.level = parent.level + 1;
+        } else {
+          rootNodes.push(node);
+        }
+      } else {
+        rootNodes.push(node);
+      }
+    });
+
+    // Sort nodes by ID and priority
+    const sortNodes = (nodes: TodoNode[]) => {
+      nodes.sort((a, b) => {
+        // First by priority (high > medium > low)
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        const aPriority = priorityOrder[a.todo.priority || 'low'] || 1;
+        const bPriority = priorityOrder[b.todo.priority || 'low'] || 1;
+        
+        if (aPriority !== bPriority) {
+          return bPriority - aPriority;
+        }
+        
+        // Then by ID for natural ordering
+        return a.todo.id.localeCompare(b.todo.id, undefined, { numeric: true });
+      });
+      
+      nodes.forEach(node => sortNodes(node.children));
+    };
+
+    sortNodes(rootNodes);
+
+    // Auto-expand all nodes for now (can be made smarter later)
+    const expanded = new Set<string>();
+    const collectIds = (nodes: TodoNode[]) => {
+      nodes.forEach(node => {
+        if (node.children.length > 0) {
+          expanded.add(node.todo.id);
+          collectIds(node.children);
+        }
+      });
+    };
+    collectIds(rootNodes);
+
+    return {
+      todoTree: rootNodes,
+      expandedNodes: expanded
+    };
+  }, [todos]);
 
   if (!isOpen) return null;
 
   return (
     <div
       className={cn(
-        "border-l border-border/50 bg-background flex flex-col overflow-hidden sidebar-transition",
+        "flex flex-col h-full sidebar-transition",
         className,
       )}
     >
@@ -80,25 +238,12 @@ export function TaskPanel({ sessionId, isOpen, className }: TaskPanelProps) {
             </span>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground"
-          onClick={fetchTodos}
-          disabled={isLoading}
-        >
-          <RefreshCw className={cn("w-3 h-3", isLoading && "animate-spin")} />
-        </Button>
       </div>
 
       {/* Content */}
-      <ScrollArea className="flex-1">
-        <div className="p-3 space-y-2">
-          {isLoading && todos.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-            </div>
-          ) : todos.length === 0 ? (
+      <ScrollArea className="flex-1 min-h-0">
+        <div className="p-3 space-y-1">
+          {todos.length === 0 ? (
             <div className="text-center py-8 space-y-2">
               <ListTodo className="w-8 h-8 mx-auto text-muted-foreground/50" />
               <p className="text-sm text-muted-foreground">No tasks yet</p>
@@ -107,41 +252,13 @@ export function TaskPanel({ sessionId, isOpen, className }: TaskPanelProps) {
               </p>
             </div>
           ) : (
-            todos.map((todo) => (
-              <div
-                key={todo.id}
-                className={cn(
-                  "flex items-start gap-3 p-3 rounded-lg border border-border/50 bg-card",
-                  "hover:bg-accent/50 transition-colors duration-150",
-                  "animate-fade-in-up",
-                )}
-              >
-                <TodoStateIcon state={todo.state} />
-                <div className="flex-1 min-w-0">
-                  <p
-                    className={cn(
-                      "text-sm leading-relaxed",
-                      todo.state === "completed" &&
-                        "text-muted-foreground line-through",
-                    )}
-                  >
-                    {todo.content}
-                  </p>
-                  {todo.state && todo.state !== "pending" && (
-                    <span
-                      className={cn(
-                        "inline-block mt-1 text-[10px] font-medium uppercase tracking-wider px-1.5 py-0.5 rounded",
-                        todo.state === "completed" &&
-                          "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-                        todo.state === "in_progress" &&
-                          "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-                      )}
-                    >
-                      {todo.state.replace("_", " ")}
-                    </span>
-                  )}
-                </div>
-              </div>
+            todoTree.map((node) => (
+              <TodoItem
+                key={node.todo.id}
+                node={node}
+                isExpanded={expandedNodes.has(node.todo.id)}
+                onToggle={() => {}}
+              />
             ))
           )}
         </div>
