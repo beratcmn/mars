@@ -48,7 +48,7 @@ export function SessionHistory({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
+
   // Debounce search query to avoid excessive re-renders
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
@@ -57,11 +57,12 @@ export function SessionHistory({
     if (!debouncedSearchQuery.trim()) {
       return sessions;
     }
-    
+
     const query = debouncedSearchQuery.toLowerCase().trim();
-    return sessions.filter(session => 
-      session.title?.toLowerCase().includes(query) ||
-      session.id.toLowerCase().includes(query)
+    return sessions.filter(
+      (session) =>
+        session.title?.toLowerCase().includes(query) ||
+        session.id.toLowerCase().includes(query),
     );
   }, [sessions, debouncedSearchQuery]);
 
@@ -149,7 +150,7 @@ export function SessionHistory({
             <img src="./logo.png" alt="Mars" className="h-4 w-4" />
             Session History
           </h3>
-          
+
           {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -170,14 +171,13 @@ export function SessionHistory({
               </Button>
             )}
           </div>
-          
+
           {/* Search result count */}
           {debouncedSearchQuery && (
             <div className="mt-2 text-xs text-muted-foreground">
-              {filteredSessions.length === 0 
-                ? "No results found" 
-                : `${filteredSessions.length} of ${sessions.length} sessions`
-              }
+              {filteredSessions.length === 0
+                ? "No results found"
+                : `${filteredSessions.length} of ${sessions.length} sessions`}
             </div>
           )}
         </div>

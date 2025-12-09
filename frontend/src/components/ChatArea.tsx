@@ -18,6 +18,8 @@ import {
   ArrowDown,
   FileText,
   FilePen,
+  Terminal,
+  FilePlus,
 } from "lucide-react";
 
 // Part types for rendering
@@ -142,6 +144,145 @@ function ToolCallPart({ part }: { part: ToolPart }) {
     );
   }
 
+  // Check for Bash/Shell tool - terminal-style display
+  const isBash =
+    part.tool.toLowerCase() === "bash" ||
+    part.tool.toLowerCase() === "shell" ||
+    part.tool.toLowerCase() === "run_command" ||
+    part.tool.toLowerCase() === "execute";
+
+  if (isBash) {
+    const bashInput = part.state.input as Record<string, unknown> | undefined;
+    const command = (bashInput?.command as string) || "";
+    const description = (bashInput?.description as string) || "";
+
+    return (
+      <div className="my-2 animate-fade-in">
+        <div className="rounded-md border border-border/50 overflow-hidden">
+          {/* Header */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
+          >
+            <div className="text-muted-foreground">
+              {isRunning ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isError ? (
+                <XCircle className="w-3.5 h-3.5 text-red-500/70" />
+              ) : (
+                <Terminal className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">Bash</span>
+            <code className="text-xs text-foreground font-mono bg-muted/50 px-1.5 py-0.5 rounded truncate max-w-[400px]">
+              $ {command}
+            </code>
+            {isCompleted && (
+              <CheckCircle2 className="w-3 h-3 text-muted-foreground/50 ml-auto" />
+            )}
+            {!isCompleted && (
+              <ChevronRight
+                className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? "rotate-90" : ""}`}
+              />
+            )}
+          </button>
+
+          {/* Description - subtle context */}
+          {description && (
+            <div className="px-3 py-1.5 text-[11px] text-muted-foreground/70 border-t border-border/20 bg-muted/10">
+              {description}
+            </div>
+          )}
+
+          {/* Expanded output - terminal style */}
+          {isExpanded && part.state.output && (
+            <div className="border-t border-border/30">
+              <div className="px-3 py-1 text-[10px] text-muted-foreground/50 uppercase tracking-wider bg-muted/20">
+                Output
+              </div>
+              <pre className="px-3 py-2 text-[11px] font-mono text-foreground/80 overflow-x-auto max-h-60 bg-zinc-950/5 dark:bg-zinc-950/30 whitespace-pre-wrap">
+                {part.state.output.slice(0, 3000)}
+                {part.state.output.length > 3000 ? "\n..." : ""}
+              </pre>
+            </div>
+          )}
+
+          {/* Error display */}
+          {isExpanded && part.state.error && (
+            <div className="border-t border-red-200/30 dark:border-red-900/30 p-2 bg-red-50 dark:bg-red-950/20">
+              <pre className="text-[11px] text-red-600 dark:text-red-400 whitespace-pre-wrap">
+                {part.state.error}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Check for Write/Create tool - file creation display
+  const isWrite =
+    part.tool.toLowerCase() === "write" ||
+    part.tool.toLowerCase() === "create" ||
+    part.tool.toLowerCase() === "write_file" ||
+    part.tool.toLowerCase() === "create_file";
+
+  if (isWrite) {
+    const writeInput = part.state.input as Record<string, unknown> | undefined;
+    const filePath =
+      (writeInput?.filePath as string) || (writeInput?.path as string) || "";
+    const fileName = filePath.split("/").pop() || filePath;
+    const content = (writeInput?.content as string) || "";
+
+    return (
+      <div className="my-2 animate-fade-in">
+        <div className="rounded-md border border-border/50 overflow-hidden">
+          {/* Header */}
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
+          >
+            <div className="text-muted-foreground">
+              {isRunning ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isError ? (
+                <XCircle className="w-3.5 h-3.5 text-red-500/70" />
+              ) : (
+                <FilePlus className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">Write</span>
+            <span className="text-xs text-foreground font-medium truncate">
+              {fileName}
+            </span>
+            <ChevronRight
+              className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? "rotate-90" : ""}`}
+            />
+          </button>
+
+          {/* Expanded content preview */}
+          {isExpanded && content && (
+            <div className="border-t border-border/30">
+              <pre className="p-3 text-[11px] font-mono text-foreground/80 overflow-x-auto max-h-60 bg-muted/20 whitespace-pre-wrap">
+                {content.slice(0, 2000)}
+                {content.length > 2000 ? "\n..." : ""}
+              </pre>
+            </div>
+          )}
+
+          {/* Error display */}
+          {isExpanded && part.state.error && (
+            <div className="border-t border-red-200/30 dark:border-red-900/30 p-2 bg-red-50 dark:bg-red-950/20">
+              <pre className="text-[11px] text-red-600 dark:text-red-400 whitespace-pre-wrap">
+                {part.state.error}
+              </pre>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Check for Read tool - minimal file preview
   const isRead = part.tool.toLowerCase() === "read";
 
@@ -177,7 +318,7 @@ function ToolCallPart({ part }: { part: ToolPart }) {
           {/* Expanded code preview */}
           {isExpanded && part.state.output && (
             <div className="border-t border-border/30">
-              <pre className="p-3 text-[11px] font-mono text-foreground/80 overflow-x-auto max-h-60 bg-muted/20">
+              <pre className="p-3 text-[11px] font-mono text-foreground/80 overflow-x-auto max-h-60 bg-muted/20 whitespace-pre-wrap">
                 {part.state.output.slice(0, 2000)}
                 {part.state.output.length > 2000 ? "\n..." : ""}
               </pre>
