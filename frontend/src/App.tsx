@@ -836,7 +836,7 @@ function App() {
     const assistantMessage: Message = {
       id: `asst - ${Date.now()} `,
       role: "assistant",
-      content: "",
+      content: isSlashCommand ? "Processing command..." : "",
       modelID: selectedModel?.modelId,
       providerID: selectedModel?.providerId,
     };
@@ -857,38 +857,19 @@ function App() {
     try {
       if (api.isPyWebView()) {
         if (isSlashCommand) {
-          // Find the command definition to get argument names
-          const availableCommands = await api.listCommands();
-          const commandDef = availableCommands.find(
-            (c) => c.name === commandName,
-          );
-
-          // Construct arguments
-          let args: Record<string, unknown> | undefined;
-
-          if (commandArgs) {
-            const cmdArgsDef =
-              commandDef?.args ||
-              (commandDef as { arguments?: unknown[] })?.arguments;
-            if (cmdArgsDef && cmdArgsDef.length > 0) {
-              // Use the name of the first argument
-              const firstArg = cmdArgsDef[0];
-              const argName =
-                firstArg && typeof firstArg === "object" && "name" in firstArg
-                  ? (firstArg.name as string)
-                  : "text";
-              args = { [argName]: commandArgs };
-            } else {
-              // Fallback: send as "text" if no definition found, or maybe the command expects raw text
-              args = { text: commandArgs };
-            }
-          }
 
           // Execute slash command - returns result synchronously (not streaming)
+          const modelString = selectedModel
+            ? `${selectedModel.providerId}/${selectedModel.modelId}`
+            : undefined;
+
+          // Pass raw arguments string directly as per API spec
           const result = await api.executeCommand(
             commandName,
-            args,
+            commandArgs,
             currentSessionId,
+            selectedAgent?.name,
+            modelString,
           );
 
           // Handle the synchronous response - extract text from parts

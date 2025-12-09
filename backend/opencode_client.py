@@ -426,13 +426,16 @@ class OpenCodeClient:
         self,
         session_id: str,
         command: str,
-        arguments: Optional[dict] = None,
+        arguments: Union[str, dict] = "",
         agent: Optional[str] = None,
+        model: Optional[str] = None,
     ) -> dict:
         """Execute a slash command."""
-        body = {"command": command, "arguments": arguments or {}}
+        body = {"command": command, "arguments": arguments}
         if agent:
             body["agent"] = agent
+        if model:
+            body["model"] = model
         return self._request("POST", f"/session/{session_id}/command", json=body)
 
     # === Events ===

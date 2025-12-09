@@ -288,18 +288,17 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
       <div className="max-w-2xl mx-auto relative">
         {/* Command suggestions dropdown */}
         {showCommandSuggestions && commandSuggestions.length > 0 && (
-          <div className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-popover border border-border rounded-md shadow-lg overflow-hidden z-50">
+          <div className="absolute bottom-full left-0 mb-2 w-full max-w-md bg-popover border border-border rounded-md shadow-lg overflow-hidden z-50" onMouseDown={(e) => e.preventDefault()}>
             <div className="p-1">
               {commandSuggestions.map((cmd, index) => (
                 <button
                   key={cmd.name}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertCommand(cmd.name)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${
-                    index === commandSelectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${index === commandSelectedIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
+                    }`}
                 >
                   <Terminal className="h-4 w-4 opacity-70 shrink-0" />
                   <span className="font-medium text-foreground">
@@ -318,7 +317,7 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
 
         {/* File mention suggestions dropdown */}
         {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute bottom-full left-0 mb-2 w-full max-w-sm bg-popover border border-border rounded-md shadow-lg overflow-hidden z-50">
+          <div className="absolute bottom-full left-0 mb-2 w-full max-w-sm bg-popover border border-border rounded-md shadow-lg overflow-hidden z-50" onMouseDown={(e) => e.preventDefault()}>
             <div className="p-1">
               {suggestions.map((file, index) => (
                 <button
@@ -326,11 +325,10 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   // We need to prevent default mousedown to not lose focus from editor
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${
-                    index === selectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50"
-                  }`}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
+                    }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />
                   <span className="truncate">{file}</span>
@@ -345,6 +343,11 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             contentEditable
             onInput={handleInput}
             onKeyDown={handleKeyDown}
+            onBlur={() => {
+              // Hide suggestions when focus is lost
+              setShowSuggestions(false);
+              setShowCommandSuggestions(false);
+            }}
             className="w-full min-h-[48px] max-h-[200px] overflow-y-auto py-3 pl-5 pr-14 text-sm outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40 empty:before:font-light"
             data-placeholder="Ask to make changes, @mention files, run /commands"
             role="textbox"

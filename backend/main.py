@@ -452,8 +452,10 @@ class MarsAPI:
     def execute_command(
         self,
         command: str,
-        arguments: Optional[dict] = None,
+        arguments: Union[str, dict] = "",
         session_id: Optional[str] = None,
+        agent: Optional[str] = None,
+        model: Optional[str] = None,
     ) -> dict:
         """Execute a slash command."""
         try:
@@ -461,7 +463,9 @@ class MarsAPI:
             if not sid:
                 return {"success": False, "error": "No active session"}
 
-            result = self.client.execute_command(str(sid), command, arguments)
+            result = self.client.execute_command(
+                str(sid), command, arguments, agent=agent, model=model
+            )
             return {"success": True, "result": result, "error": None}
         except Exception as e:
             return {"success": False, "result": None, "error": str(e)}

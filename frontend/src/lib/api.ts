@@ -157,8 +157,10 @@ interface MarsApiInterface {
   list_commands(): Promise<ApiResponse<unknown[]>>;
   execute_command(
     command: string,
-    args?: Record<string, unknown>,
+    args?: string | Record<string, unknown>,
     session_id?: string,
+    agent?: string,
+    model?: string,
   ): Promise<ApiResponse<unknown>>;
 
   // Files
@@ -503,11 +505,19 @@ export async function listCommands(): Promise<Command[]> {
 
 export async function executeCommand(
   command: string,
-  args?: Record<string, unknown>,
+  args?: string | Record<string, unknown>,
   sessionId?: string,
+  agent?: string,
+  model?: string,
 ): Promise<unknown | null> {
   if (!isPyWebView()) return null;
-  const result = await getApi().execute_command(command, args, sessionId);
+  const result = await getApi().execute_command(
+    command,
+    args,
+    sessionId,
+    agent,
+    model,
+  );
   return result.success ? result.result : null;
 }
 
