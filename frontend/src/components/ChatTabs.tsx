@@ -1,10 +1,10 @@
-import { File, Plus, X } from "lucide-react";
+import { File, Plus, Settings, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Tab {
   id: string;
   label: string;
-  icon: "file" | "sparkles";
+  icon: "file" | "sparkles" | "settings";
 }
 
 interface ChatTabsProps {
@@ -22,16 +22,16 @@ export function ChatTabs({
   onNewTab,
   onTabClose,
 }: ChatTabsProps) {
-  const getIcon = (icon: "file" | "sparkles") => {
+  const getIcon = (icon: "file" | "sparkles" | "settings") => {
     switch (icon) {
       case "file":
         return <File className="h-4 w-4" />;
       case "sparkles":
         return <img src="./logo.png" alt="Mars" className="h-4 w-4" />;
+      case "settings":
+        return <Settings className="h-4 w-4" />;
     }
   };
-
-
 
   return (
     <div className="flex items-center gap-1 border-b border-border/50 px-3 pt-1">

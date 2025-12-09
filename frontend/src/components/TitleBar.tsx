@@ -11,7 +11,11 @@ interface TitleBarProps {
   isSidebarOpen: boolean;
   onToggleSidebar: () => void;
   activeSessionId?: string;
-  onSessionSelect: (session: { id: string; title?: string; createdAt?: string }) => void;
+  onSessionSelect: (session: {
+    id: string;
+    title?: string;
+    createdAt?: string;
+  }) => void;
   onSessionDelete?: (sessionId: string) => void;
 }
 
@@ -82,7 +86,6 @@ export function TitleBar({
       </div>
 
       <div className="flex flex-1 items-center justify-center gap-2 text-xs text-muted-foreground">
-
         <FolderOpen className="h-4 w-4" />
         <span className="font-medium" title={projectPath}>
           {projectPath || "No project selected"}
@@ -98,7 +101,11 @@ export function TitleBar({
             await api.openInEditor(projectPath || undefined);
           }}
         >
-          <img src={vscodeIcon} alt="VS Code" className="h-3.5 w-3.5 shrink-0" />
+          <img
+            src={vscodeIcon}
+            alt="VS Code"
+            className="h-3.5 w-3.5 shrink-0"
+          />
           <span>Open in Editor</span>
         </Button>
       </div>

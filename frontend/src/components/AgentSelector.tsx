@@ -53,8 +53,8 @@ export function AgentSelector({
         >
           <div className="flex items-center justify-center w-5 h-5">
             {selectedAgent && planetsByAgent[selectedAgent.name] ? (
-              <img 
-                src={`./planets/${planetsByAgent[selectedAgent.name].image}`} 
+              <img
+                src={`./planets/${planetsByAgent[selectedAgent.name].image}`}
                 alt={selectedAgent.name}
                 className="w-4 h-4 object-cover rounded-full"
               />
@@ -90,14 +90,14 @@ export function AgentSelector({
                 const isSelected = selectedAgent?.name === agent.name;
                 const assignment = planetsByAgent[agent.name];
 
-                 return (
-                   <button
-                     key={agent.name}
-                     onClick={() => {
-                       onAgentChange(agent);
-                       setOpen(false);
-                     }}
-                     className={`
+                return (
+                  <button
+                    key={agent.name}
+                    onClick={() => {
+                      onAgentChange(agent);
+                      setOpen(false);
+                    }}
+                    className={`
                        w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-sm text-left
                        transition-all duration-150 ease-out
                        ${
@@ -106,26 +106,25 @@ export function AgentSelector({
                            : "hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5 text-foreground"
                        }
                      `}
-                   >
-                     <span className="truncate mr-2 flex items-center gap-2">
-                       <div className="w-4 h-4 flex items-center justify-center">
-                         {assignment ? (
-                           <img 
-                             src={`./planets/${assignment.image}`} 
-                             alt={agent.name}
-                             className="w-4 h-4 object-cover rounded-full"
-                           />
-                         ) : (
-                           <Earth className="h-4 w-4 text-red-400" />
-                         )}
-                       </div>
-                       {agent.name}
-                     </span>
-                     {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
-                   </button>
-                 );
-               })}
-
+                  >
+                    <span className="truncate mr-2 flex items-center gap-2">
+                      <div className="w-4 h-4 flex items-center justify-center">
+                        {assignment ? (
+                          <img
+                            src={`./planets/${assignment.image}`}
+                            alt={agent.name}
+                            className="w-4 h-4 object-cover rounded-full"
+                          />
+                        ) : (
+                          <Earth className="h-4 w-4 text-red-400" />
+                        )}
+                      </div>
+                      {agent.name}
+                    </span>
+                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
           )}
         </ScrollArea>

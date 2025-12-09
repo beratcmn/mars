@@ -14,6 +14,7 @@ interface FooterProps {
   selectedAgent: Agent | null;
   planetsByAgent?: Record<string, PlanetAssignment>;
   onAgentChange: (agent: Agent) => void;
+  onOpenSettings?: () => void;
 }
 
 export function Footer({
@@ -25,6 +26,7 @@ export function Footer({
   selectedAgent,
   planetsByAgent,
   onAgentChange,
+  onOpenSettings,
 }: FooterProps) {
   return (
     <footer className="flex h-9 items-center justify-between px-4 text-xs">
@@ -44,18 +46,12 @@ export function Footer({
         />
       </div>
       <div className="flex items-center gap-1">
-        <img src="./logo.png" alt="Mars" className="h-4 w-4 mr-2 opacity-40" />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-110 active:scale-95"
-        >
-          <Paperclip className="h-3 w-3" />
-        </Button>
         <Button
           variant="ghost"
           size="icon"
           className="h-6 w-6 text-muted-foreground hover:text-foreground transition-all duration-150 hover:scale-110 hover:rotate-45 active:scale-95"
+          onClick={onOpenSettings}
+          title="Open settings in new window"
         >
           <Settings className="h-3 w-3" />
         </Button>

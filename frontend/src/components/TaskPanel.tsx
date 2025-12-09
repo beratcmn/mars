@@ -26,33 +26,41 @@ interface TodoNode {
 function TodoStateIcon({ state }: { state: Todo["state"] }) {
   switch (state) {
     case "completed":
-      return <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />;
+      return (
+        <CheckCircle2 className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+      );
     case "in_progress":
       return (
         <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin flex-shrink-0" />
       );
     default:
-      return <Circle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />;
+      return (
+        <Circle className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+      );
   }
 }
 
 function PriorityIndicator({ priority }: { priority?: Todo["priority"] }) {
   if (!priority || priority === "low") return null;
-  
+
   return (
     <div
       className={cn(
         "w-1 h-1 rounded-full flex-shrink-0 mt-2",
         priority === "high" && "bg-red-500",
-        priority === "medium" && "bg-yellow-500"
+        priority === "medium" && "bg-yellow-500",
       )}
     />
   );
 }
 
-function TodoItem({ node, isExpanded, onToggle }: { 
-  node: TodoNode; 
-  isExpanded: boolean; 
+function TodoItem({
+  node,
+  isExpanded,
+  onToggle,
+}: {
+  node: TodoNode;
+  isExpanded: boolean;
   onToggle: () => void;
 }) {
   const hasChildren = node.children.length > 0;
@@ -81,10 +89,10 @@ function TodoItem({ node, isExpanded, onToggle }: {
           </button>
         )}
         {!hasChildren && <div className="w-4" />}
-        
+
         <TodoStateIcon state={node.todo.state} />
         <PriorityIndicator priority={node.todo.priority} />
-        
+
         <div className="flex-1 min-w-0">
           <p
             className={cn(
@@ -127,7 +135,7 @@ function TodoItem({ node, isExpanded, onToggle }: {
           </div>
         </div>
       </div>
-      
+
       {hasChildren && isExpanded && (
         <div className="mt-1">
           {node.children.map((child) => (
@@ -162,11 +170,11 @@ export function TaskPanel({ todos = [], isOpen, className }: TaskPanelProps) {
     // Build hierarchy
     todos.forEach((todo) => {
       const node = nodeMap.get(todo.id)!;
-      
+
       // Check if this is a subtask (e.g., "1.1", "1.2", "2.1.1")
-      const parts = todo.id.split('.');
+      const parts = todo.id.split(".");
       if (parts.length > 1) {
-        const parentId = parts.slice(0, -1).join('.');
+        const parentId = parts.slice(0, -1).join(".");
         const parent = nodeMap.get(parentId);
         if (parent) {
           parent.children.push(node);
@@ -184,18 +192,18 @@ export function TaskPanel({ todos = [], isOpen, className }: TaskPanelProps) {
       nodes.sort((a, b) => {
         // First by priority (high > medium > low)
         const priorityOrder = { high: 3, medium: 2, low: 1 };
-        const aPriority = priorityOrder[a.todo.priority || 'low'] || 1;
-        const bPriority = priorityOrder[b.todo.priority || 'low'] || 1;
-        
+        const aPriority = priorityOrder[a.todo.priority || "low"] || 1;
+        const bPriority = priorityOrder[b.todo.priority || "low"] || 1;
+
         if (aPriority !== bPriority) {
           return bPriority - aPriority;
         }
-        
+
         // Then by ID for natural ordering
         return a.todo.id.localeCompare(b.todo.id, undefined, { numeric: true });
       });
-      
-      nodes.forEach(node => sortNodes(node.children));
+
+      nodes.forEach((node) => sortNodes(node.children));
     };
 
     sortNodes(rootNodes);
@@ -203,7 +211,7 @@ export function TaskPanel({ todos = [], isOpen, className }: TaskPanelProps) {
     // Auto-expand all nodes for now (can be made smarter later)
     const expanded = new Set<string>();
     const collectIds = (nodes: TodoNode[]) => {
-      nodes.forEach(node => {
+      nodes.forEach((node) => {
         if (node.children.length > 0) {
           expanded.add(node.todo.id);
           collectIds(node.children);
@@ -214,19 +222,14 @@ export function TaskPanel({ todos = [], isOpen, className }: TaskPanelProps) {
 
     return {
       todoTree: rootNodes,
-      expandedNodes: expanded
+      expandedNodes: expanded,
     };
   }, [todos]);
 
   if (!isOpen) return null;
 
   return (
-    <div
-      className={cn(
-        "flex flex-col h-full sidebar-transition",
-        className,
-      )}
-    >
+    <div className={cn("flex flex-col h-full sidebar-transition", className)}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div className="flex items-center gap-2">

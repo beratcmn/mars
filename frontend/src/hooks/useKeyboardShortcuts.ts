@@ -42,12 +42,12 @@ export function useKeyboardShortcuts({
       if (e.key === "Tab" && !isMeta && !e.shiftKey && !e.altKey) {
         // Don't interfere with tab navigation in form inputs
         const activeElement = document.activeElement as HTMLElement;
-        const isInputElement = activeElement && (
-          activeElement.tagName === 'INPUT' ||
-          activeElement.tagName === 'TEXTAREA' ||
-          activeElement.contentEditable === 'true'
-        );
-        
+        const isInputElement =
+          activeElement &&
+          (activeElement.tagName === "INPUT" ||
+            activeElement.tagName === "TEXTAREA" ||
+            activeElement.contentEditable === "true");
+
         if (!isInputElement) {
           e.preventDefault();
           onRotateAgent?.();

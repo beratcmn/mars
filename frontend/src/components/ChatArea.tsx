@@ -89,9 +89,11 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   const isError = part.state.status === "error";
 
   // Extract data for task tools
-  const taskInput = isTask ? (part.state.input as Record<string, unknown>) : null;
-  const taskDescription = taskInput?.description as string || "";
-  const taskPrompt = taskInput?.prompt as string || "";
+  const taskInput = isTask
+    ? (part.state.input as Record<string, unknown>)
+    : null;
+  const taskDescription = (taskInput?.description as string) || "";
+  const taskPrompt = (taskInput?.prompt as string) || "";
   const subagentType = (taskInput?.subagent_type as string) || "agent";
 
   // Format tool name for display
@@ -164,15 +166,20 @@ function ToolCallPart({ part }: { part: ToolPart }) {
               )}
             </div>
             <span className="text-xs text-muted-foreground">Read</span>
-            <span className="text-xs text-foreground font-medium truncate">{fileName}</span>
-            <ChevronRight className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+            <span className="text-xs text-foreground font-medium truncate">
+              {fileName}
+            </span>
+            <ChevronRight
+              className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? "rotate-90" : ""}`}
+            />
           </button>
 
           {/* Expanded code preview */}
           {isExpanded && part.state.output && (
             <div className="border-t border-border/30">
               <pre className="p-3 text-[11px] font-mono text-foreground/80 overflow-x-auto max-h-60 bg-muted/20">
-                {part.state.output.slice(0, 2000)}{part.state.output.length > 2000 ? "\n..." : ""}
+                {part.state.output.slice(0, 2000)}
+                {part.state.output.length > 2000 ? "\n..." : ""}
               </pre>
             </div>
           )}
@@ -209,8 +216,12 @@ function ToolCallPart({ part }: { part: ToolPart }) {
               )}
             </div>
             <span className="text-xs text-muted-foreground">Edit</span>
-            <span className="text-xs text-foreground font-medium truncate">{fileName}</span>
-            <ChevronRight className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+            <span className="text-xs text-foreground font-medium truncate">
+              {fileName}
+            </span>
+            <ChevronRight
+              className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? "rotate-90" : ""}`}
+            />
           </button>
 
           {/* Expanded diff view */}
@@ -220,7 +231,10 @@ function ToolCallPart({ part }: { part: ToolPart }) {
               {oldString && (
                 <div className="rounded bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/30 px-2 py-1.5">
                   <pre className="text-[11px] font-mono text-red-700 dark:text-red-400 whitespace-pre-wrap">
-                    {oldString.split('\n').map((line) => `- ${line}`).join('\n')}
+                    {oldString
+                      .split("\n")
+                      .map((line) => `- ${line}`)
+                      .join("\n")}
                   </pre>
                 </div>
               )}
@@ -228,7 +242,10 @@ function ToolCallPart({ part }: { part: ToolPart }) {
               {newString && (
                 <div className="rounded bg-green-50 dark:bg-green-950/20 border border-green-200/50 dark:border-green-900/30 px-2 py-1.5">
                   <pre className="text-[11px] font-mono text-green-700 dark:text-green-400 whitespace-pre-wrap">
-                    {newString.split('\n').map((line) => `+ ${line}`).join('\n')}
+                    {newString
+                      .split("\n")
+                      .map((line) => `+ ${line}`)
+                      .join("\n")}
                   </pre>
                 </div>
               )}
@@ -275,7 +292,8 @@ function ToolCallPart({ part }: { part: ToolPart }) {
             <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-2">
                 <span className="serif-title-sm text-foreground">
-                  {taskDescription || `${subagentType.charAt(0).toUpperCase() + subagentType.slice(1)} task`}
+                  {taskDescription ||
+                    `${subagentType.charAt(0).toUpperCase() + subagentType.slice(1)} task`}
                 </span>
                 {isRunning && (
                   <span className="text-[10px] text-muted-foreground/70 italic">
@@ -286,7 +304,9 @@ function ToolCallPart({ part }: { part: ToolPart }) {
             </div>
 
             {/* Expand indicator */}
-            <ChevronRight className={`w-4 h-4 text-muted-foreground/50 transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+            <ChevronRight
+              className={`w-4 h-4 text-muted-foreground/50 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""}`}
+            />
           </button>
 
           {/* Expanded Content */}

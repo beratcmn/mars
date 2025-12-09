@@ -7,6 +7,7 @@ import { FileExplorer } from "@/components/FileExplorer";
 import { CodeViewer } from "@/components/CodeViewer";
 import { TaskPanel } from "@/components/TaskPanel";
 import { TitleBar } from "@/components/TitleBar";
+import { Settings } from "@/components/Settings";
 import { type SelectedModel } from "@/components/ModelSelector";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import * as api from "@/lib/api";
@@ -79,7 +80,11 @@ interface FileTab extends Tab {
   filePath: string;
 }
 
-type AppTab = SessionTab | FileTab;
+interface SettingsTab extends Tab {
+  type: "settings";
+}
+
+type AppTab = SessionTab | FileTab | SettingsTab;
 
 export interface PlanetAssignment {
   image: string;
@@ -222,10 +227,16 @@ function applyEventToTabs(
             const todos = todosFromInput.map((t) => ({
               id: t.id,
               content: t.content,
-              state: (t.status === "in_progress" ? "in_progress" :
-                t.status === "completed" ? "completed" : "pending") as "pending" | "in_progress" | "completed",
-              priority: (t.priority === "high" ? "high" :
-                t.priority === "medium" ? "medium" : "low") as "high" | "medium" | "low",
+              state: (t.status === "in_progress"
+                ? "in_progress"
+                : t.status === "completed"
+                  ? "completed"
+                  : "pending") as "pending" | "in_progress" | "completed",
+              priority: (t.priority === "high"
+                ? "high"
+                : t.priority === "medium"
+                  ? "medium"
+                  : "low") as "high" | "medium" | "low",
             }));
 
             return {
@@ -357,7 +368,9 @@ function App() {
   );
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [planetsByAgent, setPlanetsByAgent] = useState<Record<string, PlanetAssignment>>({});
+  const [planetsByAgent, setPlanetsByAgent] = useState<
+    Record<string, PlanetAssignment>
+  >({});
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -462,6 +475,26 @@ function App() {
     await createNewTab();
   }, [createNewTab]);
 
+  // Handle opening settings tab
+  const handleOpenSettings = useCallback(() => {
+    // Check if settings tab already exists
+    const existingSettingsTab = tabs.find((t) => t.type === "settings");
+    if (existingSettingsTab) {
+      setActiveTabId(existingSettingsTab.id);
+      return;
+    }
+
+    const newTab: SettingsTab = {
+      id: `settings-${Date.now()}`,
+      type: "settings",
+      label: "Settings",
+      icon: "settings",
+    };
+
+    setTabs((prev) => [...prev, newTab]);
+    setActiveTabId(newTab.id);
+  }, [tabs]);
+
   // Handle closing current active tab
   const handleCloseActiveTab = useCallback(async () => {
     if (activeTabId) {
@@ -477,20 +510,24 @@ function App() {
     }
 
     const currentIndex = selectedAgent
-      ? agents.findIndex(agent => agent.name === selectedAgent.name)
+      ? agents.findIndex((agent) => agent.name === selectedAgent.name)
       : -1;
 
     const nextIndex = (currentIndex + 1) % agents.length;
     const nextAgent = agents[nextIndex];
 
-    console.log(`Rotating agent from ${selectedAgent?.name || 'None'} to ${nextAgent.name}`);
+    console.log(
+      `Rotating agent from ${selectedAgent?.name || "None"} to ${nextAgent.name}`,
+    );
     setSelectedAgent(nextAgent);
 
     // Save to settings
-    api.saveSettings({
-      selectedAgent: nextAgent,
-      planetsByAgent,
-    }).catch(e => console.error("Failed to save agent settings:", e));
+    api
+      .saveSettings({
+        selectedAgent: nextAgent,
+        planetsByAgent,
+      })
+      .catch((e) => console.error("Failed to save agent settings:", e));
   }, [agents, selectedAgent, planetsByAgent]);
 
   // Keyboard shortcuts
@@ -669,12 +706,19 @@ function App() {
               if (found) setSelectedAgent(savedAgent);
             }
 
-            const savedPlanets = (settings.planetsByAgent as Record<string, PlanetAssignment>) || {};
-            const updatedPlanets: Record<string, PlanetAssignment> = { ...savedPlanets };
+            const savedPlanets =
+              (settings.planetsByAgent as Record<string, PlanetAssignment>) ||
+              {};
+            const updatedPlanets: Record<string, PlanetAssignment> = {
+              ...savedPlanets,
+            };
             let changed = false;
             for (const agent of agentsList) {
               if (!updatedPlanets[agent.name]) {
-                updatedPlanets[agent.name] = getPlanetForAgent(agent.name, updatedPlanets);
+                updatedPlanets[agent.name] = getPlanetForAgent(
+                  agent.name,
+                  updatedPlanets,
+                );
                 changed = true;
               }
             }
@@ -803,9 +847,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-            ...tab,
-            messages: [...tab.messages, userMessage, assistantMessage],
-          }
+              ...tab,
+              messages: [...tab.messages, userMessage, assistantMessage],
+            }
           : tab,
       ),
     );
@@ -826,13 +870,15 @@ function App() {
 
           if (commandArgs) {
             const cmdArgsDef =
-              commandDef?.args || (commandDef as { arguments?: unknown[] })?.arguments;
+              commandDef?.args ||
+              (commandDef as { arguments?: unknown[] })?.arguments;
             if (cmdArgsDef && cmdArgsDef.length > 0) {
               // Use the name of the first argument
               const firstArg = cmdArgsDef[0];
-              const argName = firstArg && typeof firstArg === 'object' && 'name' in firstArg
-                ? firstArg.name as string
-                : 'text';
+              const argName =
+                firstArg && typeof firstArg === "object" && "name" in firstArg
+                  ? (firstArg.name as string)
+                  : "text";
               args = { [argName]: commandArgs };
             } else {
               // Fallback: send as "text" if no definition found, or maybe the command expects raw text
@@ -906,9 +952,9 @@ function App() {
           // Regular message
           const modelParam = selectedModel
             ? {
-              providerID: selectedModel.providerId,
-              modelID: selectedModel.modelId,
-            }
+                providerID: selectedModel.providerId,
+                modelID: selectedModel.modelId,
+              }
             : undefined;
 
           const agentParam = selectedAgent ? selectedAgent.name : undefined;
@@ -997,7 +1043,6 @@ function App() {
               // Store full path for accuracy; UI still shows folder name
               setProjectRoot(path);
             }}
-
           />
         </div>
 
@@ -1020,6 +1065,42 @@ function App() {
               />
             ) : activeTab?.type === "file" ? (
               <CodeViewer filePath={(activeTab as FileTab).filePath} />
+            ) : activeTab?.type === "settings" ? (
+              <Settings
+                providers={providers}
+                connectedProviders={connectedProviders}
+                selectedModel={selectedModel}
+                onModelChange={async (model) => {
+                  setSelectedModel(model);
+                  if (model) {
+                    try {
+                      const currentSettings = await api.loadSettings();
+                      await api.saveSettings({
+                        ...currentSettings,
+                        selectedModel: model,
+                      });
+                    } catch (e) {
+                      console.error("Failed to save settings:", e);
+                    }
+                  }
+                }}
+                agents={agents}
+                selectedAgent={selectedAgent}
+                planetsByAgent={planetsByAgent}
+                onAgentChange={async (agent) => {
+                  setSelectedAgent(agent);
+                  try {
+                    const currentSettings = await api.loadSettings();
+                    await api.saveSettings({
+                      ...currentSettings,
+                      selectedAgent: agent,
+                      planetsByAgent,
+                    });
+                  } catch (e) {
+                    console.error("Failed to save agent settings:", e);
+                  }
+                }}
+              />
             ) : (
               <ChatArea
                 messages={[]}
@@ -1042,7 +1123,9 @@ function App() {
           isOpen={isTaskPanelOpen}
           className={cn(
             "w-72 border-l border-border/50 bg-background flex flex-col h-full transition-transform duration-200 ease-in-out",
-            isTaskPanelOpen ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 pointer-events-none"
+            isTaskPanelOpen
+              ? "translate-x-0 opacity-100"
+              : "translate-x-full opacity-0 pointer-events-none",
           )}
         />
 
@@ -1112,6 +1195,7 @@ function App() {
             console.error("Failed to save agent settings:", e);
           }
         }}
+        onOpenSettings={handleOpenSettings}
       />
     </div>
   );
