@@ -847,9 +847,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-              ...tab,
-              messages: [...tab.messages, userMessage, assistantMessage],
-            }
+            ...tab,
+            messages: [...tab.messages, userMessage, assistantMessage],
+          }
           : tab,
       ),
     );
@@ -952,9 +952,9 @@ function App() {
           // Regular message
           const modelParam = selectedModel
             ? {
-                providerID: selectedModel.providerId,
-                modelID: selectedModel.modelId,
-              }
+              providerID: selectedModel.providerId,
+              modelID: selectedModel.modelId,
+            }
             : undefined;
 
           const agentParam = selectedAgent ? selectedAgent.name : undefined;
@@ -1098,6 +1098,22 @@ function App() {
                     });
                   } catch (e) {
                     console.error("Failed to save agent settings:", e);
+                  }
+                }}
+                onIconChange={async (agentName, icon) => {
+                  const updatedPlanets = {
+                    ...planetsByAgent,
+                    [agentName]: icon,
+                  };
+                  setPlanetsByAgent(updatedPlanets);
+                  try {
+                    const currentSettings = await api.loadSettings();
+                    await api.saveSettings({
+                      ...currentSettings,
+                      planetsByAgent: updatedPlanets,
+                    });
+                  } catch (e) {
+                    console.error("Failed to save icon settings:", e);
                   }
                 }}
               />

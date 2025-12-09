@@ -1,8 +1,28 @@
-import { Settings as SettingsIcon } from "lucide-react";
+import { useState } from "react";
+import { Settings as SettingsIcon, ChevronDown, Check } from "lucide-react";
 import { ModelSelector, type SelectedModel } from "@/components/ModelSelector";
 import { AgentSelector } from "@/components/AgentSelector";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { Provider, Agent } from "@/lib/api";
 import type { PlanetAssignment } from "@/App";
+
+// Available planet icons for selection
+const availableIcons: PlanetAssignment[] = [
+  { image: "mars.png" },
+  { image: "jupiter.png" },
+  { image: "mercury.png" },
+  { image: "venus_1.png" },
+  { image: "venus_2.png" },
+  { image: "venus_3.png" },
+  { image: "planet.png" },
+  { image: "planet_1.png" },
+  { image: "planet_2.png" },
+  { image: "person.png" },
+];
 
 interface SettingsProps {
   providers: Provider[];
@@ -13,6 +33,58 @@ interface SettingsProps {
   selectedAgent: Agent | null;
   planetsByAgent?: Record<string, PlanetAssignment>;
   onAgentChange: (agent: Agent) => void;
+  onIconChange?: (agentName: string, icon: PlanetAssignment) => void;
+}
+
+function IconPicker({
+  currentIcon,
+  onSelect,
+}: {
+  currentIcon?: PlanetAssignment;
+  onSelect: (icon: PlanetAssignment) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-2 p-2 rounded-lg border border-border/50 bg-background hover:bg-muted/50 transition-colors">
+          <img
+            src={`./planets/${currentIcon?.image || "planet.png"}`}
+            alt="Icon"
+            className="h-6 w-6"
+          />
+          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-2" align="end">
+        <div className="grid grid-cols-5 gap-1">
+          {availableIcons.map((icon) => (
+            <button
+              key={icon.image}
+              onClick={() => {
+                onSelect(icon);
+                setOpen(false);
+              }}
+              className={`p-2 rounded-lg transition-all hover:bg-muted ${currentIcon?.image === icon.image
+                  ? "bg-primary/10 ring-1 ring-primary"
+                  : ""
+                }`}
+            >
+              <img
+                src={`./planets/${icon.image}`}
+                alt={icon.image}
+                className="h-6 w-6"
+              />
+              {currentIcon?.image === icon.image && (
+                <Check className="absolute top-0.5 right-0.5 h-3 w-3 text-primary" />
+              )}
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function Settings({
@@ -24,6 +96,7 @@ export function Settings({
   selectedAgent,
   planetsByAgent,
   onAgentChange,
+  onIconChange,
 }: SettingsProps) {
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -49,22 +122,26 @@ export function Settings({
               Choose the AI model for your conversations
             </p>
           </div>
-          <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
-            <ModelSelector
-              providers={providers}
-              connectedProviders={connectedProviders}
-              selectedModel={selectedModel}
-              onModelChange={onModelChange}
-            />
+          <div className="p-4 rounded-lg border border-border/50 bg-muted/20 flex items-center">
+            <div className="flex-1">
+              <ModelSelector
+                providers={providers}
+                connectedProviders={connectedProviders}
+                selectedModel={selectedModel}
+                onModelChange={onModelChange}
+              />
+            </div>
           </div>
         </section>
 
-        {/* Agent Selection */}
+        {/* Default Agent Selection */}
         <section className="space-y-4">
           <div>
-            <h2 className="text-sm font-medium text-foreground mb-1">Agent</h2>
+            <h2 className="text-sm font-medium text-foreground mb-1">
+              Default Agent
+            </h2>
             <p className="text-xs text-muted-foreground mb-3">
-              Select the agent persona for your assistant
+              Select the default agent for new conversations
             </p>
           </div>
           <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
@@ -74,6 +151,52 @@ export function Settings({
               planetsByAgent={planetsByAgent}
               onAgentChange={onAgentChange}
             />
+          </div>
+        </section>
+
+        {/* Agent Icons */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-medium text-foreground mb-1">
+              Agent Icons
+            </h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              Customize the icon for each agent
+            </p>
+          </div>
+          <div className="rounded-lg border border-border/50 bg-muted/20 divide-y divide-border/50">
+            {agents.length === 0 ? (
+              <div className="p-4 text-sm text-muted-foreground text-center">
+                No agents available
+              </div>
+            ) : (
+              agents.map((agent) => (
+                <div
+                  key={agent.name}
+                  className="flex items-center justify-between p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={`./planets/${planetsByAgent?.[agent.name]?.image || "planet.png"}`}
+                      alt={agent.name}
+                      className="h-8 w-8"
+                    />
+                    <div>
+                      <p className="text-sm font-medium">{agent.name}</p>
+                      {agent.description && (
+                        <p className="text-xs text-muted-foreground truncate max-w-[300px]">
+                          {agent.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <IconPicker
+                    currentIcon={planetsByAgent?.[agent.name]}
+                    onSelect={(icon) => onIconChange?.(agent.name, icon)}
+                  />
+                </div>
+              ))
+            )}
           </div>
         </section>
 

@@ -501,24 +501,50 @@ class MarsAPI:
 
     # === Settings ===
 
+    def _get_settings_path(self) -> str:
+        """Get the path to the settings file in user's Application Support directory.
+        
+        This ensures settings persist across app updates.
+        - macOS: ~/Library/Application Support/Mars/settings.json
+        - Linux: ~/.config/Mars/settings.json  
+        - Windows: %APPDATA%/Mars/settings.json
+        """
+        import platform
+        
+        system = platform.system()
+        if system == "Darwin":  # macOS
+            base_dir = os.path.expanduser("~/Library/Application Support/Mars")
+        elif system == "Windows":
+            base_dir = os.path.join(os.environ.get("APPDATA", ""), "Mars")
+        else:  # Linux and others
+            base_dir = os.path.expanduser("~/.config/Mars")
+        
+        # Create directory if it doesn't exist
+        os.makedirs(base_dir, exist_ok=True)
+        
+        return os.path.join(base_dir, "settings.json")
+
     def save_settings(self, settings: dict) -> dict:
-        """Save settings to a local JSON file."""
+        """Save settings to a local JSON file in user's Application Support directory."""
         try:
             import json
 
-            settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
+            settings_path = self._get_settings_path()
+            logger.info(f"Saving settings to: {settings_path}")
             with open(settings_path, "w") as f:
                 json.dump(settings, f, indent=2)
             return {"success": True, "error": None}
         except Exception as e:
+            logger.error(f"Error saving settings: {e}")
             return {"success": False, "error": str(e)}
 
     def load_settings(self) -> dict:
-        """Load settings from a local JSON file."""
+        """Load settings from a local JSON file in user's Application Support directory."""
         try:
             import json
 
-            settings_path = os.path.join(os.path.dirname(__file__), "settings.json")
+            settings_path = self._get_settings_path()
+            logger.info(f"Loading settings from: {settings_path}")
             if not os.path.exists(settings_path):
                 return {"success": True, "settings": {}, "error": None}
 
@@ -526,6 +552,7 @@ class MarsAPI:
                 settings = json.load(f)
             return {"success": True, "settings": settings, "error": None}
         except Exception as e:
+            logger.error(f"Error loading settings: {e}")
             return {"success": False, "settings": {}, "error": str(e)}
 
     def open_in_editor(self, path: Optional[str] = None) -> dict:
