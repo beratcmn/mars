@@ -639,7 +639,7 @@ def main():
         frameless=True,
         background_color="#FFFFFF",
         shadow=True,
-        easy_drag=True,
+        easy_drag=False,
     )
     api.window = window
 
