@@ -45,7 +45,7 @@ export const softTheme: Theme = {
 
     // Borders and inputs - warm gray
     border: "oklch(0.90 0.018 80)",
-    input: "oklch(0.97 0.02 80)",
+    input: "oklch(0.997 0.008 80)",
     ring: "oklch(0.70 0.02 60)",
 
     // Chart colors - warmer palette
