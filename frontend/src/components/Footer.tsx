@@ -1,4 +1,4 @@
-import { Settings, Paperclip } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ModelSelector, type SelectedModel } from "@/components/ModelSelector";
 import { AgentSelector } from "@/components/AgentSelector";
