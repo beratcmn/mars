@@ -7,7 +7,6 @@
 
 import {
   createContext,
-  useContext,
   useState,
   useEffect,
   useCallback,
@@ -119,16 +118,5 @@ export function ThemeProvider({
   );
 }
 
-/**
- * Hook to access the theme context.
- * Must be used within a ThemeProvider.
- */
-export function useTheme(): ThemeContextValue {
-  const context = useContext(ThemeContext);
-
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-
-  return context;
-}
+export { ThemeContext };
+export type { ThemeContextValue };

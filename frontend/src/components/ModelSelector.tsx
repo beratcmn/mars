@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, startTransition } from "react";
 import { ChevronDown, Check, Search, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -71,7 +71,7 @@ export function ModelSelector({
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
-      setSearchQuery(""); // Reset search on close
+      startTransition(() => setSearchQuery("")); // Reset search on close
     }
   }, [open]);
 

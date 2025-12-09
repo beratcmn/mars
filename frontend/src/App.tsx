@@ -451,28 +451,31 @@ function App() {
     setActiveTabId(newTab.id);
   };
 
-  const handleTabClose = async (tabId: string) => {
-    const tab = tabs.find((t) => t.id === tabId);
-    if (!tab) return;
-    setTabs((prev) => prev.filter((t) => t.id !== tabId));
-    if (activeTabId === tabId) {
-      const remainingTabs = tabs.filter((t) => t.id !== tabId);
-      if (remainingTabs.length > 0) {
-        setActiveTabId(remainingTabs[0].id);
-        if (remainingTabs[0].type === "session" && api.isPyWebView())
-          await api.setCurrentSession(remainingTabs[0].sessionId);
-      } else {
-        setActiveTabId(null);
+  const handleTabClose = useCallback(
+    async (tabId: string) => {
+      const tab = tabs.find((t) => t.id === tabId);
+      if (!tab) return;
+      setTabs((prev) => prev.filter((t) => t.id !== tabId));
+      if (activeTabId === tabId) {
+        const remainingTabs = tabs.filter((t) => t.id !== tabId);
+        if (remainingTabs.length > 0) {
+          setActiveTabId(remainingTabs[0].id);
+          if (remainingTabs[0].type === "session" && api.isPyWebView())
+            await api.setCurrentSession(remainingTabs[0].sessionId);
+        } else {
+          setActiveTabId(null);
+        }
       }
-    }
-    if (
-      tab.type === "session" &&
-      api.isPyWebView() &&
-      tab.sessionId.startsWith("ses")
-    ) {
-      await api.deleteSession(tab.sessionId);
-    }
-  };
+      if (
+        tab.type === "session" &&
+        api.isPyWebView() &&
+        tab.sessionId.startsWith("ses")
+      ) {
+        await api.deleteSession(tab.sessionId);
+      }
+    },
+    [tabs, activeTabId],
+  );
 
   const handleNewTab = useCallback(async () => {
     await createNewTab();
@@ -503,7 +506,7 @@ function App() {
     if (activeTabId) {
       await handleTabClose(activeTabId);
     }
-  }, [activeTabId]);
+  }, [activeTabId, handleTabClose]);
 
   // Handle opening agent modal with Tab key
   const handleOpenAgentModal = useCallback(() => {
@@ -748,7 +751,7 @@ function App() {
     };
 
     init();
-  }, [isInitialized, createNewTab]);
+  }, [isInitialized, createNewTab, getPlanetForAgent]);
 
   // Event buffer for batching SSE events
   // This prevents UI freezing/stuttering when many events arrive simultaneously

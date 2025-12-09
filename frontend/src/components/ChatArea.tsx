@@ -468,6 +468,29 @@ export function ChatArea({
   hasActiveSession,
   onNewChat,
 }: ChatAreaProps) {
+  // Scroll state for scroll-to-bottom button
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  // Scroll to bottom function
+  const scrollToBottom = () => {
+    if (scrollAreaRef.current) {
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]",
+      );
+      if (scrollContainer) {
+        scrollContainer.scrollTop = scrollContainer.scrollHeight;
+      }
+    }
+  };
+
+  // Auto-scroll when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages.length]);
+
   // No active session - show start new chat prompt
   if (!hasActiveSession) {
     return (
@@ -498,46 +521,19 @@ export function ChatArea({
 
           <Button
             onClick={onNewChat}
-            variant="ghost"
-            size="sm"
-            className="gap-2 transition-all duration-200 hover:scale-105 active:scale-95 hover:bg-primary/5"
+            className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3"
           >
-            <MessageSquarePlus className="h-4 w-4" />
-            Start a new chat
+            <MessageSquarePlus className="w-4 h-4 mr-2" />
+            Start New Chat
           </Button>
-        </div>
-      </div>
-    );
-  }
 
-  // Active session but no messages yet
-  if (messages.length === 0) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <div className="text-center space-y-8 animate-fade-in-up max-w-lg px-6">
-          {/* Logo */}
-          <div className="relative mx-auto w-16 h-16">
-            <img
-              src="./logo.png"
-              alt="Mars"
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <h1 className="text-3xl font-serif italic text-foreground">
-              What can I help you build?
-            </h1>
-            <div className="w-12 h-px bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
-          </div>
-
-          {/* Suggestion Cards */}
-          <div className="flex flex-wrap justify-center gap-2">
+          {/* Quick suggestions */}
+          <div className="grid grid-cols-1 gap-2 text-xs">
             {[
-              "Explain this codebase",
-              "Fix a bug",
-              "Write tests",
-              "Refactor code",
+              "Help me debug this React component",
+              "Explain how this algorithm works",
+              "Write tests for this function",
+              "Optimize this code for performance",
             ].map((suggestion, i) => (
               <button
                 key={suggestion}
@@ -553,10 +549,6 @@ export function ChatArea({
     );
   }
 
-  // Scroll state for scroll-to-bottom button
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-
   // Check if scrolled away from bottom
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
@@ -564,25 +556,6 @@ export function ChatArea({
       target.scrollHeight - target.scrollTop - target.clientHeight < 100;
     setShowScrollButton(!isNearBottom);
   };
-
-  // Scroll to bottom function
-  const scrollToBottom = () => {
-    if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector(
-        "[data-radix-scroll-area-viewport]",
-      );
-      if (scrollContainer) {
-        scrollContainer.scrollTop = scrollContainer.scrollHeight;
-      }
-    }
-  };
-
-  // Auto-scroll when new messages arrive
-  useEffect(() => {
-    if (messages.length > 0) {
-      scrollToBottom();
-    }
-  }, [messages.length]);
 
   const formatTokens = (num: number) => {
     if (num >= 1000) return `${(num / 1000).toFixed(1)}k`;

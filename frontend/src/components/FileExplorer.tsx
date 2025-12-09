@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { ChevronRight, ChevronDown, File, Folder } from "lucide-react";
-import * as api from "@/lib/api";
+import { useState, useEffect, useCallback, startTransition } from "react";
 import type { FileEntry } from "@/lib/api";
+import { listFiles } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronRight, Folder, File } from "lucide-react";
 
 interface FileExplorerProps {
   onFileSelect: (file: FileEntry) => void;
@@ -17,21 +17,21 @@ export function FileExplorer({
 }: FileExplorerProps) {
   const [files, setFiles] = useState<FileEntry[]>([]);
 
-  useEffect(() => {
-    loadFiles();
-  }, []);
-
-  const loadFiles = async () => {
+  const loadFiles = useCallback(async () => {
     try {
-      const result = await api.listFiles(".");
-      setFiles(result.files);
+      const result = await listFiles(".");
+      startTransition(() => setFiles(result.files));
       if (onRootLoaded) {
         onRootLoaded(result.root);
       }
     } catch (e) {
       console.error("Failed to load files:", e);
     }
-  };
+  }, [onRootLoaded]);
+
+  useEffect(() => {
+    loadFiles();
+  }, [loadFiles]);
 
   return (
     <div className={cn("h-full overflow-y-auto bg-muted/20", className)}>
@@ -69,7 +69,7 @@ function FileTreeItem({
     if (!hasLoaded) {
       setIsLoading(true);
       try {
-        const result = await api.listFiles(file.path);
+        const result = await listFiles(file.path);
         setChildren(result.files);
         setHasLoaded(true);
       } catch (e) {

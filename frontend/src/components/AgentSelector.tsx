@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, startTransition } from "react";
 import { ChevronDown, Earth, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -39,7 +39,7 @@ export function AgentSelector({
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 100);
     } else {
-      setSearchQuery(""); // Reset search on close
+      startTransition(() => setSearchQuery("")); // Reset search on close
     }
   }, [open]);
 

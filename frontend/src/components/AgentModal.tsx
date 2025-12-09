@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, startTransition } from "react";
 import { Search, X, Earth, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Kbd } from "@/components/ui/kbd";
@@ -48,13 +48,13 @@ export function AgentModal({
       // Small delay for smooth entrance
       requestAnimationFrame(() => setIsVisible(true));
     } else {
-      setIsVisible(false);
+      startTransition(() => setIsVisible(false));
     }
   }, [isOpen]);
 
   // Reset highlighted index when filtered agents change
   useEffect(() => {
-    setHighlightedIndex(0);
+    startTransition(() => setHighlightedIndex(0));
   }, [filteredAgents]);
 
   // Set initial highlighted index to selected agent
@@ -63,7 +63,9 @@ export function AgentModal({
       const selectedIndex = filteredAgents.findIndex(
         (agent) => agent.name === selectedAgent.name,
       );
-      setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      startTransition(() =>
+        setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : 0),
+      );
     }
   }, [isOpen, selectedAgent, filteredAgents]);
 
@@ -71,7 +73,7 @@ export function AgentModal({
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => searchInputRef.current?.focus(), 100);
-      setSearchQuery(""); // Reset search on open
+      startTransition(() => setSearchQuery("")); // Reset search on open
     }
   }, [isOpen]);
 

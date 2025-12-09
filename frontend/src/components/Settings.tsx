@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/popover";
 import type { Provider, Agent } from "@/lib/api";
 import type { PlanetAssignment } from "@/App";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "@/hooks/useTheme";
 import { searchThemes, type Theme } from "@/themes";
 
 // Available planet icons for selection
