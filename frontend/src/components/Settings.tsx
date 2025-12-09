@@ -75,10 +75,11 @@ function IconPicker({
                 onSelect(icon);
                 setOpen(false);
               }}
-              className={`p-2 rounded-lg transition-all hover:bg-muted ${currentIcon?.image === icon.image
+              className={`p-2 rounded-lg transition-all hover:bg-muted ${
+                currentIcon?.image === icon.image
                   ? "bg-primary/10 ring-1 ring-primary"
                   : ""
-                }`}
+              }`}
             >
               <img
                 src={`./planets/${icon.image}`}
@@ -116,9 +117,10 @@ function ThemeCard({
       className={`
         relative w-full p-3 rounded-lg border text-left transition-all duration-150
         hover:border-primary/50 hover:shadow-sm
-        ${isSelected
-          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-          : "border-border/50 bg-muted/20 hover:bg-muted/40"
+        ${
+          isSelected
+            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+            : "border-border/50 bg-muted/20 hover:bg-muted/40"
         }
       `}
     >
@@ -178,7 +180,7 @@ function ThemeSelector() {
 
   const filteredThemes = useMemo(
     () => searchThemes(searchQuery),
-    [searchQuery]
+    [searchQuery],
   );
 
   return (

@@ -507,14 +507,14 @@ class MarsAPI:
 
     def _get_settings_path(self) -> str:
         """Get the path to the settings file in user's Application Support directory.
-        
+
         This ensures settings persist across app updates.
         - macOS: ~/Library/Application Support/Mars/settings.json
-        - Linux: ~/.config/Mars/settings.json  
+        - Linux: ~/.config/Mars/settings.json
         - Windows: %APPDATA%/Mars/settings.json
         """
         import platform
-        
+
         system = platform.system()
         if system == "Darwin":  # macOS
             base_dir = os.path.expanduser("~/Library/Application Support/Mars")
@@ -522,10 +522,10 @@ class MarsAPI:
             base_dir = os.path.join(os.environ.get("APPDATA", ""), "Mars")
         else:  # Linux and others
             base_dir = os.path.expanduser("~/.config/Mars")
-        
+
         # Create directory if it doesn't exist
         os.makedirs(base_dir, exist_ok=True)
-        
+
         return os.path.join(base_dir, "settings.json")
 
     def save_settings(self, settings: dict) -> dict:

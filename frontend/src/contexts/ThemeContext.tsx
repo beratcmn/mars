@@ -50,7 +50,7 @@ export function ThemeProvider({
   initialThemeId,
 }: ThemeProviderProps) {
   const [currentThemeId, setCurrentThemeId] = useState<string>(
-    initialThemeId ?? DEFAULT_THEME_ID
+    initialThemeId ?? DEFAULT_THEME_ID,
   );
   const [isLoaded, setIsLoaded] = useState(false);
 

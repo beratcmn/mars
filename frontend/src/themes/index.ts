@@ -65,7 +65,7 @@ export function searchThemes(query: string): Theme[] {
     (theme) =>
       theme.name.toLowerCase().includes(lowerQuery) ||
       theme.description.toLowerCase().includes(lowerQuery) ||
-      theme.category.toLowerCase().includes(lowerQuery)
+      theme.category.toLowerCase().includes(lowerQuery),
   );
 }
 

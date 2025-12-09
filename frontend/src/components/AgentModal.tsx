@@ -2,7 +2,11 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Search, X, Earth, Check } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Kbd } from "@/components/ui/kbd";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import type { Agent } from "@/lib/api";
 import type { PlanetAssignment } from "@/App";
 
@@ -31,9 +35,10 @@ export function AgentModal({
 
   const filteredAgents = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    return agents.filter((agent) =>
-      agent.name.toLowerCase().includes(query) ||
-      agent.description?.toLowerCase().includes(query)
+    return agents.filter(
+      (agent) =>
+        agent.name.toLowerCase().includes(query) ||
+        agent.description?.toLowerCase().includes(query),
     );
   }, [agents, searchQuery]);
 
@@ -56,7 +61,7 @@ export function AgentModal({
   useEffect(() => {
     if (isOpen && selectedAgent) {
       const selectedIndex = filteredAgents.findIndex(
-        (agent) => agent.name === selectedAgent.name
+        (agent) => agent.name === selectedAgent.name,
       );
       setHighlightedIndex(selectedIndex >= 0 ? selectedIndex : 0);
     }
@@ -83,7 +88,7 @@ export function AgentModal({
         case "ArrowUp":
           e.preventDefault();
           setHighlightedIndex((prev) =>
-            prev === 0 ? filteredAgents.length - 1 : prev - 1
+            prev === 0 ? filteredAgents.length - 1 : prev - 1,
           );
           break;
         case "Enter":
@@ -134,9 +139,10 @@ export function AgentModal({
           bg-background/95 backdrop-blur-xl
           shadow-2xl shadow-black/10
           transition-all duration-300 ease-out
-          ${isVisible
-            ? "opacity-100 scale-100 translate-y-0"
-            : "opacity-0 scale-95 translate-y-2"
+          ${
+            isVisible
+              ? "opacity-100 scale-100 translate-y-0"
+              : "opacity-0 scale-95 translate-y-2"
           }
         `}
         onClick={(e) => e.stopPropagation()}
@@ -162,12 +168,14 @@ export function AgentModal({
 
         {/* Search */}
         <div className="relative mx-4 mb-3">
-          <div className="
+          <div
+            className="
             flex items-center gap-3 px-3.5 py-2.5
             bg-muted/30 border border-border/40 rounded-lg
             focus-within:border-border/80 focus-within:bg-muted/40
             transition-all duration-200
-          ">
+          "
+          >
             <Search className="h-4 w-4 text-muted-foreground/50" />
             <input
               ref={searchInputRef}
@@ -211,21 +219,24 @@ export function AgentModal({
                     className={`
                       group w-full flex items-center gap-3.5 px-3.5 py-3
                       text-left rounded-lg transition-all duration-150 ease-out
-                      ${isHighlighted
-                        ? "bg-accent"
-                        : isSelected
-                          ? "bg-muted/40"
-                          : "hover:bg-muted/30"
+                      ${
+                        isHighlighted
+                          ? "bg-accent"
+                          : isSelected
+                            ? "bg-muted/40"
+                            : "hover:bg-muted/30"
                       }
                     `}
                   >
                     {/* Agent Icon */}
-                    <div className={`
+                    <div
+                      className={`
                       w-9 h-9 flex items-center justify-center flex-shrink-0
                       rounded-full overflow-hidden
                       ${isHighlighted ? "ring-2 ring-primary/30" : ""}
                       transition-all duration-200
-                    `}>
+                    `}
+                    >
                       {assignment ? (
                         <img
                           src={`./planets/${assignment.image}`}
@@ -241,11 +252,13 @@ export function AgentModal({
 
                     {/* Agent Info */}
                     <div className="flex-1 min-w-0">
-                      <div className={`
+                      <div
+                        className={`
                         text-sm font-medium truncate
                         transition-colors duration-150
                         ${isHighlighted ? "text-foreground" : "text-foreground/80"}
-                      `}>
+                      `}
+                      >
                         {agent.name}
                       </div>
                       {agent.description && (

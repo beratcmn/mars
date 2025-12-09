@@ -515,18 +515,21 @@ function App() {
   }, [agents]);
 
   // Handle agent selection from modal
-  const handleAgentSelect = useCallback((agent: Agent) => {
-    console.log(`Selected agent: ${agent.name}`);
-    setSelectedAgent(agent);
+  const handleAgentSelect = useCallback(
+    (agent: Agent) => {
+      console.log(`Selected agent: ${agent.name}`);
+      setSelectedAgent(agent);
 
-    // Save to settings
-    api
-      .saveSettings({
-        selectedAgent: agent,
-        planetsByAgent,
-      })
-      .catch((e) => console.error("Failed to save agent settings:", e));
-  }, [planetsByAgent]);
+      // Save to settings
+      api
+        .saveSettings({
+          selectedAgent: agent,
+          planetsByAgent,
+        })
+        .catch((e) => console.error("Failed to save agent settings:", e));
+    },
+    [planetsByAgent],
+  );
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -845,9 +848,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-            ...tab,
-            messages: [...tab.messages, userMessage, assistantMessage],
-          }
+              ...tab,
+              messages: [...tab.messages, userMessage, assistantMessage],
+            }
           : tab,
       ),
     );
@@ -857,7 +860,6 @@ function App() {
     try {
       if (api.isPyWebView()) {
         if (isSlashCommand) {
-
           // Execute slash command - returns result synchronously (not streaming)
           const modelString = selectedModel
             ? `${selectedModel.providerId}/${selectedModel.modelId}`
@@ -931,9 +933,9 @@ function App() {
           // Regular message
           const modelParam = selectedModel
             ? {
-              providerID: selectedModel.providerId,
-              modelID: selectedModel.modelId,
-            }
+                providerID: selectedModel.providerId,
+                modelID: selectedModel.modelId,
+              }
             : undefined;
 
           const agentParam = selectedAgent ? selectedAgent.name : undefined;
