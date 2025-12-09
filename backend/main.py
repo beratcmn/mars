@@ -110,7 +110,7 @@ def set_working_directory() -> None:
     subprocesses (opencode) work as expected.
     """
 
-    base_dir = getattr(sys, "_MEIPASS", None)
+    base_dir = getattr(sys, "_MEIPASS", None)  # type: ignore[attr-defined]
     if not base_dir:
         base_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -132,7 +132,8 @@ class MarsAPI:
         self.server = OpenCodeServer(self.config)
         self.client = OpenCodeClient(self.config)
         self._current_session_id: Optional[str] = None
-        self.window = None
+        # Assigned after window creation in main()
+        self.window: Optional[webview.Window] = None
 
     # === Server Management ===
 
@@ -160,6 +161,55 @@ class MarsAPI:
         running = self.server.is_running()
         logger.info(f"is_server_running: {running}")
         return running
+
+    # === Window Controls ===
+
+    def minimize_window(self) -> dict:
+        """Minimize the window (send to Dock)."""
+        if not self.window:
+            return {"success": False, "error": "Window not ready"}
+        try:
+            self.window.minimize()
+            return {"success": True, "error": None}
+        except Exception as exc:
+            logger.error(f"Error minimizing window: {exc}", exc_info=True)
+            return {"success": False, "error": str(exc)}
+
+    def maximize_window(self) -> dict:
+        """Maximize the window without entering fullscreen."""
+        if not self.window:
+            return {"success": False, "error": "Window not ready"}
+        try:
+            self.window.maximize()
+            return {"success": True, "error": None}
+        except Exception as exc:
+            logger.error(f"Error maximizing window: {exc}", exc_info=True)
+            return {"success": False, "error": str(exc)}
+
+    def fullscreen_window(self) -> dict:
+        """Toggle fullscreen (macOS green button behavior)."""
+        if not self.window:
+            return {"success": False, "error": "Window not ready"}
+        try:
+            self.window.toggle_fullscreen()
+            return {"success": True, "error": None}
+        except Exception as exc:
+            logger.error(f"Error toggling fullscreen: {exc}", exc_info=True)
+            return {"success": False, "error": str(exc)}
+
+    def close_window(self) -> dict:
+        """Close and destroy the window."""
+        if not self.window:
+            return {"success": False, "error": "Window not ready"}
+        try:
+            # Guard against double-destroy; pywebview can throw if already closing
+            if getattr(self.window, "destroyed", False):
+                return {"success": True, "error": None}
+            self.window.destroy()
+            return {"success": True, "error": None}
+        except Exception as exc:
+            logger.error(f"Error closing window: {exc}", exc_info=True)
+            return {"success": False, "error": str(exc)}
 
     # === Session Management ===
 
@@ -234,9 +284,17 @@ class MarsAPI:
                 self._current_session_id = sid
                 logger.info(f"Created session: {sid}")
 
+            if not sid:
+                return {
+                    "success": False,
+                    "response": None,
+                    "sessionId": None,
+                    "error": "Failed to resolve session id",
+                }
+
             logger.info(f"Sending message to session: {sid}")
             response = self.client.send_message(
-                session_id=sid, content=content, model=model, agent=agent
+                session_id=str(sid), content=content, model=model, agent=agent
             )
             logger.info(f"Got response: {response}")
 
@@ -264,7 +322,7 @@ class MarsAPI:
             if not sid:
                 return {"success": True, "messages": [], "error": None}
 
-            messages = self.client.list_messages(sid, limit=limit)
+            messages = self.client.list_messages(str(sid), limit=limit)
             return {"success": True, "messages": messages, "error": None}
         except Exception as e:
             return {"success": False, "messages": [], "error": str(e)}
@@ -276,7 +334,7 @@ class MarsAPI:
             if not sid:
                 return {"success": False, "error": "No active session"}
 
-            success = self.client.abort_session(sid)
+            success = self.client.abort_session(str(sid))
             return {"success": success, "error": None}
         except Exception as e:
             return {"success": False, "error": str(e)}
@@ -295,7 +353,6 @@ class MarsAPI:
         """Get available providers and models."""
         try:
             providers = self.client.get_providers()
-            # logger.info(f"get_providers response: {providers}")
             return {"success": True, "providers": providers, "error": None}
         except Exception as e:
             logger.error(f"get_providers error: {e}", exc_info=True)
@@ -404,7 +461,7 @@ class MarsAPI:
             if not sid:
                 return {"success": False, "error": "No active session"}
 
-            result = self.client.execute_command(sid, command, arguments)
+            result = self.client.execute_command(str(sid), command, arguments)
             return {"success": True, "result": result, "error": None}
         except Exception as e:
             return {"success": False, "result": None, "error": str(e)}
@@ -415,7 +472,7 @@ class MarsAPI:
             sid = session_id or self._current_session_id
             if not sid:
                 return {"success": True, "todos": [], "error": None}
-            todos = self.client.list_todos(sid)
+            todos = self.client.list_todos(str(sid))
             return {"success": True, "todos": todos, "error": None}
         except Exception as e:
             return {"success": False, "todos": [], "error": str(e)}
@@ -435,8 +492,6 @@ class MarsAPI:
         via EventSource for real-time streaming without buffering.
         """
         try:
-            # Frontend now handles events directly via EventSource
-            # No need to start the backend event listener
             self.client.send_message_async(
                 session_id=session_id, content=content, model=model, agent=agent
             )
@@ -546,8 +601,8 @@ def get_frontend_url() -> str:
     dev_url = "http://localhost:5173"
 
     # When bundled with PyInstaller, assets are extracted to _MEIPASS
-    if getattr(sys, "_MEIPASS", None):
-        bundled_dist = os.path.join(sys._MEIPASS, "dist", "index.html")
+    if getattr(sys, "_MEIPASS", None):  # type: ignore[attr-defined]
+        bundled_dist = os.path.join(sys._MEIPASS, "dist", "index.html")  # type: ignore[attr-defined]
         if os.path.exists(bundled_dist):
             return f"file://{bundled_dist}"
 
@@ -581,6 +636,10 @@ def main():
         height=800,
         min_size=(800, 600),
         text_select=True,
+        frameless=True,
+        background_color="#FFFFFF",
+        shadow=True,
+        easy_drag=True,
     )
     api.window = window
 

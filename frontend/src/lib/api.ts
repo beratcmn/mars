@@ -111,6 +111,12 @@ interface MarsApiInterface {
   is_server_running(): Promise<boolean>;
   check_status(): Promise<ApiResponse<boolean>>;
 
+  // Window controls
+  minimize_window(): Promise<ApiResponse<boolean>>;
+  maximize_window(): Promise<ApiResponse<boolean>>;
+  fullscreen_window(): Promise<ApiResponse<boolean>>;
+  close_window(): Promise<ApiResponse<boolean>>;
+
   // Session Management
   create_session(
     title?: string,
@@ -273,6 +279,32 @@ export function connectToEventStream(
     console.log("Closing SSE connection");
     eventSource.close();
   };
+}
+
+// === Window Controls ===
+
+export async function minimizeWindow(): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().minimize_window();
+  return result.success;
+}
+
+export async function maximizeWindow(): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().maximize_window();
+  return result.success;
+}
+
+export async function fullscreenWindow(): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().fullscreen_window();
+  return result.success;
+}
+
+export async function closeWindow(): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().close_window();
+  return result.success;
 }
 
 // === Server Management ===

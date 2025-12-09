@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Header } from "@/components/Header";
 import { ChatTabs, type Tab } from "@/components/ChatTabs";
 import { ChatArea } from "@/components/ChatArea";
 import { InputBar } from "@/components/InputBar";
@@ -7,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { FileExplorer } from "@/components/FileExplorer";
 import { CodeViewer } from "@/components/CodeViewer";
 import { TaskPanel } from "@/components/TaskPanel";
+import { TitleBar } from "@/components/TitleBar";
 import { type SelectedModel } from "@/components/ModelSelector";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import * as api from "@/lib/api";
@@ -930,7 +930,7 @@ function App() {
 
   return (
     <div className="flex h-screen w-full flex-col bg-background text-foreground overflow-hidden">
-      <Header
+      <TitleBar
         projectPath={projectRoot}
         isSidebarOpen={isSidebarOpen}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -942,6 +942,8 @@ function App() {
         onSessionSelect={handleSessionSelect}
         onSessionDelete={handleSessionDeleteFromHistory}
       />
+
+      {/* Slim header kept for future content if needed */}
 
       <div className="flex flex-1 overflow-hidden relative">
         {/* File Explorer Sidebar - Toggleable */}

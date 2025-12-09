@@ -121,6 +121,12 @@
   body {
     @apply bg-background text-foreground;
   }
+  .-webkit-app-region\:drag {
+    -webkit-app-region: drag;
+  }
+  .-webkit-app-region\:no-drag {
+    -webkit-app-region: no-drag;
+  }
 }
 
 /* File Mention Badges */
