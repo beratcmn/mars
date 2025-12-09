@@ -1,5 +1,12 @@
-import { useState } from "react";
-import { Settings as SettingsIcon, ChevronDown, Check } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  Settings as SettingsIcon,
+  ChevronDown,
+  Check,
+  Search,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { ModelSelector, type SelectedModel } from "@/components/ModelSelector";
 import { AgentSelector } from "@/components/AgentSelector";
 import {
@@ -9,6 +16,8 @@ import {
 } from "@/components/ui/popover";
 import type { Provider, Agent } from "@/lib/api";
 import type { PlanetAssignment } from "@/App";
+import { useTheme } from "@/contexts/ThemeContext";
+import { searchThemes, type Theme } from "@/themes";
 
 // Available planet icons for selection
 const availableIcons: PlanetAssignment[] = [
@@ -87,6 +96,126 @@ function IconPicker({
   );
 }
 
+/**
+ * Theme preview card component
+ */
+function ThemeCard({
+  theme,
+  isSelected,
+  onSelect,
+}: {
+  theme: Theme;
+  isSelected: boolean;
+  onSelect: () => void;
+}) {
+  const isDark = theme.category === "dark";
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`
+        relative w-full p-3 rounded-lg border text-left transition-all duration-150
+        hover:border-primary/50 hover:shadow-sm
+        ${isSelected
+          ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+          : "border-border/50 bg-muted/20 hover:bg-muted/40"
+        }
+      `}
+    >
+      <div className="flex items-start gap-3">
+        {/* Color preview squares */}
+        <div className="flex-shrink-0 grid grid-cols-2 gap-0.5 w-8 h-8 rounded overflow-hidden border border-border/30">
+          <div
+            className="w-4 h-4"
+            style={{ backgroundColor: theme.variables.background }}
+          />
+          <div
+            className="w-4 h-4"
+            style={{ backgroundColor: theme.variables.primary }}
+          />
+          <div
+            className="w-4 h-4"
+            style={{ backgroundColor: theme.variables.muted }}
+          />
+          <div
+            className="w-4 h-4"
+            style={{ backgroundColor: theme.variables.accent }}
+          />
+        </div>
+
+        {/* Theme info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium truncate">{theme.name}</span>
+            {isDark ? (
+              <Moon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            ) : (
+              <Sun className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground truncate mt-0.5">
+            {theme.description}
+          </p>
+        </div>
+
+        {/* Selected indicator */}
+        {isSelected && (
+          <div className="flex-shrink-0 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+            <Check className="h-3 w-3 text-primary-foreground" />
+          </div>
+        )}
+      </div>
+    </button>
+  );
+}
+
+/**
+ * Searchable theme selector component
+ */
+function ThemeSelector() {
+  const { currentTheme, setTheme } = useTheme();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredThemes = useMemo(
+    () => searchThemes(searchQuery),
+    [searchQuery]
+  );
+
+  return (
+    <div className="space-y-3">
+      {/* Search input */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Search themes..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 text-sm rounded-lg border border-border/50 bg-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50 transition-colors"
+        />
+      </div>
+
+      {/* Theme list */}
+      <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+        {filteredThemes.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            No themes found
+          </div>
+        ) : (
+          filteredThemes.map((theme) => (
+            <ThemeCard
+              key={theme.id}
+              theme={theme}
+              isSelected={currentTheme.id === theme.id}
+              onSelect={() => setTheme(theme.id)}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function Settings({
   providers,
   connectedProviders,
@@ -113,6 +242,19 @@ export function Settings({
             </p>
           </div>
         </div>
+
+        {/* Theme Selection */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-medium text-foreground mb-1">Theme</h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              Choose your visual style
+            </p>
+          </div>
+          <div className="p-4 rounded-lg border border-border/50 bg-muted/20">
+            <ThemeSelector />
+          </div>
+        </section>
 
         {/* Model Selection */}
         <section className="space-y-4">

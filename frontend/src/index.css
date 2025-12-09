@@ -3,7 +3,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is([data-theme-category="dark"] *));
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -80,39 +80,11 @@
   --sidebar-ring: oklch(0.708 0 0);
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
-}
+/* 
+ * Note: Dark theme variables are now handled by the theme system (src/themes/).
+ * The :root variables above serve as defaults and are overridden at runtime
+ * when a theme is applied via JavaScript.
+ */
 
 @layer base {
   * {
@@ -166,8 +138,8 @@ a[href^="#file:"] {
 }
 
 /* Specifics for dark theme refinement */
-.dark .mention-badge,
-.dark a[href^="#file:"] {
+[data-theme-category="dark"] .mention-badge,
+[data-theme-category="dark"] a[href^="#file:"] {
   background-color: var(--muted);
 }
 
@@ -547,7 +519,7 @@ html {
   line-height: 1.6;
 }
 
-.dark .prose pre {
+[data-theme-category="dark"] .prose pre {
   background-color: oklch(0.18 0 0);
   border-color: oklch(1 0 0 / 8%);
 }
@@ -732,11 +704,7 @@ html {
     border-color 0.2s ease,
     box-shadow 0.2s ease,
     background-color 0.2s ease;
-  background-color: oklch(0.995 0 0);
-}
-
-.dark .input-premium {
-  background-color: oklch(0.17 0 0);
+  background-color: var(--input);
 }
 
 .input-premium:focus-within {
@@ -744,7 +712,7 @@ html {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
-.dark .input-premium:focus-within {
+[data-theme-category="dark"] .input-premium:focus-within {
   box-shadow: 0 2px 12px rgba(255, 255, 255, 0.02);
 }
 
@@ -766,7 +734,7 @@ html {
   font-weight: 450;
 }
 
-.dark .prose code {
+[data-theme-category="dark"] .prose code {
   background-color: oklch(0.22 0.005 85);
   border-color: oklch(0.28 0.01 85);
 }
@@ -778,8 +746,8 @@ a[href^="#file:"] {
   border-color: oklch(0.92 0.015 85);
 }
 
-.dark .mention-badge,
-.dark a[href^="#file:"] {
+[data-theme-category="dark"] .mention-badge,
+[data-theme-category="dark"] a[href^="#file:"] {
   background-color: oklch(0.22 0.005 85);
   border-color: oklch(0.28 0.01 85);
 }

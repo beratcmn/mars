@@ -37,7 +37,7 @@ export function TitleBar({
   return (
     <div
       className={cn(
-        "flex h-9 items-center gap-3 px-3 border-b border-border/70 bg-white", // base
+        "flex h-9 items-center gap-3 px-3 border-b border-border/70 bg-background", // base
         "text-muted-foreground select-none cursor-move active:cursor-grabbing", // text/behavior
         "pywebview-drag-region", // drag area
         className,

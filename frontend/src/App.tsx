@@ -11,6 +11,7 @@ import { Settings } from "@/components/Settings";
 import { AgentModal } from "@/components/AgentModal";
 import { type SelectedModel } from "@/components/ModelSelector";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import * as api from "@/lib/api";
 import type { Provider, Agent, FileEntry } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -1224,4 +1225,13 @@ function App() {
   );
 }
 
-export default App;
+// Wrap App with ThemeProvider
+function AppWithProviders() {
+  return (
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  );
+}
+
+export default AppWithProviders;
