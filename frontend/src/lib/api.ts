@@ -39,11 +39,21 @@ interface Message {
     };
   };
   parts: Array<{
+    id?: string;
     type: string;
     text?: string;
-    reasoning?: string; // For later
+    reasoning?: string;
+    tool?: string;
+    state?: {
+      status?: string;
+      input?: unknown;
+      output?: string;
+      error?: string;
+      time?: { start: number; end?: number };
+    };
   }>;
 }
+
 
 interface Project {
   name: string;

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
-import { ArrowUp, File, Terminal } from "lucide-react";
+import { ArrowUp, File, Terminal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { searchFiles, listCommands, type Command } from "@/lib/api";
 
@@ -298,11 +298,10 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   key={cmd.name}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertCommand(cmd.name)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${
-                    index === commandSelectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50"
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${index === commandSelectedIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
+                    }`}
                 >
                   <Terminal className="h-4 w-4 opacity-70 shrink-0" />
                   <span className="font-medium text-foreground">
@@ -332,11 +331,10 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
                   // We need to prevent default mousedown to not lose focus from editor
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${
-                    index === selectedIndex
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50"
-                  }`}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-accent/50"
+                    }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />
                   <span className="truncate">{file}</span>
@@ -345,10 +343,10 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             </div>
           </div>
         )}
-        <div className="relative flex items-center bg-background border border-border/40 rounded-xl input-premium shadow-sm hover:border-border/60 hover:shadow-md transition-all duration-200">
+        <div className={`relative flex items-center bg-background border border-border/40 rounded-xl input-premium shadow-sm hover:border-border/60 hover:shadow-md transition-all duration-200 ${isLoading ? "opacity-70" : ""}`}>
           <div
             ref={editorRef}
-            contentEditable
+            contentEditable={!isLoading}
             onInput={handleInput}
             onKeyDown={handleKeyDown}
             onBlur={() => {
@@ -356,11 +354,12 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
               setShowSuggestions(false);
               setShowCommandSuggestions(false);
             }}
-            className="w-full min-h-[48px] max-h-[200px] overflow-y-auto py-3 pl-5 pr-14 text-sm outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40 empty:before:font-light"
+            className={`w-full min-h-[48px] max-h-[200px] overflow-y-auto py-3 pl-5 pr-14 text-sm outline-none empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/40 empty:before:font-light ${isLoading ? "cursor-not-allowed select-none" : ""}`}
             data-placeholder="Ask to make changes, @mention files, run /commands"
             role="textbox"
             aria-multiline="true"
             aria-label="Message input"
+            aria-disabled={isLoading}
           />
           <Button
             size="icon"
@@ -368,9 +367,14 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
             disabled={isLoading}
             className="absolute right-2 h-8 w-8 top-1/2 -translate-y-1/2 rounded-lg btn-press transition-all duration-150 hover:scale-105 active:scale-95"
           >
-            <ArrowUp className="h-4 w-4" />
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <ArrowUp className="h-4 w-4" />
+            )}
           </Button>
         </div>
+
       </div>
     </div>
   );

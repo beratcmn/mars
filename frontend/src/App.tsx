@@ -568,14 +568,42 @@ function App() {
           // Load existing messages for this session
           const rawMessages = await api.listMessages(session.id);
           messages = rawMessages.map((msg) => {
-            const textParts = msg.parts
-              .filter((p) => p.type === "text")
-              .map((p) => p.text || "")
+            // Transform API parts to UI MessagePart format using reduce to avoid type issues
+            const parts: MessagePart[] = [];
+            for (const p of msg.parts) {
+              if (!p.id) continue;
+
+              if (p.type === "text") {
+                parts.push({ id: p.id, type: "text", text: p.text || "" });
+              } else if (p.type === "reasoning") {
+                parts.push({ id: p.id, type: "reasoning", text: p.reasoning || p.text || "" });
+              } else if (p.type === "tool") {
+                parts.push({
+                  id: p.id,
+                  type: "tool",
+                  tool: p.tool || "unknown",
+                  state: {
+                    status: (p.state?.status as ToolPart["state"]["status"]) || "completed",
+                    input: p.state?.input as Record<string, unknown> | undefined,
+                    output: p.state?.output,
+                    error: p.state?.error,
+                    time: p.state?.time,
+                  },
+                });
+              }
+            }
+
+            // Extract text content for backward compatibility
+            const textContent = parts
+              .filter((p): p is TextPart => p.type === "text")
+              .map((p) => p.text)
               .join("");
+
             return {
               id: msg.info.id,
               role: msg.info.role as "user" | "assistant",
-              content: textParts,
+              content: textContent,
+              parts, // Include all parts for rendering
               modelID: msg.info.modelID,
               providerID: msg.info.providerID,
               cost: msg.info.cost,
@@ -583,6 +611,7 @@ function App() {
               time: msg.info.time,
             };
           });
+
         } catch (error) {
           console.error("Failed to load session messages:", error);
         }
@@ -785,6 +814,17 @@ function App() {
     const handleEvent = (payload: unknown) => {
       const event = payload as Record<string, unknown>;
 
+      // Check if this is a message.updated event with finish (indicates response complete)
+      // The 'finish' property is only present on the final completion event, not initial updates
+      if (event.type === "message.updated" && event.properties) {
+        const props = event.properties as Record<string, unknown>;
+        const info = props.info as Record<string, unknown>;
+        if (info?.role === "assistant" && info?.finish) {
+          // Response is complete, stop loading state
+          setIsLoading(false);
+        }
+      }
+
       // Add event to buffer
       eventBufferRef.current.push(event);
 
@@ -851,9 +891,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-              ...tab,
-              messages: [...tab.messages, userMessage, assistantMessage],
-            }
+            ...tab,
+            messages: [...tab.messages, userMessage, assistantMessage],
+          }
           : tab,
       ),
     );
@@ -936,9 +976,9 @@ function App() {
           // Regular message
           const modelParam = selectedModel
             ? {
-                providerID: selectedModel.providerId,
-                modelID: selectedModel.modelId,
-              }
+              providerID: selectedModel.providerId,
+              modelID: selectedModel.modelId,
+            }
             : undefined;
 
           const agentParam = selectedAgent ? selectedAgent.name : undefined;
@@ -978,8 +1018,14 @@ function App() {
       }
     } catch (error) {
       console.error("Error sending message:", error);
-    } finally {
+      // Clear loading on error
       setIsLoading(false);
+    } finally {
+      // For slash commands and browser mock mode, clear loading here
+      // For streaming messages, loading is cleared when message.updated event with tokens is received
+      if (isSlashCommand || !api.isPyWebView()) {
+        setIsLoading(false);
+      }
     }
   };
 
