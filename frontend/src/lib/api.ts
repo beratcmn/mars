@@ -54,7 +54,6 @@ interface Message {
   }>;
 }
 
-
 interface Project {
   name: string;
   path: string;
@@ -151,7 +150,10 @@ interface MarsApiInterface {
   ): Promise<ApiResponse<Session>>;
   list_sessions(): Promise<ApiResponse<Session[]>>;
   get_session(session_id: string): Promise<ApiResponse<Session>>;
-  rename_session(session_id: string, title: string): Promise<ApiResponse<boolean>>;
+  rename_session(
+    session_id: string,
+    title: string,
+  ): Promise<ApiResponse<boolean>>;
   delete_session(session_id: string): Promise<ApiResponse<boolean>>;
   set_current_session(session_id: string): Promise<void>;
   get_current_session_id(): Promise<string | null>;

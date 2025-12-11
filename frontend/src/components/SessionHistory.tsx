@@ -1,5 +1,12 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { History, MessageSquare, Trash2, Search, X, Pencil } from "lucide-react";
+import {
+  History,
+  MessageSquare,
+  Trash2,
+  Search,
+  X,
+  Pencil,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -319,15 +326,17 @@ export function SessionHistory({
                       </>
                     )}
                   </div>
-                  
+
                   {/* Action Buttons Group */}
-                  <div className={cn(
-                    "flex items-center gap-1 transition-all duration-150",
-                    // Hide buttons when editing this session
-                    editingSessionId === session.id 
-                      ? "opacity-0 pointer-events-none w-0 overflow-hidden" 
-                      : "opacity-0 group-hover:opacity-100"
-                  )}>
+                  <div
+                    className={cn(
+                      "flex items-center gap-1 transition-all duration-150",
+                      // Hide buttons when editing this session
+                      editingSessionId === session.id
+                        ? "opacity-0 pointer-events-none w-0 overflow-hidden"
+                        : "opacity-0 group-hover:opacity-100",
+                    )}
+                  >
                     <Button
                       variant="ghost"
                       size="icon"
@@ -337,7 +346,7 @@ export function SessionHistory({
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    
+
                     {onSessionDelete && (
                       <Button
                         variant="ghost"

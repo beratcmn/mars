@@ -380,7 +380,9 @@ function App() {
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
-  const isEmptySession = activeTab?.type === "session" && (activeTab as SessionTab).messages.length === 0;
+  const isEmptySession =
+    activeTab?.type === "session" &&
+    (activeTab as SessionTab).messages.length === 0;
 
   // Create a new session tab
   const createNewTab = useCallback(async () => {
@@ -574,15 +576,23 @@ function App() {
               if (p.type === "text") {
                 parts.push({ id: p.id, type: "text", text: p.text || "" });
               } else if (p.type === "reasoning") {
-                parts.push({ id: p.id, type: "reasoning", text: p.reasoning || p.text || "" });
+                parts.push({
+                  id: p.id,
+                  type: "reasoning",
+                  text: p.reasoning || p.text || "",
+                });
               } else if (p.type === "tool") {
                 parts.push({
                   id: p.id,
                   type: "tool",
                   tool: p.tool || "unknown",
                   state: {
-                    status: (p.state?.status as ToolPart["state"]["status"]) || "completed",
-                    input: p.state?.input as Record<string, unknown> | undefined,
+                    status:
+                      (p.state?.status as ToolPart["state"]["status"]) ||
+                      "completed",
+                    input: p.state?.input as
+                      | Record<string, unknown>
+                      | undefined,
                     output: p.state?.output,
                     error: p.state?.error,
                     time: p.state?.time,
@@ -609,7 +619,6 @@ function App() {
               time: msg.info.time,
             };
           });
-
         } catch (error) {
           console.error("Failed to load session messages:", error);
         }
@@ -892,9 +901,9 @@ function App() {
       prev.map((tab) =>
         tab.id === currentTabId && tab.type === "session"
           ? {
-            ...tab,
-            messages: [...tab.messages, userMessage, assistantMessage],
-          }
+              ...tab,
+              messages: [...tab.messages, userMessage, assistantMessage],
+            }
           : tab,
       ),
     );
@@ -977,9 +986,9 @@ function App() {
           // Regular message
           const modelParam = selectedModel
             ? {
-              providerID: selectedModel.providerId,
-              modelID: selectedModel.modelId,
-            }
+                providerID: selectedModel.providerId,
+                modelID: selectedModel.modelId,
+              }
             : undefined;
 
           const agentParam = selectedAgent ? selectedAgent.name : undefined;
@@ -1105,7 +1114,14 @@ function App() {
             )}
 
             {activeTab?.type === "session" ? (
-              <div className={cn("h-full transition-opacity duration-500", isEmptySession ? "opacity-0 pointer-events-none" : "opacity-100")}>
+              <div
+                className={cn(
+                  "h-full transition-opacity duration-500",
+                  isEmptySession
+                    ? "opacity-0 pointer-events-none"
+                    : "opacity-100",
+                )}
+              >
                 <ChatArea
                   messages={(activeTab as SessionTab).messages}
                   hasActiveSession={true}

@@ -126,7 +126,9 @@ export function ModelSelector({
           ) : (
             <div className="space-y-1">
               {filteredGroups.map((group) => {
-                const isCollapsed = collapsedProviders.includes(group.provider.id);
+                const isCollapsed = collapsedProviders.includes(
+                  group.provider.id,
+                );
                 return (
                   <div key={group.provider.id} className="pt-1">
                     <button
@@ -169,7 +171,9 @@ export function ModelSelector({
                             }
                           `}
                             >
-                              <span className="truncate mr-2">{model.name}</span>
+                              <span className="truncate mr-2">
+                                {model.name}
+                              </span>
                               {isSelected && (
                                 <Check className="h-3.5 w-3.5 shrink-0" />
                               )}

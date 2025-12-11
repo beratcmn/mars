@@ -61,7 +61,7 @@ export function ThemeProvider({
         // Wait for PyWebView to be ready before loading settings
         // pywebview.api is not available until the pywebviewready event fires
         const isPyWebViewReady = await waitForPyWebView();
-        
+
         if (!isPyWebViewReady) {
           // Running in browser mode, apply default theme
           applyTheme(DEFAULT_THEME_ID);

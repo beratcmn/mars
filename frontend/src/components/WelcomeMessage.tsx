@@ -6,7 +6,10 @@ interface WelcomeMessageProps {
   showButton?: boolean;
 }
 
-export function WelcomeMessage({ onNewChat, showButton = true }: WelcomeMessageProps) {
+export function WelcomeMessage({
+  onNewChat,
+  showButton = true,
+}: WelcomeMessageProps) {
   return (
     <div className="text-center space-y-6 animate-fade-in-up max-w-md px-6">
       {/* Logo */}

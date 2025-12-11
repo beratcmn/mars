@@ -9,7 +9,11 @@ interface InputBarProps {
   showWelcomeSuggestions?: boolean;
 }
 
-export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = false }: InputBarProps) {
+export function InputBar({
+  onSend,
+  isLoading = false,
+  showWelcomeSuggestions = false,
+}: InputBarProps) {
   // File mention suggestions
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -34,11 +38,32 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
   const getInputValue = () => {
     if (!editorRef.current) return "";
     let text = "";
-    editorRef.current.childNodes.forEach((node) => {
+    let isFirstBlock = true;
+
+    const processNode = (node: Node) => {
       if (node.nodeType === Node.TEXT_NODE) {
         text += node.textContent;
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         const el = node as HTMLElement;
+        const tagName = el.tagName.toLowerCase();
+
+        // Handle line breaks
+        if (tagName === "br") {
+          text += "\n";
+          return;
+        }
+
+        // Handle block elements (div, p) - add newline before (except first)
+        if (tagName === "div" || tagName === "p") {
+          if (!isFirstBlock && text.length > 0 && !text.endsWith("\n")) {
+            text += "\n";
+          }
+          isFirstBlock = false;
+          // Process children
+          el.childNodes.forEach(processNode);
+          return;
+        }
+
         if (el.classList.contains("mention-badge")) {
           // Reconstruct the mention format from data attribute
           const fullPath = el.getAttribute("data-full-path");
@@ -49,10 +74,13 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
             text += el.textContent;
           }
         } else {
-          text += el.textContent; // fallback
+          // For other elements, process their children
+          el.childNodes.forEach(processNode);
         }
       }
-    });
+    };
+
+    editorRef.current.childNodes.forEach(processNode);
     return text.replace(/\u00A0/g, " "); // Replace nbsp
   };
 
@@ -223,7 +251,53 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    // Get plain text only, stripping all HTML formatting
+    const text = e.clipboardData.getData("text/plain");
+    if (!text) return;
+
+    const selection = window.getSelection();
+    if (!selection || !selection.rangeCount) return;
+
+    const range = selection.getRangeAt(0);
+    range.deleteContents();
+
+    // Split text by newlines and insert properly
+    const lines = text.split("\n");
+    const fragment = document.createDocumentFragment();
+
+    lines.forEach((line, index) => {
+      if (index > 0) {
+        // Add a line break before each line except the first
+        fragment.appendChild(document.createElement("br"));
+      }
+      if (line) {
+        fragment.appendChild(document.createTextNode(line));
+      }
+    });
+
+    range.insertNode(fragment);
+
+    // Move cursor to end of inserted content
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    // Trigger input handler to update any state
+    handleInput();
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Prevent formatting shortcuts (Cmd+B, Cmd+I, Cmd+U) to keep text plain
+    if (
+      (e.metaKey || e.ctrlKey) &&
+      ["b", "i", "u"].includes(e.key.toLowerCase())
+    ) {
+      e.preventDefault();
+      return;
+    }
+
     // Handle command suggestions
     if (showCommandSuggestions && commandSuggestions.length > 0) {
       if (e.key === "ArrowUp") {
@@ -315,7 +389,7 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
                 "Write tests for this function",
                 "Optimize this code for performance",
                 "Create a new feature",
-                "Refactor the codebase"
+                "Refactor the codebase",
               ].map((suggestion, i) => (
                 <button
                   key={suggestion}
@@ -343,10 +417,11 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
                   key={cmd.name}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertCommand(cmd.name)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${index === commandSelectedIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50"
-                    }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-sm text-left ${
+                    index === commandSelectedIndex
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50"
+                  }`}
                 >
                   <Terminal className="h-4 w-4 opacity-70 shrink-0" />
                   <span className="font-medium text-foreground">
@@ -376,10 +451,11 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
                   // We need to prevent default mousedown to not lose focus from editor
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => insertMention(file)}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${index === selectedIndex
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50"
-                    }`}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-left ${
+                    index === selectedIndex
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50"
+                  }`}
                 >
                   <File className="h-3.5 w-3.5 opacity-70" />
                   <span className="truncate">{file}</span>
@@ -388,12 +464,15 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
             </div>
           </div>
         )}
-        <div className={`relative flex items-center bg-background border border-border/40 rounded-xl input-premium shadow-sm hover:border-border/60 hover:shadow-md transition-all duration-200 ${isLoading ? "opacity-70" : ""}`}>
+        <div
+          className={`relative flex items-center bg-background border border-border/40 rounded-xl input-premium shadow-sm hover:border-border/60 hover:shadow-md transition-all duration-200 ${isLoading ? "opacity-70" : ""}`}
+        >
           <div
             ref={editorRef}
             contentEditable={!isLoading}
             onInput={handleInput}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             onBlur={() => {
               // Hide suggestions when focus is lost
               setShowSuggestions(false);
@@ -419,7 +498,6 @@ export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = f
             )}
           </Button>
         </div>
-
       </div>
     </div>
   );
