@@ -470,7 +470,8 @@ export async function listAgents(): Promise<Agent[]> {
     ];
   }
   const result = await getApi().list_agents();
-  return (result.agents as Agent[]) || [];
+  const agents = (result.agents as Agent[]) || [];
+  return agents.filter((agent) => agent.mode !== "subagent");
 }
 
 export async function getCurrentProject(): Promise<Project | null> {
