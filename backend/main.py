@@ -773,7 +773,7 @@ def main():
         window.state["latest_event"] = None
 
     # Start the application
-    debug = True
+    debug = False
     webview.start(debug=debug)
 
     # Cleanup on exit
