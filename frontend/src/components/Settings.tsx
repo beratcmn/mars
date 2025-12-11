@@ -38,6 +38,8 @@ interface SettingsProps {
   connectedProviders: string[];
   selectedModel: SelectedModel | null;
   onModelChange: (model: SelectedModel) => void;
+  collapsedProviders?: string[];
+  onCollapseChange?: (providerId: string) => void;
   agents: Agent[];
   selectedAgent: Agent | null;
   planetsByAgent?: Record<string, PlanetAssignment>;
@@ -223,6 +225,8 @@ export function Settings({
   connectedProviders,
   selectedModel,
   onModelChange,
+  collapsedProviders,
+  onCollapseChange,
   agents,
   selectedAgent,
   planetsByAgent,
@@ -273,6 +277,8 @@ export function Settings({
                 connectedProviders={connectedProviders}
                 selectedModel={selectedModel}
                 onModelChange={onModelChange}
+                collapsedProviders={collapsedProviders}
+                onCollapseChange={onCollapseChange}
               />
             </div>
           </div>

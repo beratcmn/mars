@@ -151,6 +151,7 @@ interface MarsApiInterface {
   ): Promise<ApiResponse<Session>>;
   list_sessions(): Promise<ApiResponse<Session[]>>;
   get_session(session_id: string): Promise<ApiResponse<Session>>;
+  rename_session(session_id: string, title: string): Promise<ApiResponse<boolean>>;
   delete_session(session_id: string): Promise<ApiResponse<boolean>>;
   set_current_session(session_id: string): Promise<void>;
   get_current_session_id(): Promise<string | null>;
@@ -407,6 +408,15 @@ export async function getSession(sessionId: string): Promise<Session | null> {
     return result.session as Session;
   }
   return null;
+}
+
+export async function renameSession(
+  sessionId: string,
+  title: string,
+): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().rename_session(sessionId, title);
+  return result.success;
 }
 
 export async function deleteSession(sessionId: string): Promise<boolean> {

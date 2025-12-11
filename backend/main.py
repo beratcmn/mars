@@ -324,6 +324,14 @@ class MarsAPI:
         except Exception as e:
             return {"success": False, "session": None, "error": str(e)}
 
+    def rename_session(self, session_id: str, title: str) -> dict:
+        """Rename a session."""
+        try:
+            success = self.client.rename_session(session_id, title)
+            return {"success": success, "error": None}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
     def delete_session(self, session_id: str) -> dict:
         """Delete a session."""
         try:

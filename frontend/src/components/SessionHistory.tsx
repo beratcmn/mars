@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
-import { History, MessageSquare, Trash2, Search, X } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { History, MessageSquare, Trash2, Search, X, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,6 +48,9 @@ export function SessionHistory({
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Debounce search query to avoid excessive re-renders
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -71,12 +74,21 @@ export function SessionHistory({
     setSearchQuery("");
   }, []);
 
-  // Reset search when popover closes
+  // Reset states when popover closes
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery("");
+      setEditingSessionId(null);
+      setEditTitle("");
     }
   }, [isOpen]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingSessionId && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [editingSessionId]);
 
   // Fetch sessions when popover opens
   useEffect(() => {
@@ -112,6 +124,58 @@ export function SessionHistory({
     }
   };
 
+  const startEditing = (e: React.MouseEvent, session: Session) => {
+    e.stopPropagation();
+    setEditingSessionId(session.id);
+    setEditTitle(session.title || "Untitled Session");
+  };
+
+  const saveTitle = async () => {
+    if (!editingSessionId) return;
+
+    const trimmedTitle = editTitle.trim();
+    const sessionId = editingSessionId;
+
+    // Optimistic update
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === sessionId
+          ? { ...s, title: trimmedTitle || "Untitled Session" }
+          : s,
+      ),
+    );
+
+    setEditingSessionId(null);
+
+    // Persist change
+    try {
+      const finalTitle = trimmedTitle || "Untitled Session";
+      const success = await api.renameSession(sessionId, finalTitle);
+      if (!success) {
+        // Revert on failure (could be improved with a toast notification)
+        console.error("Failed to rename session");
+        fetchSessions(); // Reload true state
+      }
+    } catch (error) {
+      console.error("Error renaming session:", error);
+      fetchSessions();
+    }
+  };
+
+  const cancelEditing = () => {
+    setEditingSessionId(null);
+    setEditTitle("");
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveTitle();
+    } else if (e.key === "Escape") {
+      cancelEditing();
+    }
+  };
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -144,6 +208,7 @@ export function SessionHistory({
         className="w-80 p-0 bg-popover/95 backdrop-blur-xl border-border/50 rounded-md"
         align="start"
         sideOffset={8}
+        onInteractOutside={() => saveTitle()}
       >
         <div className="p-3 border-b border-border/50">
           <h3 className="serif-title text-base flex items-center gap-2 mb-3">
@@ -209,8 +274,10 @@ export function SessionHistory({
                   )}
                   style={{ animationDelay: `${index * 30}ms` }}
                   onClick={() => {
-                    onSessionSelect(session);
-                    setIsOpen(false);
+                    if (editingSessionId !== session.id) {
+                      onSessionSelect(session);
+                      setIsOpen(false);
+                    }
                   }}
                 >
                   <MessageSquare
@@ -222,32 +289,67 @@ export function SessionHistory({
                     )}
                   />
                   <div className="flex-1 min-w-0">
-                    <p
-                      className={cn(
-                        "text-sm truncate",
-                        activeSessionId === session.id
-                          ? "font-medium"
-                          : "text-foreground/90",
-                      )}
-                    >
-                      {session.title || "Untitled Session"}
-                    </p>
-                    {session.createdAt && (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {formatDate(session.createdAt)}
-                      </p>
+                    {editingSessionId === session.id ? (
+                      <Input
+                        ref={inputRef}
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        onBlur={saveTitle}
+                        onKeyDown={handleKeyDown}
+                        onClick={(e) => e.stopPropagation()}
+                        className="h-6 py-0 px-1 text-sm bg-background/50"
+                      />
+                    ) : (
+                      <>
+                        <p
+                          className={cn(
+                            "text-sm truncate",
+                            activeSessionId === session.id
+                              ? "font-medium"
+                              : "text-foreground/90",
+                          )}
+                        >
+                          {session.title || "Untitled Session"}
+                        </p>
+                        {session.createdAt && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {formatDate(session.createdAt)}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
-                  {onSessionDelete && (
+                  
+                  {/* Action Buttons Group */}
+                  <div className={cn(
+                    "flex items-center gap-1 transition-all duration-150",
+                    // Hide buttons when editing this session
+                    editingSessionId === session.id 
+                      ? "opacity-0 pointer-events-none w-0 overflow-hidden" 
+                      : "opacity-0 group-hover:opacity-100"
+                  )}>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all duration-150 text-muted-foreground hover:text-destructive hover:scale-110 active:scale-95"
-                      onClick={(e) => handleDelete(e, session.id)}
+                      className="h-6 w-6 text-muted-foreground hover:text-foreground hover:scale-110 active:scale-95"
+                      onClick={(e) => startEditing(e, session)}
+                      title="Rename session"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                  )}
+                    
+                    {onSessionDelete && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive hover:scale-110 active:scale-95"
+                        onClick={(e) => handleDelete(e, session.id)}
+                        title="Delete session"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

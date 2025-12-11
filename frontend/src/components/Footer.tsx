@@ -10,6 +10,8 @@ interface FooterProps {
   connectedProviders: string[];
   selectedModel: SelectedModel | null;
   onModelChange: (model: SelectedModel) => void;
+  collapsedProviders?: string[];
+  onCollapseChange?: (providerId: string) => void;
   agents: Agent[];
   selectedAgent: Agent | null;
   planetsByAgent?: Record<string, PlanetAssignment>;
@@ -22,6 +24,8 @@ export function Footer({
   connectedProviders,
   selectedModel,
   onModelChange,
+  collapsedProviders,
+  onCollapseChange,
   agents,
   selectedAgent,
   planetsByAgent,
@@ -36,6 +40,8 @@ export function Footer({
           connectedProviders={connectedProviders}
           selectedModel={selectedModel}
           onModelChange={onModelChange}
+          collapsedProviders={collapsedProviders}
+          onCollapseChange={onCollapseChange}
         />
         <div className="w-px h-4 bg-border/50 mx-2" />
         <AgentSelector

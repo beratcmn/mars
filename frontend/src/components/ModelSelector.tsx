@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, startTransition } from "react";
-import { ChevronDown, Check, Search, Box } from "lucide-react";
+import { ChevronDown, ChevronRight, Check, Search, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -22,6 +22,8 @@ interface ModelSelectorProps {
   connectedProviders: string[];
   selectedModel: SelectedModel | null;
   onModelChange: (model: SelectedModel) => void;
+  collapsedProviders?: string[];
+  onCollapseChange?: (providerId: string) => void;
 }
 
 export function ModelSelector({
@@ -29,6 +31,8 @@ export function ModelSelector({
   connectedProviders,
   selectedModel,
   onModelChange,
+  collapsedProviders = [],
+  onCollapseChange,
 }: ModelSelectorProps) {
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -121,30 +125,41 @@ export function ModelSelector({
             </div>
           ) : (
             <div className="space-y-1">
-              {filteredGroups.map((group) => (
-                <div key={group.provider.id} className="pt-1">
-                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 selection:bg-transparent">
-                    <Box className="w-3 h-3 opacity-50" />
-                    {group.provider.name}
-                  </div>
-                  <div className="space-y-0.5">
-                    {group.models.map((model) => {
-                      const isSelected =
-                        selectedModel?.providerId === group.provider.id &&
-                        selectedModel?.modelId === model.id;
+              {filteredGroups.map((group) => {
+                const isCollapsed = collapsedProviders.includes(group.provider.id);
+                return (
+                  <div key={group.provider.id} className="pt-1">
+                    <button
+                      onClick={() => onCollapseChange?.(group.provider.id)}
+                      className="w-full px-2 py-1.5 text-xs font-semibold text-muted-foreground flex items-center gap-1.5 selection:bg-transparent hover:text-foreground hover:bg-muted/50 rounded-sm transition-colors"
+                    >
+                      {isCollapsed ? (
+                        <ChevronRight className="w-3 h-3 opacity-50" />
+                      ) : (
+                        <ChevronDown className="w-3 h-3 opacity-50" />
+                      )}
+                      <Box className="w-3 h-3 opacity-50" />
+                      {group.provider.name}
+                    </button>
+                    {!isCollapsed && (
+                      <div className="space-y-0.5 ml-2 border-l border-border/40 pl-1">
+                        {group.models.map((model) => {
+                          const isSelected =
+                            selectedModel?.providerId === group.provider.id &&
+                            selectedModel?.modelId === model.id;
 
-                      return (
-                        <button
-                          key={model.id}
-                          onClick={() =>
-                            handleModelSelect(
-                              group.provider.id,
-                              group.provider.name,
-                              model.id,
-                              model.name,
-                            )
-                          }
-                          className={`
+                          return (
+                            <button
+                              key={model.id}
+                              onClick={() =>
+                                handleModelSelect(
+                                  group.provider.id,
+                                  group.provider.name,
+                                  model.id,
+                                  model.name,
+                                )
+                              }
+                              className={`
                             w-full flex items-center justify-between px-2.5 py-2 text-sm rounded-sm text-left
                             transition-all duration-150 ease-out
                             ${
@@ -153,17 +168,19 @@ export function ModelSelector({
                                 : "hover:bg-accent hover:text-accent-foreground hover:translate-x-0.5 text-foreground"
                             }
                           `}
-                        >
-                          <span className="truncate mr-2">{model.name}</span>
-                          {isSelected && (
-                            <Check className="h-3.5 w-3.5 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
+                            >
+                              <span className="truncate mr-2">{model.name}</span>
+                              {isSelected && (
+                                <Check className="h-3.5 w-3.5 shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </ScrollArea>

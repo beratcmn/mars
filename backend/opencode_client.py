@@ -343,6 +343,10 @@ class OpenCodeClient:
             body["parentID"] = parent_id
         return self._request("POST", "/session", json=body)
 
+    def rename_session(self, session_id: str, title: str) -> bool:
+        """Rename a session."""
+        return self._request("PATCH", f"/session/{session_id}", json={"title": title})
+
     def get_session(self, session_id: str) -> dict:
         """Get session details."""
         return self._request("GET", f"/session/{session_id}")

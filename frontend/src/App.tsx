@@ -373,6 +373,7 @@ function App() {
   const [planetsByAgent, setPlanetsByAgent] = useState<
     Record<string, PlanetAssignment>
   >({});
+  const [collapsedProviders, setCollapsedProviders] = useState<string[]>([]);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
 
   // Get the active tab
@@ -698,6 +699,9 @@ function App() {
                 (p) => p.id === saved.providerId,
               );
               if (provider) modelToSelect = saved;
+            }
+            if (settings.collapsedProviders) {
+              setCollapsedProviders(settings.collapsedProviders as string[]);
             }
           } catch (e) {
             console.error("Failed to load settings:", e);
@@ -1114,6 +1118,22 @@ function App() {
                     }
                   }
                 }}
+                collapsedProviders={collapsedProviders}
+                onCollapseChange={async (providerId) => {
+                  const newCollapsed = collapsedProviders.includes(providerId)
+                    ? collapsedProviders.filter((id) => id !== providerId)
+                    : [...collapsedProviders, providerId];
+                  setCollapsedProviders(newCollapsed);
+                  try {
+                    const currentSettings = await api.loadSettings();
+                    await api.saveSettings({
+                      ...currentSettings,
+                      collapsedProviders: newCollapsed,
+                    });
+                  } catch (e) {
+                    console.error("Failed to save settings:", e);
+                  }
+                }}
                 agents={agents}
                 selectedAgent={selectedAgent}
                 planetsByAgent={planetsByAgent}
@@ -1233,6 +1253,22 @@ function App() {
             } catch (e) {
               console.error("Failed to save settings:", e);
             }
+          }
+        }}
+        collapsedProviders={collapsedProviders}
+        onCollapseChange={async (providerId) => {
+          const newCollapsed = collapsedProviders.includes(providerId)
+            ? collapsedProviders.filter((id) => id !== providerId)
+            : [...collapsedProviders, providerId];
+          setCollapsedProviders(newCollapsed);
+          try {
+            const currentSettings = await api.loadSettings();
+            await api.saveSettings({
+              ...currentSettings,
+              collapsedProviders: newCollapsed,
+            });
+          } catch (e) {
+            console.error("Failed to save settings:", e);
           }
         }}
         agents={agents}
