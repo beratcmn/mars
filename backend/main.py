@@ -4,9 +4,12 @@ Main entry point for the desktop application.
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
+import time
+from threading import Thread
 from typing import Optional, Union
 
 import webview
@@ -134,6 +137,75 @@ class MarsAPI:
         self._current_session_id: Optional[str] = None
         # Assigned after window creation in main()
         self.window: Optional[webview.Window] = None
+        self._event_listener_thread: Optional[Thread] = None
+        self._stop_event_listener = False
+
+    def _start_event_listener(self) -> None:
+        """Start a background thread that listens to OpenCode events and pushes to window.state."""
+        if self._event_listener_thread and self._event_listener_thread.is_alive():
+            return  # Already running
+
+        self._stop_event_listener = False
+
+        def listener():
+            while not self._stop_event_listener:
+                try:
+                    for event in self.client.listen_events():
+                        if self._stop_event_listener:
+                            break
+                        # Log event for debugging
+                        event_type = (
+                            event.get("type", "unknown")
+                            if isinstance(event, dict)
+                            else "unknown"
+                        )
+                        logger.debug(f"OpenCode event: {event_type} | {event}")
+                        if self.window and self.window.state is not None:
+                            # Push event to shared state - triggers pywebviewstatechange in frontend
+                            try:
+                                self.window.state.latest_event = event
+                            except Exception as state_err:
+                                logger.warning(
+                                    f"Failed to push event to pywebview state: {state_err}"
+                                )
+
+                            # Manually dispatch the DOM event to ensure the frontend receives updates
+                            try:
+                                detail_json = json.dumps(
+                                    {"key": "latest_event", "value": event},
+                                    default=str,
+                                )
+                                js = (
+                                    "window.dispatchEvent(new CustomEvent("
+                                    "'pywebviewstatechange', "
+                                    f"{{ detail: {detail_json} }}));"
+                                )
+
+                                if hasattr(self.window, "run_js"):
+                                    self.window.run_js(js)
+                                else:
+                                    self.window.evaluate_js(js)
+                            except Exception as js_err:
+                                logger.warning(
+                                    f"Failed to dispatch pywebviewstatechange event: {js_err}"
+                                )
+                except Exception as e:
+                    logger.error(f"Event listener error: {e}")
+                    if self._stop_event_listener:
+                        break
+                    # Silent reconnect after delay
+                    time.sleep(1)
+
+        self._event_listener_thread = Thread(target=listener, daemon=True)
+        self._event_listener_thread.start()
+        logger.info("Event listener thread started")
+
+    def _stop_event_listener_thread(self) -> None:
+        """Stop the event listener thread."""
+        self._stop_event_listener = True
+        if self._event_listener_thread:
+            self._event_listener_thread.join(timeout=2)
+            self._event_listener_thread = None
 
     # === Server Management ===
 
@@ -143,6 +215,9 @@ class MarsAPI:
         try:
             success = self.server.start()
             logger.info(f"Server start result: {success}")
+            if success:
+                # Auto-start event listener when server starts
+                self._start_event_listener()
             return {"success": success, "error": None}
         except Exception as e:
             logger.error(f"Error starting server: {e}", exc_info=True)
@@ -151,6 +226,7 @@ class MarsAPI:
     def stop_server(self) -> dict:
         """Stop the OpenCode server."""
         try:
+            self._stop_event_listener_thread()
             success = self.server.stop()
             return {"success": success, "error": None}
         except Exception as e:
@@ -160,6 +236,9 @@ class MarsAPI:
         """Check if the server is running."""
         running = self.server.is_running()
         logger.info(f"is_server_running: {running}")
+        if running:
+            # Ensure event listener is started when server is detected
+            self._start_event_listener()
         return running
 
     # === Window Controls ===
@@ -681,8 +760,20 @@ def main():
     )
     api.window = window
 
+    # Initialize shared state key
+    if window:
+        try:
+            window.state["latest_event"] = None
+        except Exception as e:
+            logger.warning(f"Failed to initialize window state: {e}")
+
+    # Initialize shared state key
+    # This ensures the key exists for the frontend to subscribe to
+    if hasattr(window, "state"):
+        window.state["latest_event"] = None
+
     # Start the application
-    debug = False
+    debug = True
     webview.start(debug=debug)
 
     # Cleanup on exit

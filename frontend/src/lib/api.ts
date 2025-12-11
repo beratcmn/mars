@@ -95,12 +95,29 @@ export interface Todo {
   priority?: "high" | "medium" | "low";
 }
 
+// PyWebView state interface with subscription support
+interface PyWebViewState {
+  latest_event?: unknown;
+  // State subscription using += and -= operators (simulated via addEventListener)
+  // In pywebview, state changes trigger events that can be subscribed to
+}
+
 // PyWebView injects the `pywebview` object into the window
 declare global {
   interface Window {
     pywebview?: {
       api: MarsApiInterface;
+      state: PyWebViewState;
     };
+    // pywebview fires 'pywebviewstatechange' events for state changes
+    addEventListener(
+      type: "pywebviewstatechange",
+      listener: (event: CustomEvent<{ key: string; value: unknown }>) => void,
+    ): void;
+    removeEventListener(
+      type: "pywebviewstatechange",
+      listener: (event: CustomEvent<{ key: string; value: unknown }>) => void,
+    ): void;
   }
 }
 
@@ -199,21 +216,20 @@ export function waitForPyWebView(): Promise<boolean> {
       return;
     }
 
-    // Wait for pywebviewready event
-    console.log("Waiting for pywebviewready event...");
+    // Timeout after 5 seconds
+    const timeoutId = setTimeout(() => {
+      window.removeEventListener("pywebviewready", handleReady);
+      console.log("PyWebView timeout - running in browser mode");
+      resolve(false);
+    }, 5000);
+
     const handleReady = () => {
+      clearTimeout(timeoutId);
       console.log("PyWebView ready event fired!");
       window.removeEventListener("pywebviewready", handleReady);
       resolve(true);
     };
     window.addEventListener("pywebviewready", handleReady);
-
-    // Timeout after 5 seconds
-    setTimeout(() => {
-      window.removeEventListener("pywebviewready", handleReady);
-      console.log("PyWebView timeout - running in browser mode");
-      resolve(false);
-    }, 5000);
   });
 }
 
@@ -237,49 +253,67 @@ export function onEvent(
   return () => window.removeEventListener(eventName, handler);
 }
 
-// OpenCode server port (same as backend config)
-const OPENCODE_PORT = 4096;
-
 /**
- * Connect directly to OpenCode SSE event stream using browser's native EventSource.
- * This bypasses pywebview's evaluate_js which causes buffering.
- * Returns a cleanup function to close the connection.
+ * Connect to OpenCode events via pywebview shared state.
+ * The backend pushes events to window.state.latest_event which triggers
+ * a 'pywebviewstatechange' event in the frontend.
+ * Returns a cleanup function to unsubscribe.
  */
 export function connectToEventStream(
   onEvent: (payload: unknown) => void,
 ): () => void {
-  const url = `http://127.0.0.1:${OPENCODE_PORT}/global/event`;
+  if (!isPyWebView()) {
+    console.warn("connectToEventStream: Not running in PyWebView");
+    return () => {};
+  }
 
-  console.log("Connecting to SSE stream:", url);
-  const eventSource = new EventSource(url);
+  console.log("Subscribing to pywebview state changes");
 
-  eventSource.onopen = () => {
-    console.log("SSE connection opened");
+  let lastSignature: string | null = null;
+
+  const handlePayload = (payload: unknown) => {
+    if (!payload) return;
+
+    let signature: string | null = null;
+    try {
+      signature = JSON.stringify(payload);
+    } catch {
+      // Fallback signature when payload is not serializable
+      signature = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    }
+
+    if (signature && signature === lastSignature) return;
+    lastSignature = signature;
+    onEvent(payload);
   };
 
-  eventSource.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      // The useful part is usually in 'payload'
-      if (data.payload) {
-        onEvent(data.payload);
-      } else {
-        onEvent(data);
-      }
-    } catch (e) {
-      console.error("Failed to parse SSE event:", e);
+  const handler = (event: CustomEvent<{ key: string; value: unknown }>) => {
+    if (event.detail.key === "latest_event") {
+      handlePayload(event.detail.value);
     }
   };
 
-  eventSource.onerror = (error) => {
-    console.error("SSE connection error:", error);
-    // EventSource will automatically try to reconnect
-  };
+  window.addEventListener("pywebviewstatechange", handler);
+
+  // Capture any event that might already be present on state and
+  // provide a polling fallback in case DOM events are not fired.
+  const initial = window.pywebview?.state?.latest_event;
+  if (initial) {
+    handlePayload(initial);
+  }
+
+  const pollId = window.setInterval(() => {
+    const latest = window.pywebview?.state?.latest_event;
+    if (latest) {
+      handlePayload(latest);
+    }
+  }, 250);
 
   // Return cleanup function
   return () => {
-    console.log("Closing SSE connection");
-    eventSource.close();
+    console.log("Unsubscribing from pywebview state changes");
+    window.removeEventListener("pywebviewstatechange", handler);
+    window.clearInterval(pollId);
   };
 }
 

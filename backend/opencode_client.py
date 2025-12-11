@@ -440,62 +440,20 @@ class OpenCodeClient:
 
     # === Events ===
     def listen_events(self):
-        """Yield events from the server's global event stream using raw sockets."""
+        """Yield events from OpenCode SSE stream using requests."""
         import json
-        import socket
-        import time
 
-        host = self.config.host
-        port = self.config.port
+        url = f"{self.base_url}/global/event"
 
         try:
-            # Create raw socket connection
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((host, port))
-
-            # Send HTTP GET request manually
-            request = f"GET /global/event HTTP/1.1\r\nHost: {host}:{port}\r\nAccept: text/event-stream\r\nConnection: keep-alive\r\n\r\n"
-            sock.sendall(request.encode())
-
-            # Create unbuffered file-like object from socket (buffering=1 = line buffered)
-            sock_file = sock.makefile("rb", buffering=1)
-
-            # Skip HTTP headers
-            while True:
-                header_line = sock_file.readline()
-                if header_line in (b"\r\n", b"\n", b""):
-                    break
-
-            # Read SSE events line by line
-            while True:
-                line = sock_file.readline()
-                recv_time = time.time()
-
-                if not line:
-                    break
-
-                line = line.decode("utf-8").strip()
-                if line.startswith("data: "):
-                    data_str = line[6:]
-                    try:
-                        data = json.loads(data_str)
-                        event_type = data.get("type", "unknown")
-                        logger.debug(
-                            f"SSE received event '{event_type}' at {recv_time:.3f}"
-                        )
-
-                        # The useful part is usually in 'payload'
-                        if "payload" in data:
-                            yield data["payload"]
-                        else:
-                            yield data
-                    except json.JSONDecodeError:
-                        logger.warning(f"Failed to decode event data: {data_str}")
-
+            with requests.get(url, stream=True, timeout=None) as response:
+                response.raise_for_status()
+                for line in response.iter_lines(decode_unicode=True):
+                    if line and line.startswith("data: "):
+                        try:
+                            data = json.loads(line[6:])
+                            yield data.get("payload", data)
+                        except json.JSONDecodeError:
+                            logger.warning(f"Failed to decode event: {line}")
         except Exception as e:
             logger.error(f"Error in event listener: {e}")
-        finally:
-            try:
-                sock.close()
-            except Exception:
-                pass
