@@ -467,6 +467,9 @@ class OpenCodeClient:
         try:
             with requests.get(url, stream=True, timeout=None) as response:
                 response.raise_for_status()
+                # Explicitly set encoding to UTF-8 to handle non-ASCII characters correctly
+                # Without this, requests may default to Latin-1 based on HTTP headers
+                response.encoding = 'utf-8'
                 for line in response.iter_lines(decode_unicode=True):
                     if line and line.startswith("data: "):
                         try:
