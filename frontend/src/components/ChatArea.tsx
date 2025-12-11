@@ -604,6 +604,42 @@ function formatMentions(text: string): string {
   });
 }
 
+// Helper to render user message content with mention badges
+function renderUserContent(content: string) {
+  const parts = [];
+  let lastIndex = 0;
+  const regex = /@\[(.*?)\]/g;
+  let match;
+
+  while ((match = regex.exec(content)) !== null) {
+    // Add text before match
+    if (match.index > lastIndex) {
+      parts.push(content.slice(lastIndex, match.index));
+    }
+
+    const fullPath = match[1];
+    const basename = fullPath.split("/").pop() || fullPath;
+
+    // Add chip
+    parts.push(
+      <span key={match.index} className="mention-badge">
+        {basename}
+      </span>,
+    );
+
+    lastIndex = regex.lastIndex;
+  }
+
+  // Add remaining text
+  if (lastIndex < content.length) {
+    parts.push(content.slice(lastIndex));
+  }
+
+  if (parts.length === 0) return content;
+
+  return parts;
+}
+
 export function ChatArea({
   messages,
   hasActiveSession,
@@ -774,7 +810,7 @@ export function ChatArea({
                       </button>
                     </div>
                     <div className="bg-primary text-primary-foreground px-4 py-2.5 max-w-[85%] rounded-md message-bubble shadow-sm text-sm whitespace-pre-wrap">
-                      {message.content}
+                      {renderUserContent(message.content)}
                     </div>
                   </div>
                 ) : (
