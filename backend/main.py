@@ -535,8 +535,15 @@ class MarsAPI:
 
             settings_path = self._get_settings_path()
             logger.info(f"Saving settings to: {settings_path}")
-            with open(settings_path, "w") as f:
+
+            # Atomic write: write to temp file then rename
+            tmp_path = settings_path + ".tmp"
+            with open(tmp_path, "w") as f:
                 json.dump(settings, f, indent=2)
+                f.flush()
+                os.fsync(f.fileno())
+
+            os.replace(tmp_path, settings_path)
             return {"success": True, "error": None}
         except Exception as e:
             logger.error(f"Error saving settings: {e}")

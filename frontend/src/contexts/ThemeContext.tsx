@@ -20,6 +20,7 @@ import {
   type Theme,
 } from "@/themes";
 import * as api from "@/lib/api";
+import { waitForPyWebView } from "@/lib/api";
 
 interface ThemeContextValue {
   /** Currently active theme */
@@ -57,6 +58,16 @@ export function ThemeProvider({
   useEffect(() => {
     const loadTheme = async () => {
       try {
+        // Wait for PyWebView to be ready before loading settings
+        // pywebview.api is not available until the pywebviewready event fires
+        const isPyWebViewReady = await waitForPyWebView();
+        
+        if (!isPyWebViewReady) {
+          // Running in browser mode, apply default theme
+          applyTheme(DEFAULT_THEME_ID);
+          return;
+        }
+
         const settings = await api.loadSettings();
         const savedThemeId = settings.themeId as string | undefined;
 
