@@ -6,9 +6,10 @@ import { searchFiles, listCommands, type Command } from "@/lib/api";
 interface InputBarProps {
   onSend: (message: string) => void;
   isLoading?: boolean;
+  showWelcomeSuggestions?: boolean;
 }
 
-export function InputBar({ onSend, isLoading = false }: InputBarProps) {
+export function InputBar({ onSend, isLoading = false, showWelcomeSuggestions = false }: InputBarProps) {
   // File mention suggestions
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -118,6 +119,24 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
       setShowSuggestions(false);
       setShowCommandSuggestions(false);
     }
+  };
+
+  const insertText = (text: string) => {
+    if (!editorRef.current) return;
+    editorRef.current.innerText = text;
+    // Trigger input event manually to ensure state is updated if needed
+    handleInput();
+
+    // Move cursor to end
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(editorRef.current);
+    range.collapse(false);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    // Focus the editor
+    editorRef.current.focus();
   };
 
   const insertCommand = (commandName: string) => {
@@ -286,6 +305,32 @@ export function InputBar({ onSend, isLoading = false }: InputBarProps) {
       }}
     >
       <div className="max-w-2xl mx-auto relative">
+        {/* Welcome Suggestions Carousel */}
+        {showWelcomeSuggestions && (
+          <div className="w-full mb-4 overflow-x-auto whitespace-nowrap pb-2 no-scrollbar mask-linear-fade">
+            <div className="flex gap-2 justify-center flex-wrap">
+              {[
+                "Help me debug this React component",
+                "Explain how this algorithm works",
+                "Write tests for this function",
+                "Optimize this code for performance",
+                "Create a new feature",
+                "Refactor the codebase"
+              ].map((suggestion, i) => (
+                <button
+                  key={suggestion}
+                  onClick={() => insertText(suggestion)}
+                  className="inline-flex items-center px-4 py-2 rounded-full bg-muted/40 hover:bg-muted border border-border/50 hover:border-primary/30 text-xs text-muted-foreground hover:text-foreground transition-all duration-200 shrink-0 animate-fade-in-up shadow-sm hover:shadow-md hover:-translate-y-0.5"
+                  style={{ animationDelay: `${i * 0.05}s` }}
+                >
+                  <span className="mr-2 opacity-70">✨</span>
+                  {suggestion}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Command suggestions dropdown */}
         {showCommandSuggestions && commandSuggestions.length > 0 && (
           <div

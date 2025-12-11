@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Button } from "@/components/ui/button";
 import { Streamdown } from "streamdown";
+import { WelcomeMessage } from "@/components/WelcomeMessage";
 import {
-  MessageSquarePlus,
   Zap,
   Clock,
   Coins,
@@ -672,56 +671,7 @@ export function ChatArea({
   if (!hasActiveSession) {
     return (
       <div className="flex h-full items-center justify-center">
-        <div className="text-center space-y-6 animate-fade-in-up max-w-md px-6">
-          {/* Logo */}
-          <div className="relative mx-auto w-20 h-20">
-            <img
-              src="./logo.png"
-              alt="Mars"
-              className="w-full h-full object-contain"
-            />
-          </div>
-
-          <div className="space-y-3">
-            <h1 className="text-4xl font-serif italic text-foreground">
-              Welcome to{" "}
-              <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                Mars
-              </span>
-            </h1>
-            <div className="w-16 h-px bg-gradient-to-r from-transparent via-border to-transparent mx-auto" />
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-relaxed">
-              Your intelligent coding companion. Start a new conversation to
-              explore code with AI assistance.
-            </p>
-          </div>
-
-          <Button
-            onClick={onNewChat}
-            className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 px-8 py-3"
-          >
-            <MessageSquarePlus className="w-4 h-4 mr-2" />
-            Start New Chat
-          </Button>
-
-          {/* Quick suggestions */}
-          <div className="grid grid-cols-1 gap-2 text-xs">
-            {[
-              "Help me debug this React component",
-              "Explain how this algorithm works",
-              "Write tests for this function",
-              "Optimize this code for performance",
-            ].map((suggestion, i) => (
-              <button
-                key={suggestion}
-                className={`px-4 py-2 text-xs text-muted-foreground bg-muted/50 hover:bg-muted hover:text-foreground border border-transparent hover:border-border/50 rounded-full transition-all duration-200 animate-fade-in-up`}
-                style={{ animationDelay: `${i * 0.1}s` }}
-              >
-                {suggestion}
-              </button>
-            ))}
-          </div>
-        </div>
+        <WelcomeMessage onNewChat={onNewChat} />
       </div>
     );
   }

@@ -805,6 +805,21 @@ a[href^="#file:"] {
   font-weight: 500;
 }
 
+/* Scrollbar hiding utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Linear fade mask for carousel */
+.mask-linear-fade {
+  mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 20px, black calc(100% - 20px), transparent);
+}
+
 /* ========================================
    User Message Prose Styling
    Ensures text is visible against primary background

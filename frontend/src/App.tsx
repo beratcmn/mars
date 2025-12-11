@@ -9,7 +9,9 @@ import { TaskPanel } from "@/components/TaskPanel";
 import { TitleBar } from "@/components/TitleBar";
 import { Settings } from "@/components/Settings";
 import { AgentModal } from "@/components/AgentModal";
+import { WelcomeMessage } from "@/components/WelcomeMessage";
 import { type SelectedModel } from "@/components/ModelSelector";
+
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import * as api from "@/lib/api";
@@ -378,6 +380,7 @@ function App() {
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
+  const isEmptySession = activeTab?.type === "session" && (activeTab as SessionTab).messages.length === 0;
 
   // Create a new session tab
   const createNewTab = useCallback(async () => {
@@ -1085,12 +1088,30 @@ function App() {
           />
 
           <div className="flex-1 overflow-hidden relative">
+            {/* Empty Session: Welcome + Input centered together */}
+            {isEmptySession && activeTab?.type === "session" && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 z-10">
+                <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
+                  <WelcomeMessage showButton={false} />
+                  <div className="w-full px-6">
+                    <InputBar
+                      onSend={(msg) => handleSend(msg)}
+                      isLoading={isLoading}
+                      showWelcomeSuggestions={false}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {activeTab?.type === "session" ? (
-              <ChatArea
-                messages={(activeTab as SessionTab).messages}
-                hasActiveSession={true}
-                onNewChat={handleNewTab}
-              />
+              <div className={cn("h-full transition-opacity duration-500", isEmptySession ? "opacity-0 pointer-events-none" : "opacity-100")}>
+                <ChatArea
+                  messages={(activeTab as SessionTab).messages}
+                  hasActiveSession={true}
+                  onNewChat={handleNewTab}
+                />
+              </div>
             ) : activeTab?.type === "file" ? (
               <CodeViewer filePath={(activeTab as FileTab).filePath} />
             ) : activeTab?.type === "settings" ? (
@@ -1170,11 +1191,15 @@ function App() {
             )}
           </div>
 
-          <InputBar 
-            onSend={(msg) => handleSend(msg)} 
-            isLoading={isLoading} 
-            showWelcomeSuggestions={!activeTab}
-          />
+          {activeTab?.type === "session" && !isEmptySession && (
+            <div className="w-full relative z-20">
+              <InputBar
+                onSend={(msg) => handleSend(msg)}
+                isLoading={isLoading}
+                showWelcomeSuggestions={false}
+              />
+            </div>
+          )}
         </div>
 
         {/* Task Panel - Right Side */}
