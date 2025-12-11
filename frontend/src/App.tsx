@@ -467,13 +467,7 @@ function App() {
           setActiveTabId(null);
         }
       }
-      if (
-        tab.type === "session" &&
-        api.isPyWebView() &&
-        tab.sessionId.startsWith("ses")
-      ) {
-        await api.deleteSession(tab.sessionId);
-      }
+      // Automatic session deletion removed - strictly a UI close operation
     },
     [tabs, activeTabId],
   );
@@ -1176,7 +1170,11 @@ function App() {
             )}
           </div>
 
-          <InputBar onSend={(msg) => handleSend(msg)} isLoading={isLoading} />
+          <InputBar 
+            onSend={(msg) => handleSend(msg)} 
+            isLoading={isLoading} 
+            showWelcomeSuggestions={!activeTab}
+          />
         </div>
 
         {/* Task Panel - Right Side */}

@@ -298,6 +298,7 @@ class OpenCodeClient:
     def _request(self, method: str, path: str, **kwargs) -> Any:
         """Make an HTTP request to the OpenCode server."""
         url = f"{self.base_url}{path}"
+        response = None
         try:
             response = requests.request(method, url, **kwargs)
             response.raise_for_status()
@@ -305,7 +306,9 @@ class OpenCodeClient:
                 return response.json()
             return True
         except requests.exceptions.JSONDecodeError:
-            return response.text
+            if response:
+                return response.text
+            return ""
         except requests.exceptions.RequestException as e:
             raise Exception(f"OpenCode API error: {e}")
 
@@ -345,7 +348,19 @@ class OpenCodeClient:
 
     def rename_session(self, session_id: str, title: str) -> bool:
         """Rename a session."""
-        return self._request("PATCH", f"/session/{session_id}", json={"title": title})
+        # Fetch current session to get required 'time' field
+        # The backend validation requires 'time' to be present in the body
+        time_val = {}
+        try:
+            session = self.get_session(session_id)
+            if session and isinstance(session, dict):
+                time_val = session.get("time", {})
+        except Exception as e:
+            logger.warning(f"Failed to fetch session for rename: {e}")
+
+        return self._request(
+            "PATCH", f"/session/{session_id}", json={"title": title, "time": time_val}
+        )
 
     def get_session(self, session_id: str) -> dict:
         """Get session details."""
