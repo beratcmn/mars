@@ -776,6 +776,9 @@ function App() {
       if (!activeTab || activeTab.type !== "session") return;
 
       const parentSessionId = (activeTab as SessionTab).sessionId;
+      const parentTitleRaw = (activeTab as SessionTab).label || "Untitled";
+      const parentTitle = parentTitleRaw.replace(/^Branch:\s*/i, "").trim();
+      const branchTitle = `Branch: ${parentTitle || "Untitled"}`;
 
       try {
         const forked = await api.forkSession(parentSessionId, messageId);
@@ -784,10 +787,24 @@ function App() {
           return;
         }
 
+        // Rename the new session to match "Branch: {session title}"
+        try {
+          await api.renameSession(forked.id, branchTitle);
+        } catch (e) {
+          console.error("Failed to rename forked session:", e);
+        }
+
         const existingTab = tabs.find(
           (t) => t.type === "session" && (t as SessionTab).sessionId === forked.id,
         );
         if (existingTab) {
+          setTabs((prev) =>
+            prev.map((t) =>
+              t.id === existingTab.id && t.type === "session"
+                ? { ...t, label: branchTitle }
+                : t,
+            ),
+          );
           setActiveTabId(existingTab.id);
           await api.setCurrentSession(forked.id);
           return;
@@ -849,7 +866,7 @@ function App() {
           id: tabId,
           type: "session",
           sessionId: forked.id,
-          label: forked.title || "Untitled",
+          label: branchTitle,
           icon: "sparkles",
           messages: forkedMessages,
         };
