@@ -420,6 +420,35 @@ function applyEventToTabs(
   return tabs;
 }
 
+function attachToolPartToSession(
+  tabs: AppTab[],
+  sessionId: string,
+  part: ToolPart,
+): AppTab[] {
+  return tabs.map((tab) => {
+    if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
+
+    const messages = [...tab.messages];
+    const lastMsg = messages[messages.length - 1];
+
+    if (!lastMsg || lastMsg.role !== "assistant") {
+      return {
+        ...tab,
+        messages: [...messages, { id: part.id, role: "assistant", content: "", parts: [part] }],
+      };
+    }
+
+    const existingParts = lastMsg.parts || [];
+    return {
+      ...tab,
+      messages: [
+        ...messages.slice(0, -1),
+        { ...lastMsg, parts: [...existingParts, part] },
+      ],
+    };
+  });
+}
+
 function App() {
   const [tabs, setTabs] = useState<AppTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
@@ -1107,6 +1136,38 @@ function App() {
     }
   };
 
+  const handleAbort = useCallback(async () => {
+    if (!activeTab || activeTab.type !== "session") return;
+    if (!isLoading) return;
+
+    const sessionId = activeTab.sessionId;
+
+    // Optimistically stop UI loading state to prevent "stuck spinner"
+    setIsLoading(false);
+
+    let success = false;
+    try {
+      success = api.isPyWebView() ? await api.abortSession(sessionId) : true;
+    } catch (e) {
+      console.error("Failed to abort session:", e);
+      success = false;
+    }
+
+    const part: ToolPart = {
+      id: `session.abort-${sessionId}-${Date.now()}`,
+      type: "tool",
+      tool: "session.status",
+      state: {
+        status: success ? "completed" : "error",
+        input: { kind: "abort" },
+        output: success ? "Stopped generating." : "Failed to stop generating.",
+        time: { start: Date.now() },
+      },
+    };
+
+    setTabs((prev) => attachToolPartToSession(prev, sessionId, part));
+  }, [activeTab, isLoading]);
+
   // Show loading state while initializing
   if (!isInitialized) {
     return (
@@ -1173,6 +1234,7 @@ function App() {
                   <div className="w-full px-6">
                     <InputBar
                       onSend={(msg) => handleSend(msg)}
+                      onAbort={handleAbort}
                       isLoading={isLoading}
                       showWelcomeSuggestions={false}
                     />
@@ -1279,6 +1341,7 @@ function App() {
             <div className="w-full relative z-20">
               <InputBar
                 onSend={(msg) => handleSend(msg)}
+                onAbort={handleAbort}
                 isLoading={isLoading}
                 showWelcomeSuggestions={false}
               />

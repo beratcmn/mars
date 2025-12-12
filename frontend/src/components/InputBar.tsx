@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect, type KeyboardEvent } from "react";
-import { ArrowUp, File, Terminal, Loader2 } from "lucide-react";
+import { ArrowUp, File, Terminal, Loader2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { searchFiles, listCommands, type Command } from "@/lib/api";
 
 interface InputBarProps {
   onSend: (message: string) => void;
+  onAbort?: () => void;
   isLoading?: boolean;
   showWelcomeSuggestions?: boolean;
 }
 
 export function InputBar({
   onSend,
+  onAbort,
   isLoading = false,
   showWelcomeSuggestions = false,
 }: InputBarProps) {
@@ -289,6 +291,12 @@ export function InputBar({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (isLoading && onAbort && e.key === "Escape") {
+      e.preventDefault();
+      onAbort();
+      return;
+    }
+
     // Prevent formatting shortcuts (Cmd+B, Cmd+I, Cmd+U) to keep text plain
     if (
       (e.metaKey || e.ctrlKey) &&
@@ -357,6 +365,8 @@ export function InputBar({
       handleSend();
     }
   };
+
+  const canAbort = Boolean(isLoading && onAbort);
 
   return (
     <div
@@ -487,11 +497,15 @@ export function InputBar({
           />
           <Button
             size="icon"
-            onClick={handleSend}
-            disabled={isLoading}
+            onClick={canAbort ? onAbort : handleSend}
+            disabled={isLoading && !canAbort}
             className="absolute right-2 h-8 w-8 top-1/2 -translate-y-1/2 rounded-lg btn-press transition-all duration-150 hover:scale-105 active:scale-95"
+            title={canAbort ? "Stop generating" : "Send"}
+            aria-label={canAbort ? "Stop generating" : "Send"}
           >
-            {isLoading ? (
+            {canAbort ? (
+              <Square className="h-4 w-4" />
+            ) : isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <ArrowUp className="h-4 w-4" />

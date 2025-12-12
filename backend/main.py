@@ -583,6 +583,8 @@ class MarsAPI:
         via EventSource for real-time streaming without buffering.
         """
         try:
+            # Keep backend's "current session" in sync for follow-up actions like abort.
+            self._current_session_id = session_id
             self.client.send_message_async(
                 session_id=session_id, content=content, model=model, agent=agent
             )
