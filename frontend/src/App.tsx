@@ -17,6 +17,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import * as api from "@/lib/api";
 import type { Provider, Agent, FileEntry } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { buildSessionStatusNotice } from "@/lib/streamIssues";
 
 // Part types for streaming message content
 interface TextPart {
@@ -115,6 +116,73 @@ function applyEventToTabs(
   tabs: AppTab[],
   event: Record<string, unknown>,
 ): AppTab[] {
+  // Handle session.status events (retries, rate limits, etc.)
+  if (event.type === "session.status" && event.properties) {
+    const props = event.properties as Record<string, unknown>;
+    const sessionId = props.sessionID as string | undefined;
+    const notice = buildSessionStatusNotice(props.status);
+
+    if (!sessionId || !notice) return tabs;
+
+    const partId = `session.status-${sessionId}`;
+    const part: ToolPart = {
+      id: partId,
+      type: "tool",
+      tool: "session.status",
+      state: {
+        status: notice.toolStateStatus,
+        input: notice.input,
+        output: notice.output,
+        time: { start: Date.now() },
+      },
+    };
+
+    return tabs.map((tab) => {
+      if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
+
+      const messages = [...tab.messages];
+      const lastMsg = messages[messages.length - 1];
+
+      // Attach to the last assistant message when available; otherwise append a new one.
+      if (!lastMsg || lastMsg.role !== "assistant") {
+        return {
+          ...tab,
+          messages: [
+            ...messages,
+            { id: partId, role: "assistant", content: "", parts: [part] },
+          ],
+        };
+      }
+
+      const existingParts = lastMsg.parts || [];
+      const updatedParts = [...existingParts];
+      const existing = updatedParts.find(
+        (p): p is ToolPart =>
+          p.type === "tool" &&
+          p.tool.toLowerCase() === "session.status" &&
+          p.id === partId,
+      );
+
+      if (existing) {
+        const previousStart = existing.state.time?.start;
+        existing.state = {
+          ...part.state,
+          time: { start: previousStart || part.state.time?.start || Date.now() },
+        };
+      } else {
+        updatedParts.push(part);
+      }
+
+      return {
+        ...tab,
+        messages: [
+          ...messages.slice(0, -1),
+          { ...lastMsg, parts: updatedParts },
+        ],
+      };
+    });
+  }
+
   // Handle message.part.updated - text deltas, tool calls, reasoning
   if (event.type === "message.part.updated" && event.properties) {
     const props = event.properties as Record<string, unknown>;

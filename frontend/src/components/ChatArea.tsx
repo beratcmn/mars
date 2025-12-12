@@ -89,6 +89,75 @@ function ToolCallPart({ part }: { part: ToolPart }) {
   const isCompleted = part.state.status === "completed";
   const isError = part.state.status === "error";
 
+  const isSessionStatus = part.tool.toLowerCase() === "session.status";
+
+  if (isSessionStatus) {
+    const input = part.state.input as Record<string, unknown> | undefined;
+    const attempt =
+      input && typeof input.attempt === "number" ? input.attempt : undefined;
+    const rawMessage =
+      input && typeof input.rawMessage === "string" ? input.rawMessage : "";
+    const shortRaw =
+      rawMessage.split("\n").find((line) => line.trim())?.trim() || "";
+    const summary =
+      (part.state.output as string) || shortRaw || "Status update";
+
+    return (
+      <div className="my-2 animate-fade-in">
+        <div className="rounded-md border border-border/50 overflow-hidden">
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-muted/30 hover:bg-muted/50 transition-colors"
+          >
+            <div className="text-muted-foreground">
+              {isRunning ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : isError ? (
+                <XCircle className="w-3.5 h-3.5 text-red-500/70" />
+              ) : (
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">Status</span>
+            {typeof attempt === "number" && (
+              <span className="text-[10px] text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">
+                attempt {attempt}
+              </span>
+            )}
+            <span className="text-xs text-foreground/80 truncate">
+              {summary}
+            </span>
+            <ChevronRight
+              className={`w-3 h-3 text-muted-foreground/50 ml-auto transition-transform ${isExpanded ? "rotate-90" : ""}`}
+            />
+          </button>
+
+          {isExpanded && (
+            <div className="border-t border-border/30">
+              {rawMessage && (
+                <pre className="px-3 py-2 text-[11px] font-mono text-foreground/70 overflow-x-auto max-h-60 bg-muted/20 whitespace-pre-wrap">
+                  {rawMessage.slice(0, 3000)}
+                  {rawMessage.length > 3000 ? "\n..." : ""}
+                </pre>
+              )}
+
+              {part.state.input && (
+                <details className="border-t border-border/20 bg-muted/10">
+                  <summary className="px-3 py-2 text-[11px] text-muted-foreground/60 cursor-pointer hover:text-muted-foreground/80">
+                    details
+                  </summary>
+                  <pre className="px-3 pb-3 text-[10px] font-mono text-muted-foreground/60 overflow-x-auto whitespace-pre-wrap">
+                    {JSON.stringify(part.state.input, null, 2)}
+                  </pre>
+                </details>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Extract data for task tools
   const taskInput = isTask
     ? (part.state.input as Record<string, unknown>)
