@@ -167,7 +167,9 @@ function applyEventToTabs(
         const previousStart = existing.state.time?.start;
         existing.state = {
           ...part.state,
-          time: { start: previousStart || part.state.time?.start || Date.now() },
+          time: {
+            start: previousStart || part.state.time?.start || Date.now(),
+          },
         };
       } else {
         updatedParts.push(part);
@@ -434,7 +436,10 @@ function attachToolPartToSession(
     if (!lastMsg || lastMsg.role !== "assistant") {
       return {
         ...tab,
-        messages: [...messages, { id: part.id, role: "assistant", content: "", parts: [part] }],
+        messages: [
+          ...messages,
+          { id: part.id, role: "assistant", content: "", parts: [part] },
+        ],
       };
     }
 

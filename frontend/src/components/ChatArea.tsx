@@ -98,7 +98,10 @@ function ToolCallPart({ part }: { part: ToolPart }) {
     const rawMessage =
       input && typeof input.rawMessage === "string" ? input.rawMessage : "";
     const shortRaw =
-      rawMessage.split("\n").find((line) => line.trim())?.trim() || "";
+      rawMessage
+        .split("\n")
+        .find((line) => line.trim())
+        ?.trim() || "";
     const summary =
       (part.state.output as string) || shortRaw || "Status update";
 

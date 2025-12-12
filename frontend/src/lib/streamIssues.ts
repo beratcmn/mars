@@ -49,13 +49,14 @@ function formatCompactDuration(seconds: number): string {
 
 function tryParseJsonPayloadFromText(text: string): unknown | undefined {
   const start = Math.min(
-    ...["[", "{"]
-      .map((ch) => text.indexOf(ch))
-      .filter((idx) => idx >= 0),
+    ...["[", "{"].map((ch) => text.indexOf(ch)).filter((idx) => idx >= 0),
   );
   if (!Number.isFinite(start)) return undefined;
 
-  const tail = text.slice(start).trim().replace(/['"]+$/, "");
+  const tail = text
+    .slice(start)
+    .trim()
+    .replace(/['"]+$/, "");
 
   const endBracket = tail.lastIndexOf("]");
   const endBrace = tail.lastIndexOf("}");
@@ -71,7 +72,9 @@ function tryParseJsonPayloadFromText(text: string): unknown | undefined {
   }
 }
 
-function extractProviderErrorInfoFromPayload(payload: unknown): ProviderErrorInfo {
+function extractProviderErrorInfoFromPayload(
+  payload: unknown,
+): ProviderErrorInfo {
   const root =
     Array.isArray(payload) && payload.length > 0 ? payload[0] : payload;
   if (!root || typeof root !== "object") return {};
@@ -133,7 +136,9 @@ export function buildSessionStatusNotice(
   const message = typeof s.message === "string" ? s.message : "";
   const next = typeof s.next === "number" ? s.next : undefined;
 
-  const parsedPayload = message ? tryParseJsonPayloadFromText(message) : undefined;
+  const parsedPayload = message
+    ? tryParseJsonPayloadFromText(message)
+    : undefined;
   const providerError = parsedPayload
     ? extractProviderErrorInfoFromPayload(parsedPayload)
     : {};
@@ -155,7 +160,10 @@ export function buildSessionStatusNotice(
     type === "retry" ? "running" : type === "error" ? "error" : "completed";
 
   const compactBaseMessage = message
-    ? message.split("\n").find((line) => line.trim())?.trim() || message.trim()
+    ? message
+        .split("\n")
+        .find((line) => line.trim())
+        ?.trim() || message.trim()
     : "Status update";
 
   const output = isRateLimit
@@ -184,4 +192,3 @@ export function buildSessionStatusNotice(
     },
   };
 }
-
