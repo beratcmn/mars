@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   XCircle,
   Copy,
+  GitBranch,
   ArrowDown,
   FileText,
   FilePen,
@@ -53,6 +54,7 @@ type MessagePart = TextPart | ReasoningPart | ToolPart;
 
 interface Message {
   id: string;
+  messageID?: string;
   role: "user" | "assistant";
   content: string;
   parts?: MessagePart[];
@@ -77,6 +79,7 @@ interface ChatAreaProps {
   messages: Message[];
   hasActiveSession: boolean;
   onNewChat?: () => void;
+  onForkMessage?: (messageId: string) => void;
 }
 
 // Component for rendering a tool call - minimalist design
@@ -715,6 +718,7 @@ export function ChatArea({
   messages,
   hasActiveSession,
   onNewChat,
+  onForkMessage,
 }: ChatAreaProps) {
   // Scroll state for scroll-to-bottom button
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -907,16 +911,27 @@ export function ChatArea({
                         </>
                       )}
 
-                      {/* Copy button - always at far right */}
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(message.content);
-                        }}
-                        className="ml-auto p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted/80 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                        title="Copy response"
-                      >
-                        <Copy className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="ml-auto flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-150">
+                        {onForkMessage && message.messageID && (
+                          <button
+                            onClick={() => onForkMessage(message.messageID!)}
+                            className="p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                            title="Branch from here"
+                          >
+                            <GitBranch className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(message.content);
+                          }}
+                          className="p-1.5 rounded-md text-muted-foreground/40 hover:text-foreground hover:bg-muted/80 transition-all duration-150"
+                          title="Copy response"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

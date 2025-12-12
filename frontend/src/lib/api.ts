@@ -155,6 +155,10 @@ interface MarsApiInterface {
     title: string,
   ): Promise<ApiResponse<boolean>>;
   delete_session(session_id: string): Promise<ApiResponse<boolean>>;
+  fork_session(
+    session_id: string,
+    message_id?: string,
+  ): Promise<ApiResponse<Session>>;
   set_current_session(session_id: string): Promise<void>;
   get_current_session_id(): Promise<string | null>;
 
@@ -425,6 +429,15 @@ export async function deleteSession(sessionId: string): Promise<boolean> {
   if (!isPyWebView()) return false;
   const result = await getApi().delete_session(sessionId);
   return result.success;
+}
+
+export async function forkSession(
+  sessionId: string,
+  messageId?: string,
+): Promise<Session | null> {
+  if (!isPyWebView()) return null;
+  const result = await getApi().fork_session(sessionId, messageId || undefined);
+  return result.success ? (result.session as Session) : null;
 }
 
 export async function setCurrentSession(sessionId: string): Promise<void> {

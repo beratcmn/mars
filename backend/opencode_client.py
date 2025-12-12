@@ -346,6 +346,13 @@ class OpenCodeClient:
             body["parentID"] = parent_id
         return self._request("POST", "/session", json=body)
 
+    def fork_session(self, session_id: str, message_id: Optional[str] = None) -> dict:
+        """Fork an existing session at a message."""
+        body = {}
+        if message_id:
+            body["messageID"] = message_id
+        return self._request("POST", f"/session/{session_id}/fork", json=body)
+
     def rename_session(self, session_id: str, title: str) -> bool:
         """Rename a session."""
         # Fetch current session to get required 'time' field

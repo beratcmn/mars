@@ -51,6 +51,9 @@ type MessagePart = TextPart | ReasoningPart | ToolPart;
 
 interface Message {
   id: string;
+  // OpenCode message ID (needed for fork/revert/etc). For locally-created placeholder
+  // messages during streaming, this is populated later via SSE `message.updated`.
+  messageID?: string;
   role: "user" | "assistant";
   content: string;
   // Parts for streaming content (tools, reasoning, text)
@@ -344,37 +347,61 @@ function applyEventToTabs(
     if (!info) return tabs;
 
     const sessionId = info.sessionID as string;
+    const messageId = info.id as string | undefined;
 
-    // Only update assistant messages with metadata
-    if (info.role === "assistant" && info.tokens) {
-      const tokens = info.tokens as Record<string, unknown>;
+    // Update assistant messages with metadata (and capture the canonical message ID)
+    if (info.role === "assistant") {
+      const tokens = info.tokens as Record<string, unknown> | undefined;
+      const hasTokens =
+        !!tokens &&
+        typeof tokens.input === "number" &&
+        typeof tokens.output === "number";
+
       return tabs.map((tab) => {
-        if (tab.type === "session" && tab.sessionId === sessionId) {
-          const messages = [...tab.messages];
-          const lastMsg = messages[messages.length - 1];
+        if (tab.type !== "session" || tab.sessionId !== sessionId) return tab;
 
-          if (lastMsg && lastMsg.role === "assistant") {
-            return {
-              ...tab,
-              messages: [
-                ...messages.slice(0, -1),
-                {
-                  ...lastMsg,
-                  modelID: (info.modelID as string) || lastMsg.modelID,
-                  providerID: (info.providerID as string) || lastMsg.providerID,
-                  cost: info.cost as number,
-                  tokens: {
-                    input: tokens.input as number,
-                    output: tokens.output as number,
-                    cache: tokens.cache as { read: number; write: number },
-                  },
-                  time: info.time as { created: number; completed: number },
-                },
-              ],
-            };
+        const messages = [...tab.messages];
+
+        let idx = -1;
+        if (messageId) {
+          idx = messages.findIndex(
+            (m) => m.messageID === messageId || m.id === messageId,
+          );
+        }
+        if (idx === -1) {
+          for (let i = messages.length - 1; i >= 0; i--) {
+            if (messages[i].role === "assistant") {
+              idx = i;
+              break;
+            }
           }
         }
-        return tab;
+        if (idx === -1) return tab;
+
+        const target = messages[idx];
+        if (!target || target.role !== "assistant") return tab;
+
+        const updated: Message = {
+          ...target,
+          messageID: messageId || target.messageID,
+          modelID: (info.modelID as string) || target.modelID,
+          providerID: (info.providerID as string) || target.providerID,
+          time: (info.time as { created: number; completed: number }) || target.time,
+        };
+
+        if (typeof info.cost === "number") {
+          updated.cost = info.cost;
+        }
+        if (hasTokens) {
+          updated.tokens = {
+            input: tokens!.input as number,
+            output: tokens!.output as number,
+            cache: tokens!.cache as { read: number; write: number },
+          };
+        }
+
+        messages[idx] = updated;
+        return { ...tab, messages };
       });
     }
   }
@@ -711,6 +738,7 @@ function App() {
 
             return {
               id: msg.info.id,
+              messageID: msg.info.id,
               role: msg.info.role as "user" | "assistant",
               content: textContent,
               parts, // Include all parts for rendering
@@ -740,6 +768,100 @@ function App() {
       setActiveTabId(tabId);
     },
     [tabs],
+  );
+
+  const handleForkMessage = useCallback(
+    async (messageId: string) => {
+      if (!api.isPyWebView()) return;
+      if (!activeTab || activeTab.type !== "session") return;
+
+      const parentSessionId = (activeTab as SessionTab).sessionId;
+
+      try {
+        const forked = await api.forkSession(parentSessionId, messageId);
+        if (!forked) {
+          console.error("Fork failed: no session returned");
+          return;
+        }
+
+        const existingTab = tabs.find(
+          (t) => t.type === "session" && (t as SessionTab).sessionId === forked.id,
+        );
+        if (existingTab) {
+          setActiveTabId(existingTab.id);
+          await api.setCurrentSession(forked.id);
+          return;
+        }
+
+        const rawMessages = await api.listMessages(forked.id);
+        const forkedMessages: Message[] = rawMessages.map((msg) => {
+          const parts: MessagePart[] = [];
+          for (const p of msg.parts) {
+            if (!p.id) continue;
+
+            if (p.type === "text") {
+              parts.push({ id: p.id, type: "text", text: p.text || "" });
+            } else if (p.type === "reasoning") {
+              parts.push({
+                id: p.id,
+                type: "reasoning",
+                text: p.reasoning || p.text || "",
+              });
+            } else if (p.type === "tool") {
+              parts.push({
+                id: p.id,
+                type: "tool",
+                tool: p.tool || "unknown",
+                state: {
+                  status:
+                    (p.state?.status as ToolPart["state"]["status"]) ||
+                    "completed",
+                  input: p.state?.input as Record<string, unknown> | undefined,
+                  output: p.state?.output,
+                  error: p.state?.error,
+                  time: p.state?.time,
+                },
+              });
+            }
+          }
+
+          const textContent = parts
+            .filter((p): p is TextPart => p.type === "text")
+            .map((p) => p.text)
+            .join("");
+
+          return {
+            id: msg.info.id,
+            messageID: msg.info.id,
+            role: msg.info.role as "user" | "assistant",
+            content: textContent,
+            parts,
+            modelID: msg.info.modelID,
+            providerID: msg.info.providerID,
+            cost: msg.info.cost,
+            tokens: msg.info.tokens,
+            time: msg.info.time,
+          };
+        });
+
+        const tabId = `tab-${Date.now()}`;
+        const newTab: SessionTab = {
+          id: tabId,
+          type: "session",
+          sessionId: forked.id,
+          label: forked.title || "Untitled",
+          icon: "sparkles",
+          messages: forkedMessages,
+        };
+
+        setTabs((prev) => [...prev, newTab]);
+        setActiveTabId(tabId);
+        await api.setCurrentSession(forked.id);
+      } catch (error) {
+        console.error("Failed to fork session:", error);
+      }
+    },
+    [activeTab, tabs],
   );
 
   // Handle deleting a session from history
@@ -1261,6 +1383,7 @@ function App() {
                   messages={(activeTab as SessionTab).messages}
                   hasActiveSession={true}
                   onNewChat={handleNewTab}
+                  onForkMessage={api.isPyWebView() ? handleForkMessage : undefined}
                 />
               </div>
             ) : activeTab?.type === "file" ? (

@@ -340,6 +340,17 @@ class MarsAPI:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    def fork_session(
+        self, session_id: str, message_id: Optional[str] = None
+    ) -> dict:
+        """Fork an existing session at a message."""
+        try:
+            session = self.client.fork_session(session_id, message_id=message_id)
+            return {"success": True, "session": session, "error": None}
+        except Exception as e:
+            logger.error(f"Error forking session: {e}", exc_info=True)
+            return {"success": False, "session": None, "error": str(e)}
+
     def set_current_session(self, session_id: str) -> None:
         """Set the current active session."""
         self._current_session_id = session_id
