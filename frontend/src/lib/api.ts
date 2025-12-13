@@ -212,6 +212,9 @@ interface MarsApiInterface {
 
   // Editor
   open_in_editor(path?: string): Promise<ApiResponse<boolean>>;
+  
+  // Advanced
+  set_opencode_port(port: number): Promise<ApiResponse<boolean>>;
 }
 
 /**
@@ -685,5 +688,11 @@ export async function openInEditor(path?: string): Promise<boolean> {
   if (!result.success && result.error) {
     console.error("Failed to open in editor:", result.error);
   }
+  return result.success;
+}
+
+export async function setOpenCodePort(port: number): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().set_opencode_port(port);
   return result.success;
 }

@@ -45,6 +45,8 @@ interface SettingsProps {
   planetsByAgent?: Record<string, PlanetAssignment>;
   onAgentChange: (agent: Agent) => void;
   onIconChange?: (agentName: string, icon: PlanetAssignment) => void;
+  opencodePort?: number;
+  onPortChange?: (port: number) => void;
 }
 
 function IconPicker({
@@ -232,6 +234,8 @@ export function Settings({
   planetsByAgent,
   onAgentChange,
   onIconChange,
+  opencodePort,
+  onPortChange,
 }: SettingsProps) {
   return (
     <div className="flex flex-col h-full overflow-auto">
@@ -280,6 +284,50 @@ export function Settings({
                 collapsedProviders={collapsedProviders}
                 onCollapseChange={onCollapseChange}
               />
+            </div>
+          </div>
+        </section>
+
+        {/* Connection Settings */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-sm font-medium text-foreground mb-1">Connection</h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              Configure connection to OpenCode server
+            </p>
+          </div>
+          <div className="p-4 rounded-lg border border-border/50 bg-muted/20 space-y-3">
+            <div className="flex flex-col gap-2">
+              <label htmlFor="port-input" className="text-sm text-muted-foreground">
+                Server Port
+              </label>
+              <div className="flex gap-2">
+                <input
+                  id="port-input"
+                  type="number"
+                  placeholder="4096"
+                  className="flex-1 px-3 py-2 text-sm rounded-md border border-border/50 bg-background focus:outline-none focus:ring-1 focus:ring-primary/50"
+                  value={opencodePort || ""}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && onPortChange) {
+                      onPortChange(val);
+                    }
+                  }}
+                />
+                <button 
+                  onClick={() => {
+                    // Reset to default
+                    if (onPortChange) onPortChange(4096);
+                  }}
+                  className="px-3 py-2 text-xs rounded-md bg-muted hover:bg-muted/80 text-muted-foreground transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Default is 4096. Requires app restart to take full effect if server is managed by Mars.
+              </p>
             </div>
           </div>
         </section>

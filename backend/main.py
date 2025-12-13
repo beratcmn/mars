@@ -131,7 +131,40 @@ class MarsAPI:
     """
 
     def __init__(self):
-        self.config = OpenCodeConfig()
+        # Load settings first to get any saved port
+        # Note: self.load_settings() depends on self._get_settings_path which is static-ish
+        # but the method is an instance method.
+        # OpenCodeConfig init happens here.
+
+        # We need to temporarily use default config to check settings path if needed,
+        # but load_settings doesn't use config/client.
+
+        port_override = None
+        try:
+            # We can't use self.load_settings() yet if it wasn't fully initialized,
+            # but looking at load_settings implementation, it only needs standard libs
+            # and doesn't depend on self.client/server.
+            # So we can call it safely? No, self.load_settings is an instance method.
+            # We can just call it.
+
+            # Use a dummy client init or just move load_settings logic/call it.
+            # Actually load_settings implementation is safe.
+            settings_res = self.load_settings()
+            if settings_res.get("success"):
+                settings = settings_res.get("settings", {})
+                # Only use stored setting if MARS_PORT env var is NOT set
+                # If MARS_PORT is set, it means we are in a CLI session with a dedicated server
+                if not os.environ.get("MARS_PORT"):
+                    port_override = settings.get("opencodePort")
+                    if port_override:
+                        try:
+                            port_override = int(port_override)
+                        except (ValueError, TypeError):
+                            port_override = None
+        except Exception as e:
+            logger.warning(f"Failed to load settings during init: {e}")
+
+        self.config = OpenCodeConfig(_port=port_override)
         self.server = OpenCodeServer(self.config)
         self.client = OpenCodeClient(self.config)
         self._current_session_id: Optional[str] = None
@@ -206,6 +239,26 @@ class MarsAPI:
         if self._event_listener_thread:
             self._event_listener_thread.join(timeout=2)
             self._event_listener_thread = None
+
+    def set_opencode_port(self, port: int) -> dict:
+        """Update OpenCode port configuration and reconnect."""
+        try:
+            port = int(port)
+            self.config = OpenCodeConfig(_port=port)
+            # Re-initialize clients with new config
+            self.server = OpenCodeServer(self.config)
+            self.client = OpenCodeClient(self.config)
+
+            logger.info(f"Updated OpenCode port to {port}")
+
+            # If server is running on the new port, start listener
+            if self.is_server_running():
+                self._start_event_listener()
+
+            return {"success": True, "error": None}
+        except Exception as e:
+            logger.error(f"Error setting port: {e}")
+            return {"success": False, "error": str(e)}
 
     # === Server Management ===
 
@@ -340,9 +393,7 @@ class MarsAPI:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def fork_session(
-        self, session_id: str, message_id: Optional[str] = None
-    ) -> dict:
+    def fork_session(self, session_id: str, message_id: Optional[str] = None) -> dict:
         """Fork an existing session at a message."""
         try:
             session = self.client.fork_session(session_id, message_id=message_id)

@@ -506,6 +506,7 @@ function App() {
   >({});
   const [collapsedProviders, setCollapsedProviders] = useState<string[]>([]);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const [opencodePort, setOpencodePort] = useState<number>(4096);
 
   // Get the active tab
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -949,6 +950,9 @@ function App() {
             }
             if (settings.collapsedProviders) {
               setCollapsedProviders(settings.collapsedProviders as string[]);
+            }
+            if (settings.opencodePort) {
+              setOpencodePort(Number(settings.opencodePort));
             }
           } catch (e) {
             console.error("Failed to load settings:", e);
@@ -1470,6 +1474,21 @@ function App() {
                     });
                   } catch (e) {
                     console.error("Failed to save icon settings:", e);
+                  }
+                }}
+                opencodePort={opencodePort}
+                onPortChange={async (port) => {
+                  setOpencodePort(port);
+                  try {
+                    const currentSettings = await api.loadSettings();
+                    await api.saveSettings({
+                      ...currentSettings,
+                      opencodePort: port,
+                    });
+                    // Also update backend config immediately
+                    await api.setOpenCodePort(port);
+                  } catch (e) {
+                    console.error("Failed to save port settings:", e);
                   }
                 }}
               />

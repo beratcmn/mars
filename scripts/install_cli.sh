@@ -72,20 +72,29 @@ echo "Opening Mars in: $WORKDIR"
 
 export MARS_WORKDIR="$WORKDIR"
 
-# Kill any existing opencode server on port 4096 first
-if lsof -ti:4096 > /dev/null 2>&1; then
-    echo "Killing existing opencode server..."
-    lsof -ti:4096 | xargs kill -9 2>/dev/null || true
+# Find a random free port
+get_free_port() {
+    python3 -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1]); s.close()'
+}
+
+MARS_PORT=$(get_free_port)
+export MARS_PORT="$MARS_PORT"
+echo "Using port: $MARS_PORT"
+
+# Kill any existing opencode server on THIS port (unlikely, but good practice)
+if lsof -ti:$MARS_PORT > /dev/null 2>&1; then
+    echo "Killing existing process on port $MARS_PORT..."
+    lsof -ti:$MARS_PORT | xargs kill -9 2>/dev/null || true
     sleep 0.5
 fi
 
 echo "Starting opencode server in $WORKDIR..."
 cd "$WORKDIR"
-nohup opencode serve -p 4096 > /tmp/opencode_server.log 2>&1 &
+nohup opencode serve -p "$MARS_PORT" > /tmp/opencode_server_${MARS_PORT}.log 2>&1 &
 
 echo "Waiting for server..."
 for i in {1..20}; do
-    if curl -s http://127.0.0.1:4096/config > /dev/null 2>&1; then
+    if curl -s http://127.0.0.1:$MARS_PORT/config > /dev/null 2>&1; then
         echo "OpenCode server ready!"
         break
     fi

@@ -19,7 +19,14 @@ class OpenCodeConfig:
     """Configuration for OpenCode server connection."""
 
     host: str = "127.0.0.1"
-    port: int = 4096
+    _port: Optional[int] = None
+
+    @property
+    def port(self) -> int:
+        """Get port from explicit setting, environment or default to 4096."""
+        if self._port is not None:
+            return self._port
+        return int(os.environ.get("MARS_PORT", 4096))
 
     @property
     def base_url(self) -> str:
