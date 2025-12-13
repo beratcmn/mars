@@ -516,40 +516,24 @@ function App() {
 
   // Create a new session tab
   const createNewTab = useCallback(async () => {
-    const tabId = `tab - ${Date.now()} `;
-    let sessionId = tabId; // Fallback for browser mode
-    let title = "Untitled";
+    // Generate a temporary ID for the UI
+    const tempId = `temp-${Date.now()}`;
+    const title = "Untitled";
 
-    if (api.isPyWebView()) {
-      console.log("Creating session via PyWebView...");
-      const session = await api.createSession();
-      console.log("Session creation result:", session);
-      if (session) {
-        sessionId = session.id;
-        title = session.title || "Untitled";
-      } else {
-        console.error("Failed to create session! Will use fallback tab ID.");
-      }
-    }
-
+    // Create the tab in UI memory only - DO NOT call backend yet
     const newTab: SessionTab = {
-      id: tabId,
+      id: `tab-${Date.now()}`,
       type: "session",
-      sessionId,
+      sessionId: tempId,
       label: title,
       icon: "sparkles",
       messages: [],
     };
 
-    console.log("New tab created:", newTab);
+    console.log("New temporary tab created:", newTab);
 
     setTabs((prev) => [...prev, newTab]);
-    setActiveTabId(tabId);
-
-    // Set as current session in backend
-    if (api.isPyWebView() && sessionId !== tabId) {
-      await api.setCurrentSession(sessionId);
-    }
+    setActiveTabId(newTab.id);
 
     return newTab;
   }, []);
@@ -583,7 +567,18 @@ function App() {
       filePath: file.path,
     };
 
-    setTabs((prev) => [...prev, newTab]);
+    setTabs((prev) => {
+      const active = prev.find((t) => t.id === activeTabId);
+      if (
+        active &&
+        active.type === "session" &&
+        (active as SessionTab).sessionId.startsWith("temp-") &&
+        (active as SessionTab).messages.length === 0
+      ) {
+        return prev.map((t) => (t.id === activeTabId ? newTab : t));
+      }
+      return [...prev, newTab];
+    });
     setActiveTabId(newTab.id);
   };
 
@@ -765,10 +760,26 @@ function App() {
         messages,
       };
 
-      setTabs((prev) => [...prev, newTab]);
-      setActiveTabId(tabId);
+      setTabs((prev) => {
+        // Check if we should replace the current tab (if it's active, empty, and temporary)
+        const active = prev.find((t) => t.id === activeTabId);
+        if (
+          active &&
+          active.type === "session" &&
+          (active as SessionTab).sessionId.startsWith("temp-") &&
+          (active as SessionTab).messages.length === 0
+        ) {
+          return prev.map((t) => (t.id === activeTabId ? newTab : t));
+        }
+        return [...prev, newTab];
+      });
+      // If we replaced the tab, newTab has a different ID than activeTabId (the temp one).
+      // Wait, if we replaced it in the array, the tab at that position now has newTab.id.
+      // But activeTabId state variable still points to the old temp ID until we update it.
+      // So we must update activeTabId to newTab.id.
+      setActiveTabId(newTab.id);
     },
-    [tabs],
+    [tabs, activeTabId],
   );
 
   const handleForkMessage = useCallback(
@@ -1108,7 +1119,30 @@ function App() {
     if (!activeTab || activeTab.type !== "session") return;
 
     const currentTabId = activeTab.id;
-    const currentSessionId = activeTab.sessionId;
+    let currentSessionId = activeTab.sessionId;
+
+    // Lazy creation: If session is temporary, create it now
+    if (currentSessionId.startsWith("temp-") && api.isPyWebView()) {
+      try {
+        console.log("Lazy creating session for temp ID:", currentSessionId);
+        const session = await api.createSession();
+        if (session && session.id) {
+          const realId = session.id;
+          // Update the tab with the real session ID
+          setTabs((prev) =>
+            prev.map((t) =>
+              t.id === currentTabId && t.type === "session"
+                ? { ...t, sessionId: realId }
+                : t,
+            ),
+          );
+          currentSessionId = realId;
+          await api.setCurrentSession(realId);
+        }
+      } catch (e) {
+        console.error("Failed to lazy create session:", e);
+      }
+    }
 
     // Check if this is a slash command
     const isSlashCommand = content.trim().startsWith("/");
