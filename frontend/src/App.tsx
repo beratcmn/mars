@@ -9,11 +9,13 @@ import { TaskPanel } from "@/components/TaskPanel";
 import { TitleBar } from "@/components/TitleBar";
 import { Settings } from "@/components/Settings";
 import { AgentModal } from "@/components/AgentModal";
+import { CommandMenu } from "@/components/CommandMenu";
 import { WelcomeMessage } from "@/components/WelcomeMessage";
 import { type SelectedModel } from "@/components/ModelSelector";
 
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { useTheme } from "@/hooks/useTheme";
 import * as api from "@/lib/api";
 import type { Provider, Agent, FileEntry } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -482,6 +484,7 @@ function attachToolPartToSession(
 }
 
 function App() {
+  const { setTheme } = useTheme();
   const [tabs, setTabs] = useState<AppTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -506,6 +509,7 @@ function App() {
   >({});
   const [collapsedProviders, setCollapsedProviders] = useState<string[]>([]);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [opencodePort, setOpencodePort] = useState<number>(4096);
 
   // Get the active tab
@@ -642,6 +646,10 @@ function App() {
     setIsAgentModalOpen(true);
   }, [agents]);
 
+  const handleOpenCommandMenu = useCallback(() => {
+    setIsCommandMenuOpen(true);
+  }, []);
+
   // Handle agent selection from modal
   const handleAgentSelect = useCallback(
     (agent: Agent) => {
@@ -665,6 +673,7 @@ function App() {
     onCloseTab: handleCloseActiveTab,
     onToggleSidebar: () => setIsSidebarOpen((prev) => !prev),
     onOpenAgentModal: handleOpenAgentModal,
+    onOpenCommandMenu: handleOpenCommandMenu,
   });
 
   // Handle selecting a session from history
@@ -1603,6 +1612,18 @@ function App() {
         isOpen={isAgentModalOpen}
         onClose={() => setIsAgentModalOpen(false)}
         onAgentSelect={handleAgentSelect}
+      />
+
+      <CommandMenu
+        isOpen={isCommandMenuOpen}
+        onClose={() => setIsCommandMenuOpen(false)}
+        actions={{
+          onNewChat: handleNewTab,
+          onCloseTab: handleCloseActiveTab,
+          onToggleSidebar: () => setIsSidebarOpen((prev) => !prev),
+          onOpenSettings: handleOpenSettings,
+          onSetTheme: (theme) => setTheme(theme),
+        }}
       />
 
       <Footer

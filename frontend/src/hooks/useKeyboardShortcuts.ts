@@ -5,6 +5,7 @@ interface KeyboardShortcuts {
   onCloseTab?: () => void;
   onToggleSidebar?: () => void;
   onOpenAgentModal?: () => void;
+  onOpenCommandMenu?: () => void;
 }
 
 export function useKeyboardShortcuts({
@@ -12,10 +13,18 @@ export function useKeyboardShortcuts({
   onCloseTab,
   onToggleSidebar,
   onOpenAgentModal,
+  onOpenCommandMenu,
 }: KeyboardShortcuts) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       const isMeta = e.metaKey || e.ctrlKey;
+
+      // Cmd+K or Cmd+P - Command Menu
+      if (isMeta && (e.key === "k" || e.key === "p")) {
+        e.preventDefault();
+        onOpenCommandMenu?.();
+        return;
+      }
 
       // Cmd+T - New Tab
       if (isMeta && e.key === "t") {
