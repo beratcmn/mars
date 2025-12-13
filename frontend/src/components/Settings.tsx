@@ -291,14 +291,19 @@ export function Settings({
         {/* Connection Settings */}
         <section className="space-y-4">
           <div>
-            <h2 className="text-sm font-medium text-foreground mb-1">Connection</h2>
+            <h2 className="text-sm font-medium text-foreground mb-1">
+              Connection
+            </h2>
             <p className="text-xs text-muted-foreground mb-3">
               Configure connection to OpenCode server
             </p>
           </div>
           <div className="p-4 rounded-lg border border-border/50 bg-muted/20 space-y-3">
             <div className="flex flex-col gap-2">
-              <label htmlFor="port-input" className="text-sm text-muted-foreground">
+              <label
+                htmlFor="port-input"
+                className="text-sm text-muted-foreground"
+              >
                 Server Port
               </label>
               <div className="flex gap-2">
@@ -315,7 +320,7 @@ export function Settings({
                     }
                   }}
                 />
-                <button 
+                <button
                   onClick={() => {
                     // Reset to default
                     if (onPortChange) onPortChange(4096);
@@ -326,7 +331,8 @@ export function Settings({
                 </button>
               </div>
               <p className="text-xs text-muted-foreground">
-                Default is 4096. Requires app restart to take full effect if server is managed by Mars.
+                Default is 4096. Requires app restart to take full effect if
+                server is managed by Mars.
               </p>
             </div>
           </div>

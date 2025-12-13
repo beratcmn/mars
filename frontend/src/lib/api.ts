@@ -212,7 +212,7 @@ interface MarsApiInterface {
 
   // Editor
   open_in_editor(path?: string): Promise<ApiResponse<boolean>>;
-  
+
   // Advanced
   set_opencode_port(port: number): Promise<ApiResponse<boolean>>;
 }

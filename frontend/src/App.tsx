@@ -388,7 +388,9 @@ function applyEventToTabs(
           messageID: messageId || target.messageID,
           modelID: (info.modelID as string) || target.modelID,
           providerID: (info.providerID as string) || target.providerID,
-          time: (info.time as { created: number; completed: number }) || target.time,
+          time:
+            (info.time as { created: number; completed: number }) ||
+            target.time,
         };
 
         if (typeof info.cost === "number") {
@@ -831,7 +833,8 @@ function App() {
         }
 
         const existingTab = tabs.find(
-          (t) => t.type === "session" && (t as SessionTab).sessionId === forked.id,
+          (t) =>
+            t.type === "session" && (t as SessionTab).sessionId === forked.id,
         );
         if (existingTab) {
           setTabs((prev) =>
@@ -1462,7 +1465,9 @@ function App() {
                   messages={(activeTab as SessionTab).messages}
                   hasActiveSession={true}
                   onNewChat={handleNewTab}
-                  onForkMessage={api.isPyWebView() ? handleForkMessage : undefined}
+                  onForkMessage={
+                    api.isPyWebView() ? handleForkMessage : undefined
+                  }
                 />
               </div>
             ) : activeTab?.type === "file" ? (
