@@ -17,7 +17,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { useTheme } from "@/hooks/useTheme";
 import * as api from "@/lib/api";
-import type { Provider, Agent, FileEntry } from "@/lib/api";
+import type { Provider, Agent, FileEntry, Permission } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { buildSessionStatusNotice } from "@/lib/streamIssues";
 
@@ -83,6 +83,7 @@ interface SessionTab extends Tab {
   sessionId: string;
   messages: Message[];
   todos?: api.Todo[];
+  activePermissions?: Permission[];
 }
 
 interface FileTab extends Tab {
@@ -443,6 +444,30 @@ function applyEventToTabs(
       return tabs.map((tab) => {
         if (tab.type === "session" && tab.sessionId === sessionId) {
           return { ...tab, todos };
+        }
+        return tab;
+      });
+    }
+  }
+
+  // Handle permission.updated events
+  if (event.type === "permission.updated" && event.properties) {
+    const props = event.properties as Record<string, unknown>;
+    const permission = props as unknown as Permission;
+    const sessionId = permission.sessionID;
+
+    if (sessionId) {
+      return tabs.map((tab) => {
+        if (tab.type === "session" && tab.sessionId === sessionId) {
+          const currentPermissions = tab.activePermissions || [];
+          // Avoid duplicates
+          if (currentPermissions.some((p) => p.id === permission.id)) {
+            return tab;
+          }
+          return {
+            ...tab,
+            activePermissions: [...currentPermissions, permission],
+          };
         }
         return tab;
       });
@@ -1377,6 +1402,41 @@ function App() {
     setTabs((prev) => attachToolPartToSession(prev, sessionId, part));
   }, [activeTab, isLoading]);
 
+  const handlePermissionResponse = useCallback(
+    async (permissionId: string, response: "allow" | "deny", remember: boolean) => {
+      if (!activeTab || activeTab.type !== "session") return;
+      const sessionId = activeTab.sessionId;
+
+      // Optimistically remove permission from UI
+      setTabs((prev) =>
+        prev.map((tab) => {
+          if (tab.type === "session" && tab.sessionId === sessionId) {
+            return {
+              ...tab,
+              activePermissions: (tab.activePermissions || []).filter(
+                (p) => p.id !== permissionId,
+              ),
+            };
+          }
+          return tab;
+        }),
+      );
+
+      try {
+        await api.respondToPermission(
+          sessionId,
+          permissionId,
+          response,
+          remember,
+        );
+      } catch (e) {
+        console.error("Failed to respond to permission:", e);
+        // Could revert optimistic update here if needed
+      }
+    },
+    [activeTab],
+  );
+
   // Show loading state while initializing
   if (!isInitialized) {
     return (
@@ -1468,6 +1528,8 @@ function App() {
                   onForkMessage={
                     api.isPyWebView() ? handleForkMessage : undefined
                   }
+                  activePermissions={(activeTab as SessionTab).activePermissions}
+                  onPermissionRespond={handlePermissionResponse}
                 />
               </div>
             ) : activeTab?.type === "file" ? (

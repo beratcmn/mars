@@ -388,6 +388,15 @@ class OpenCodeClient:
         """Abort a running session."""
         return self._request("POST", f"/session/{session_id}/abort")
 
+    def respond_to_permission(
+        self, session_id: str, permission_id: str, response: str, remember: bool = False
+    ) -> bool:
+        """Respond to a permission request."""
+        body = {"response": response, "remember": remember}
+        return self._request(
+            "POST", f"/session/{session_id}/permissions/{permission_id}", json=body
+        )
+
     # === Messages ===
     def list_messages(self, session_id: str, limit: Optional[int] = None) -> list:
         """List messages in a session."""

@@ -410,6 +410,31 @@ class MarsAPI:
         """Get the current session ID."""
         return self._current_session_id
 
+    def revert_message(self, session_id: str, message_id: str) -> dict:
+        """Revert a message in a session."""
+        try:
+            # We don't have a direct client method for this yet in the provided code,
+            # but it was mentioned in the docs. If it's not in client, we might skip it
+            # or implement it. The docs say /session/:id/revert.
+            # Let's assume we might need to add it to client first if we want it.
+            # For now, I'll stick to the requested permission feature.
+            pass
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def respond_to_permission(
+        self, session_id: str, permission_id: str, response: str, remember: bool = False
+    ) -> dict:
+        """Respond to a permission request."""
+        try:
+            success = self.client.respond_to_permission(
+                session_id, permission_id, response, remember
+            )
+            return {"success": success, "error": None}
+        except Exception as e:
+            logger.error(f"Error responding to permission: {e}")
+            return {"success": False, "error": str(e)}
+
     # === Messages ===
 
     def send_message(

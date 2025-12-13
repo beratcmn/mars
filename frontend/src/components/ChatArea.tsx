@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Streamdown } from "streamdown";
 import { WelcomeMessage } from "@/components/WelcomeMessage";
+import { PermissionRequest } from "@/components/PermissionRequest";
+import type { Permission } from "@/lib/api";
 import {
   Zap,
   Clock,
@@ -80,6 +82,12 @@ interface ChatAreaProps {
   hasActiveSession: boolean;
   onNewChat?: () => void;
   onForkMessage?: (messageId: string) => void;
+  activePermissions?: Permission[];
+  onPermissionRespond?: (
+    permissionId: string,
+    response: "allow" | "deny",
+    remember: boolean,
+  ) => void;
 }
 
 // Component for rendering a tool call - minimalist design
@@ -719,6 +727,8 @@ export function ChatArea({
   hasActiveSession,
   onNewChat,
   onForkMessage,
+  activePermissions,
+  onPermissionRespond,
 }: ChatAreaProps) {
   // Scroll state for scroll-to-bottom button
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -938,6 +948,23 @@ export function ChatArea({
               </div>
             );
           })}
+
+          {/* Active Permission Requests */}
+          {activePermissions &&
+            activePermissions.length > 0 &&
+            onPermissionRespond && (
+              <div className="pt-4 border-t border-border/30 mt-4">
+                {activePermissions.map((permission) => (
+                  <PermissionRequest
+                    key={permission.id}
+                    permission={permission}
+                    onRespond={(response, remember) =>
+                      onPermissionRespond(permission.id, response, remember)
+                    }
+                  />
+                ))}
+              </div>
+            )}
         </div>
       </ScrollArea>
 

@@ -130,6 +130,25 @@ declare global {
   }
 }
 
+// Permission types
+export interface Permission {
+  id: string;
+  type: string;
+  sessionID: string;
+  messageID: string;
+  callID?: string;
+  title: string;
+  metadata?: {
+    command?: string;
+    path?: string;
+    // other fields as needed
+    [key: string]: unknown;
+  };
+  time?: {
+    created: number;
+  };
+}
+
 interface MarsApiInterface {
   // Server Management
   start_server(): Promise<ApiResponse<boolean>>;
@@ -161,6 +180,14 @@ interface MarsApiInterface {
   ): Promise<ApiResponse<Session>>;
   set_current_session(session_id: string): Promise<void>;
   get_current_session_id(): Promise<string | null>;
+
+  // Permissions
+  respond_to_permission(
+    session_id: string,
+    permission_id: string,
+    response: string,
+    remember?: boolean,
+  ): Promise<ApiResponse<boolean>>;
 
   // Messages
   send_message(
@@ -451,6 +478,24 @@ export async function setCurrentSession(sessionId: string): Promise<void> {
 export async function getCurrentSessionId(): Promise<string | null> {
   if (!isPyWebView()) return null;
   return getApi().get_current_session_id();
+}
+
+// === Permissions ===
+
+export async function respondToPermission(
+  sessionId: string,
+  permissionId: string,
+  response: "allow" | "deny",
+  remember: boolean = false,
+): Promise<boolean> {
+  if (!isPyWebView()) return false;
+  const result = await getApi().respond_to_permission(
+    sessionId,
+    permissionId,
+    response,
+    remember,
+  );
+  return result.success;
 }
 
 // === Messages ===
