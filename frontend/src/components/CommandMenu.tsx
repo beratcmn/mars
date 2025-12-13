@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Command } from "cmdk";
 import {
   Search,
@@ -9,9 +9,17 @@ import {
   Sun,
   Moon,
   Command as CommandIcon,
+  Bot,
+  Cpu,
+  Check,
+  ArrowLeft,
+  Sparkles,
 } from "lucide-react";
 import { Kbd } from "@/components/ui/kbd";
 import { cn } from "@/lib/utils";
+import type { Agent, Provider } from "@/lib/api";
+import type { PlanetAssignment } from "@/App";
+import type { SelectedModel } from "@/components/ModelSelector";
 
 interface CommandMenuProps {
   isOpen: boolean;
@@ -23,17 +31,46 @@ interface CommandMenuProps {
     onOpenSettings: () => void;
     onSetTheme: (theme: "dark-plus" | "soft-light" | "system") => void;
   };
+  agents: Agent[];
+  selectedAgent: Agent | null;
+  providers: Provider[];
+  selectedModel: SelectedModel | null;
+  planetsByAgent: Record<string, PlanetAssignment>;
+  onAgentSelect: (agent: Agent) => void;
+  onModelSelect: (model: SelectedModel) => void;
 }
 
-export function CommandMenu({ isOpen, onClose, actions }: CommandMenuProps) {
+export function CommandMenu({
+  isOpen,
+  onClose,
+  actions,
+  agents,
+  selectedAgent,
+  providers,
+  selectedModel,
+  planetsByAgent,
+  onAgentSelect,
+  onModelSelect,
+}: CommandMenuProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [pages, setPages] = useState<string[]>(["root"]);
+  const [search, setSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const activePage = pages[pages.length - 1];
 
   // Handle animation timing
   useEffect(() => {
     if (isOpen) {
       requestAnimationFrame(() => setIsVisible(true));
+      // Focus hack
+      setTimeout(() => inputRef.current?.focus(), 50);
     } else {
       setIsVisible(false);
+      setTimeout(() => {
+        setPages(["root"]); // Reset to root when closed
+        setSearch("");
+      }, 300);
     }
   }, [isOpen]);
 
@@ -44,8 +81,6 @@ export function CommandMenu({ isOpen, onClose, actions }: CommandMenuProps) {
         e.preventDefault();
         if (isOpen) {
           onClose();
-        } else {
-          // This case is usually handled by parent, but good for safety
         }
       }
     };
@@ -53,6 +88,21 @@ export function CommandMenu({ isOpen, onClose, actions }: CommandMenuProps) {
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, [isOpen, onClose]);
+
+  const popPage = useCallback(() => {
+    setPages((curr) => {
+      if (curr.length > 1) {
+        setSearch(""); // Clear search when going back
+        return curr.slice(0, -1);
+      }
+      return curr;
+    });
+  }, []);
+
+  const pushPage = useCallback((page: string) => {
+    setPages((curr) => [...curr, page]);
+    setSearch(""); // Clear search when entering new page
+  }, []);
 
   if (!isOpen) return null;
 
@@ -85,12 +135,39 @@ export function CommandMenu({ isOpen, onClose, actions }: CommandMenuProps) {
           label="Global Command Menu"
           loop
           className="w-full h-full bg-transparent"
+          onKeyDown={(e) => {
+            // Go back on Escape if in submenu, otherwise close
+            if (e.key === "Escape") {
+              e.preventDefault();
+              if (pages.length > 1) {
+                popPage();
+              } else {
+                onClose();
+              }
+            }
+            // Go back on Backspace if search is empty
+            if (e.key === "Backspace" && !search && pages.length > 1) {
+              e.preventDefault();
+              popPage();
+            }
+          }}
         >
           {/* Header */}
           <div className="relative flex items-center justify-between px-5 py-4 border-b border-border/30">
             <h2 className="serif-title-lg text-foreground/90 flex items-center gap-2">
-              <CommandIcon className="w-4 h-4" />
-              Commands
+              {pages.length > 1 ? (
+                <button
+                  onClick={popPage}
+                  className="hover:bg-muted/50 p-1 rounded-md transition-colors -ml-2 mr-1"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
+              ) : (
+                <CommandIcon className="w-4 h-4" />
+              )}
+              {activePage === "root" && "Commands"}
+              {activePage === "agents" && "Select Agent"}
+              {activePage === "models" && "Select Model"}
             </h2>
             <button
               onClick={onClose}
@@ -117,7 +194,16 @@ export function CommandMenu({ isOpen, onClose, actions }: CommandMenuProps) {
             >
               <Search className="h-4 w-4 text-muted-foreground/50" />
               <Command.Input
-                placeholder="Type a command or search..."
+                ref={inputRef}
+                value={search}
+                onValueChange={setSearch}
+                placeholder={
+                  activePage === "agents"
+                    ? "Search agents..."
+                    : activePage === "models"
+                      ? "Search models..."
+                      : "Type a command or search..."
+                }
                 className="
                   flex-1 bg-transparent text-sm outline-none
                   placeholder:text-muted-foreground/40
@@ -132,73 +218,181 @@ export function CommandMenu({ isOpen, onClose, actions }: CommandMenuProps) {
               No results found.
             </Command.Empty>
 
-            <Command.Group heading="Actions" className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70">
-              <CommandItem
-                onSelect={() => {
-                  actions.onNewChat();
-                  onClose();
-                }}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                <span>New Chat</span>
-                <CommandShortcut>⌘T</CommandShortcut>
-              </CommandItem>
+            {activePage === "root" && (
+              <>
+                <Command.Group
+                  heading="Configuration"
+                  className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70"
+                >
+                  <CommandItem onSelect={() => pushPage("agents")}>
+                    <Bot className="mr-2 h-4 w-4" />
+                    <span>Change Agent</span>
+                    <div className="ml-auto text-xs text-muted-foreground/50 flex items-center gap-2">
+                      {selectedAgent?.name}
+                      <ArrowLeft className="w-3 h-3 rotate-180" />
+                    </div>
+                  </CommandItem>
+                  <CommandItem onSelect={() => pushPage("models")}>
+                    <Cpu className="mr-2 h-4 w-4" />
+                    <span>Change Model</span>
+                    <div className="ml-auto text-xs text-muted-foreground/50 flex items-center gap-2">
+                      {selectedModel?.modelName || selectedModel?.modelId}
+                      <ArrowLeft className="w-3 h-3 rotate-180" />
+                    </div>
+                  </CommandItem>
+                </Command.Group>
 
-              <CommandItem
-                onSelect={() => {
-                  actions.onToggleSidebar();
-                  onClose();
-                }}
-              >
-                <PanelLeft className="mr-2 h-4 w-4" />
-                <span>Toggle Sidebar</span>
-                <CommandShortcut>⌘B</CommandShortcut>
-              </CommandItem>
+                <Command.Separator className="my-1 h-px bg-border/30 mx-2" />
 
-              <CommandItem
-                onSelect={() => {
-                  actions.onCloseTab();
-                  onClose();
-                }}
-              >
-                <X className="mr-2 h-4 w-4" />
-                <span>Close Tab</span>
-                <CommandShortcut>⌘W</CommandShortcut>
-              </CommandItem>
+                <Command.Group
+                  heading="Actions"
+                  className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70"
+                >
+                  <CommandItem
+                    onSelect={() => {
+                      actions.onNewChat();
+                      onClose();
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    <span>New Chat</span>
+                    <CommandShortcut>⌘T</CommandShortcut>
+                  </CommandItem>
 
-              <CommandItem
-                onSelect={() => {
-                  actions.onOpenSettings();
-                  onClose();
-                }}
-              >
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Settings</span>
-              </CommandItem>
-            </Command.Group>
+                  <CommandItem
+                    onSelect={() => {
+                      actions.onToggleSidebar();
+                      onClose();
+                    }}
+                  >
+                    <PanelLeft className="mr-2 h-4 w-4" />
+                    <span>Toggle Sidebar</span>
+                    <CommandShortcut>⌘B</CommandShortcut>
+                  </CommandItem>
 
-            <Command.Separator className="my-1 h-px bg-border/30 mx-2" />
+                  <CommandItem
+                    onSelect={() => {
+                      actions.onCloseTab();
+                      onClose();
+                    }}
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    <span>Close Tab</span>
+                    <CommandShortcut>⌘W</CommandShortcut>
+                  </CommandItem>
 
-            <Command.Group heading="Theme" className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70">
-              <CommandItem
-                onSelect={() => {
-                  actions.onSetTheme("dark-plus");
-                  onClose();
-                }}
-              >
-                <Moon className="mr-2 h-4 w-4" />
-                <span>Dark Mode</span>
-              </CommandItem>
-              <CommandItem
-                onSelect={() => {
-                  actions.onSetTheme("soft-light");
-                  onClose();
-                }}
-              >
-                <Sun className="mr-2 h-4 w-4" />
-                <span>Light Mode</span>
-              </CommandItem>
-            </Command.Group>
+                  <CommandItem
+                    onSelect={() => {
+                      actions.onOpenSettings();
+                      onClose();
+                    }}
+                  >
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </CommandItem>
+                </Command.Group>
+
+                <Command.Separator className="my-1 h-px bg-border/30 mx-2" />
+
+                <Command.Group
+                  heading="Theme"
+                  className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70"
+                >
+                  <CommandItem
+                    onSelect={() => {
+                      actions.onSetTheme("dark-plus");
+                      onClose();
+                    }}
+                  >
+                    <Moon className="mr-2 h-4 w-4" />
+                    <span>Dark Mode</span>
+                  </CommandItem>
+                  <CommandItem
+                    onSelect={() => {
+                      actions.onSetTheme("soft-light");
+                      onClose();
+                    }}
+                  >
+                    <Sun className="mr-2 h-4 w-4" />
+                    <span>Light Mode</span>
+                  </CommandItem>
+                </Command.Group>
+              </>
+            )}
+
+            {activePage === "agents" && (
+              <Command.Group>
+                {agents.map((agent) => (
+                  <CommandItem
+                    key={agent.name}
+                    onSelect={() => {
+                      onAgentSelect(agent);
+                      onClose();
+                    }}
+                  >
+                    <div className="mr-2 w-5 h-5 rounded-full overflow-hidden flex items-center justify-center bg-muted/50">
+                      {planetsByAgent[agent.name] ? (
+                        <img
+                          src={`./planets/${planetsByAgent[agent.name].image}`}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Bot className="w-3 h-3" />
+                      )}
+                    </div>
+                    <span>{agent.name}</span>
+                    {selectedAgent?.name === agent.name && (
+                      <Check className="ml-auto w-4 h-4 text-primary" />
+                    )}
+                  </CommandItem>
+                ))}
+              </Command.Group>
+            )}
+
+            {activePage === "models" && (
+              <>
+                {providers.map((provider) => (
+                  <Command.Group
+                    key={provider.id}
+                    heading={provider.name}
+                    className="px-2 py-1.5 text-xs font-medium text-muted-foreground/70"
+                  >
+                    {(Array.isArray(provider.models)
+                      ? provider.models
+                      : Object.entries(provider.models || {}).map(
+                          ([id, data]) => ({
+                            id,
+                            name:
+                              typeof data === "object" && data !== null
+                                ? (data as { name?: string }).name || id
+                                : id,
+                          }),
+                        )
+                    ).map((model) => (
+                      <CommandItem
+                        key={`${provider.id}-${model.id}`}
+                        onSelect={() => {
+                          onModelSelect({
+                            providerId: provider.id,
+                            providerName: provider.name,
+                            modelId: model.id,
+                            modelName: model.name || model.id,
+                          });
+                          onClose();
+                        }}
+                      >
+                        <Sparkles className="mr-2 h-4 w-4 opacity-50" />
+                        <span>{model.name || model.id}</span>
+                        {selectedModel?.providerId === provider.id &&
+                          selectedModel?.modelId === model.id && (
+                            <Check className="ml-auto w-4 h-4 text-primary" />
+                          )}
+                      </CommandItem>
+                    ))}
+                  </Command.Group>
+                ))}
+              </>
+            )}
           </Command.List>
 
           {/* Footer */}
@@ -212,6 +406,12 @@ export function CommandMenu({ isOpen, onClose, actions }: CommandMenuProps) {
                 <Kbd>↵</Kbd>
                 <span>Select</span>
               </span>
+              {pages.length > 1 && (
+                <span className="flex items-center gap-1.5">
+                  <Kbd>Esc</Kbd>
+                  <span>Back</span>
+                </span>
+              )}
             </div>
           </div>
         </Command>

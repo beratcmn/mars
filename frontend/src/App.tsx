@@ -667,6 +667,21 @@ function App() {
     [planetsByAgent],
   );
 
+  const handleModelSelect = useCallback(async (model: SelectedModel) => {
+    setSelectedModel(model);
+    if (model) {
+      try {
+        const currentSettings = await api.loadSettings();
+        await api.saveSettings({
+          ...currentSettings,
+          selectedModel: model,
+        });
+      } catch (e) {
+        console.error("Failed to save settings:", e);
+      }
+    }
+  }, []);
+
   // Keyboard shortcuts
   useKeyboardShortcuts({
     onNewTab: handleNewTab,
@@ -1624,6 +1639,13 @@ function App() {
           onOpenSettings: handleOpenSettings,
           onSetTheme: (theme) => setTheme(theme),
         }}
+        agents={agents}
+        selectedAgent={selectedAgent}
+        providers={providers}
+        selectedModel={selectedModel}
+        planetsByAgent={planetsByAgent}
+        onAgentSelect={handleAgentSelect}
+        onModelSelect={handleModelSelect}
       />
 
       <Footer
